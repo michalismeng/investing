@@ -1,0 +1,40 @@
+<h2>Financial Data for {{ companyName }}</h2>
+
+<mat-toolbar color="primary" style="width: 100%">
+    <button mat-icon-button (click)="applyEditCommands()"><mat-icon>edit</mat-icon></button>
+    <button mat-icon-button (click)="resetEditCommands()"><mat-icon>undo</mat-icon></button>
+</mat-toolbar>
+
+<textarea [(ngModel)]="scheme" style="width: 95%" rows="5"></textarea>
+
+<button mat-raised-button style="margin-right: 0.5rem" (click)="loadStatement('IS')">Income Statement</button>
+<button mat-raised-button style="margin-right: 0.5rem" (click)="loadStatement('BS')">Balance Sheet</button>
+<button mat-raised-button (click)="loadStatement('CF')">Cashflow Statement</button>
+
+<h2 style="width: 100%; text-align: center">{{ currentStmt }}</h2>
+
+<div *ngIf="columns$ | async as columns"> 
+
+    <mat-table class="mat-elevation-z8" [dataSource]="dataSource" style="margin-top: 1rem;">
+
+    <mat-header-row *matHeaderRowDef="columns; sticky: true"></mat-header-row>
+        <mat-row *matRowDef="let myRowData; columns: columns"></mat-row>
+
+        <ng-container *ngFor="let column of columns" [matColumnDef]="column">
+            <mat-header-cell *matHeaderCellDef style="font-size: 12px">{{ parseDate(column) }}</mat-header-cell>
+            <mat-cell *matCellDef="let fact" style="font-size: 12px">
+                <div *ngIf="column == 'plabel'" style="display: inline">
+                    <button mat-icon-button [cdkCopyToClipboard]='fact.tag'><mat-icon>filter_none</mat-icon></button>
+                </div>
+                <div *ngIf="staticKeysToShow.includes(column)"
+                        matTooltip="{{fact.tag}} ({{fact.report}}.{{fact.line}})" matTooltipShowDelay="800">
+                    {{ fact[column] }}
+                </div>
+                <div *ngIf="!factRowStaticKeys.includes(column)" [matTooltip]="fact.uom" matTooltipShowDelay="800">
+                    {{ fact[column] | amount: fact.uom }}
+                </div>
+            </mat-cell>
+        </ng-container>
+
+    </mat-table>
+</div>

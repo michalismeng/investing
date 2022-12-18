@@ -1,0 +1,18 @@
+table{
+  width: 100%;
+}
+
+// .mat-column-tag {
+//     white-space: normal;
+//     word-wrap: break-word;
+//     max-width: 10rem;
+//     width: 10rem;
+// }
+
+::ng-deep .mat-column-plabel {
+  min-width: 20%;
+}
+
+mat-cell:first-of-type {
+    padding-left: 0px;
+}
