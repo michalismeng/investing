@@ -1,4 +1,4 @@
-import { formatNumber, getCurrencySymbol } from '@angular/common';
+import { formatNumber, formatPercent, getCurrencySymbol } from '@angular/common';
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({name: 'amount'})
@@ -6,6 +6,10 @@ export class AmountPipe implements PipeTransform {
   transform(value: number, currencySymbol: string = "USD"): string {
     if (value == null)
       return "-"
+
+    if (currencySymbol == "percent") {
+      return `${formatPercent(value, "en-US", ".1-1")}`
+    }
 
     let sign = value < 0 ? "-" : ""
     if (value < 0)

@@ -54,20 +54,44 @@ export class FinancialsDataSource implements DataSource<FactRow> {
         this.financialsSubject.next(this.initialFacts)
     }
 
+    private applyCombineCommand(args: string[], rows: FactRow[]) {
+      let fact0 = rows.findIndex(f => f.tag == args[0])
+      let fact1 = rows.findIndex(f => f.tag == args[1])
+      // Using this method, if both facts have a null column, then the column will disappear
+      let combined = {...this.omitNull(rows[fact1]), ...this.omitNull(rows[fact0])}
+      rows[fact0] = combined
+      rows.splice(fact1, 1)
+    }
+
+    private applyPercentCommand(args: string[], rows: FactRow[]) {
+      let tag0 = rows.findIndex(f => f.tag == args[0])
+      let tag1 = rows.findIndex(f => f.tag == args[1])
+      let keys = Object.keys(rows[tag0]).filter(k => factRowStaticKeys.includes(k) == false)
+
+      let plabel = args.length == 3 ? args[2] : `percent-${rows[tag0].tag}-${rows[tag1].tag}`
+
+      let data = Object.fromEntries(keys.map(k => [k, rows[tag0][k] / rows[tag1][k]]))
+      rows.push({
+        tag: `percent-${rows[tag0].tag}-${rows[tag1].tag}`,
+        line: rows[tag0].line + 0.5,
+        plabel: plabel,
+        report: rows[tag0].report,
+        uom: "percent",
+        ...data
+      })
+    }
+
     applyEditCommand(scheme: string) {
         let value = JSON.parse(JSON.stringify(this.financialsSubject.value)) as FactRow[]
         let commands = scheme.trim().split(",").map(t => t.trim())
         for(let command of commands) {
+          let args = command.split(":")[1].trim().split(" ")
           if (command.startsWith("combine:")) {
-            let args = command.split(":")[1].trim().split(" ")
-            let fact0 = value.findIndex(f => f.tag == args[0])
-            let fact1 = value.findIndex(f => f.tag == args[1])
-            // Using this method, if both facts have a null column, then the column will disappear
-            let combined = {...this.omitNull(value[fact1]), ...this.omitNull(value[fact0])}
-            value[fact0] = combined
-            value.splice(fact1, 1)
+            this.applyCombineCommand(args, value)
+          } else if (command.startsWith("percent:")) {
+            this.applyPercentCommand(args, value)
           }
         }
-        this.financialsSubject.next(value)
+        this.financialsSubject.next(value.sort((a, b) => a.report != b.report ? a.report - b.report : a.line - b.line))
     }
 }

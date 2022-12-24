@@ -4,6 +4,7 @@
     <button mat-icon-button (click)="applyEditCommands()"><mat-icon>edit</mat-icon></button>
     <button mat-icon-button (click)="resetEditCommands()"><mat-icon>undo</mat-icon></button>
     <button mat-icon-button (click)="combineSame()"><mat-icon>shopping_cart</mat-icon></button>
+    <!-- <button mat-icon-button ><mat-icon>percent</mat-icon></button> -->
 </mat-toolbar>
 
 <textarea [(ngModel)]="scheme" style="width: 95%" rows="5"></textarea>
@@ -29,7 +30,7 @@
                 </div>
                 <div *ngIf="staticKeysToShow.includes(column)"
                         matTooltip="{{fact.tag}} ({{fact.report}}.{{fact.line}})" matTooltipShowDelay="800">
-                    {{ fact[column] }}
+                    {{ fact[column] | wordize }}
                 </div>
                 <div *ngIf="!factRowStaticKeys.includes(column)" [matTooltip]="fact.uom" matTooltipShowDelay="800">
                     {{ fact[column] | amount: fact.uom }}

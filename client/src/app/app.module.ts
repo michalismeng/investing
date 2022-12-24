@@ -23,6 +23,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { FormStorageDirective } from 'src/directives/form-storage.directive';
+import { WordizePipe } from 'src/pipes/wordize.pipe';
 
 
 @NgModule({
@@ -33,6 +34,7 @@ import { FormStorageDirective } from 'src/directives/form-storage.directive';
     FinancialsComponent,
     AmountPipe,
     FormStorageDirective,
+    WordizePipe,
   ],
   imports: [
     BrowserModule,
