@@ -1,6 +1,6 @@
 import { CollectionViewer } from '@angular/cdk/collections';
 import { DataSource } from '@angular/cdk/table';
-import { BehaviorSubject, filter, map, Observable, tap } from 'rxjs';
+import { BehaviorSubject, filter, lastValueFrom, map, Observable, tap } from 'rxjs';
 import { FactRow, factRowStaticKeys } from 'src/models/fact';
 import { FinancialsService } from 'src/services/financials.service';
 
@@ -90,6 +90,9 @@ export class FinancialsDataSource implements DataSource<FactRow> {
             this.applyCombineCommand(args, value)
           } else if (command.startsWith("percent:")) {
             this.applyPercentCommand(args, value)
+          } else if (command.startsWith("hide:")) {
+            let index = value.findIndex(f => f.tag == args[0])
+            value.splice(index, 1)
           }
         }
         this.financialsSubject.next(value.sort((a, b) => a.report != b.report ? a.report - b.report : a.line - b.line))
