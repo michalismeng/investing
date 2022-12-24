@@ -77,4 +77,29 @@ export class FinancialsComponent {
   public resetEditCommands() {
     this.dataSource.resetFacts()
   }
+
+  public combineSame() {
+    let rows = this.dataSource.financialsSubject.value
+    let groups = this.groupBy(rows, item => item.plabel)
+    let combineCommands: [string, string][] = []
+
+    for(let key of Object.keys(groups)) {
+      let rows = groups[key]
+      if (rows.length > 1) {
+        for(let row of rows.slice(1)) {
+          combineCommands.push([rows[0].tag, row.tag])
+        }
+      }
+    }
+    this.scheme = combineCommands.map(([a, b]) => `combine: ${a} ${b}`).join(",\n")
+  }
+
+  private groupBy<T>(arr: T[], fn: (item: T) => any) {
+    return arr.reduce<Record<string, T[]>>((prev, curr) => {
+        const groupKey = fn(curr);
+        const group = prev[groupKey] || [];
+        group.push(curr);
+        return { ...prev, [groupKey]: group };
+    }, {});
+  }
 }
