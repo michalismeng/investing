@@ -19,7 +19,7 @@ def gather_numbers_for(adsh, pre, num):
     # Each row in NUM is linked to perhaps multiple rows in PRE. We want all appearences in PRE where the stmt is unique
     tags = pre[(pre["adsh"] == adsh) & (pre["stmt"].isin(["IS", "BS", "CF"]))].drop_duplicates(keep="first", subset=["tag", "adsh", "stmt"])
     numbers = num[(num["adsh"] == adsh) & (num["tag"].isin(tags["tag"]))]
-    numbers_latest = numbers.loc[numbers.groupby("tag")["ddate"].idxmax()]
+    numbers_latest = numbers.loc[numbers.sort_values(by="qtrs", ascending=False).groupby("tag")["ddate"].idxmax()]
     numbers_of_interest = numbers_latest.reset_index()[["adsh", "tag", "version", "ddate", "qtrs", "uom", "value"]]
     return pd.merge(numbers_of_interest, tags[["tag", "plabel", "report", "line", "stmt", "adsh"]], on=["adsh", "tag"], how="inner")
 
