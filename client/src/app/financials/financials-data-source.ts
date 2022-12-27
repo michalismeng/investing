@@ -73,10 +73,28 @@ export class FinancialsDataSource implements DataSource<FactRow> {
       let data = Object.fromEntries(keys.map(k => [k, rows[tag0][k] / rows[tag1][k]]))
       rows.push({
         tag: `percent-${rows[tag0].tag}-${rows[tag1].tag}`,
-        line: rows[tag0].line + 0.5,
+        line: rows[tag0].line + 0.1,
         plabel: plabel,
         report: rows[tag0].report,
         uom: "percent",
+        ...data
+      })
+    }
+
+    applyLessCommand(args: string[], rows: FactRow[]) {
+      let tag0 = rows.findIndex(f => f.tag == args[0])
+      let tag1 = rows.findIndex(f => f.tag == args[1])
+      let keys = Object.keys(rows[tag0]).filter(k => factRowStaticKeys.includes(k) == false)
+
+      let plabel = args.length == 3 ? args[2] : `less-${rows[tag0].tag}-${rows[tag1].tag}`
+
+      let data = Object.fromEntries(keys.map(k => [k, rows[tag0][k] - rows[tag1][k]]))
+      rows.push({
+        tag: `less-${rows[tag0].tag}-${rows[tag1].tag}`,
+        line: rows[tag1].line + 0.1,
+        plabel: plabel,
+        report: rows[tag0].report,
+        uom: rows[tag0].uom,
         ...data
       })
     }
@@ -90,6 +108,8 @@ export class FinancialsDataSource implements DataSource<FactRow> {
             this.applyCombineCommand(args, value)
           } else if (command.startsWith("percent:")) {
             this.applyPercentCommand(args, value)
+          } else if (command.startsWith("less:")) {
+            this.applyLessCommand(args, value)
           } else if (command.startsWith("hide:")) {
             let index = value.findIndex(f => f.tag == args[0])
             value.splice(index, 1)
