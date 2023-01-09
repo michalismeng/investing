@@ -93,7 +93,7 @@ export class FinancialsDataSource implements DataSource<FactRow> {
         tag: `less-${rows[tag0].tag}-${rows[tag1].tag}`,
         line: rows[tag1].line + 0.1,
         plabel: plabel,
-        report: rows[tag0].report,
+        report: rows[tag1].report,
         uom: rows[tag0].uom,
         ...data
       })
