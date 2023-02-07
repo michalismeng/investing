@@ -44,12 +44,13 @@ def api_show_index():
     return result.head(100).to_dict(orient="records")
 
 
-@app.route("/api/financials", methods=["POST"])
+@app.route("/api/financials")
 def api_show_financial_data():
 
-    data = request.json
+    adsh = request.args.getlist('adsh[]')
+    stmt = request.args.get('stmt')
 
-    s = model.facts.select().where(model.facts.c.adsh.in_(data["adsh"])).where(model.facts.c.stmt == data["stmt"])
+    s = model.facts.select().where(model.facts.c.adsh.in_(adsh)).where(model.facts.c.stmt == stmt)
     conn = model.engine.connect()
     result = conn.execute(s)
 

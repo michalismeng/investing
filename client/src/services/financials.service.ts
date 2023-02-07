@@ -14,7 +14,11 @@ export class FinancialsService {
     ) {}
 
     public getFacts(adsh: string[] = [], stmt: string = "IS"): Observable<FactRow[]> {
-        return this.http.post<FactRow[]>(`${this.url}`, { "adsh": adsh, "stmt": stmt })
+        let queryParams = new HttpParams();
+        queryParams = queryParams.append("stmt", stmt)
+        adsh.forEach(val => { queryParams = queryParams.append("adsh[]", val) })
+
+        return this.http.get<FactRow[]>(`${this.url}`, { params: queryParams })
     }
 
     public getScheme(name: string, stmt: string): Observable<Scheme> {
