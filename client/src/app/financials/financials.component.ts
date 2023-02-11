@@ -105,6 +105,13 @@ export class FinancialsComponent {
     this.scheme += `${percentCommand},\n`
   }
 
+  public beautifyScheme() {
+    this.scheme = this.scheme.trim()
+                             .split(",")
+                             .map(t => t.trim())
+                             .join(",\n")
+  }
+
   private groupBy<T>(arr: T[], fn: (item: T) => any) {
     return arr.reduce<Record<string, T[]>>((prev, curr) => {
         const groupKey = fn(curr);

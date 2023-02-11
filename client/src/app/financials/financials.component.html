@@ -8,6 +8,7 @@
     <button mat-fab (click)="generate('percent')">%</button>
     <button mat-fab (click)="generate('less')">-</button>
     <button mat-fab (click)="generate('hide')">hide</button>
+    <button mat-fab (click)="beautifyScheme()">beautify</button>
 </mat-toolbar>
 
 <textarea [(ngModel)]="scheme" style="width: 95%" rows="5"></textarea>
