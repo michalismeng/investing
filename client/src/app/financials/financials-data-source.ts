@@ -54,13 +54,23 @@ export class FinancialsDataSource implements DataSource<FactRow> {
         this.financialsSubject.next(this.initialFacts)
     }
 
+    // Remove elemnts from array in place, from multiple indexes.
+    private removeMultipleIndices(array: any[], indices: number[]) {
+      let localIndices: number[] = JSON.parse(JSON.stringify(indices))
+      // reverse sort, so when splicing we start from the last index and we don't
+      // mess up with the indices while splicing
+      localIndices.sort((a, b) => b - a)
+      localIndices.forEach(i => array.splice(i, 1))
+    }
+
     private applyCombineCommand(args: string[], rows: FactRow[]) {
-      let fact0 = rows.findIndex(f => f.tag == args[0])
-      let fact1 = rows.findIndex(f => f.tag == args[1])
-      // Using this method, if both facts have a null column, then the column will disappear
-      let combined = {...this.omitNull(rows[fact1]), ...this.omitNull(rows[fact0])}
-      rows[fact0] = combined
-      rows.splice(fact1, 1)
+      let facts = args.map(arg => rows.findIndex(f => f.tag == arg))
+      var combined: any = {}
+      for(let fact of facts) {
+        combined = {...this.omitNull(rows[fact]), ...combined}
+      }
+      rows[facts[0]] = combined
+      this.removeMultipleIndices(rows, facts.slice(1))
     }
 
     private applyPercentCommand(args: string[], rows: FactRow[]) {
@@ -101,7 +111,7 @@ export class FinancialsDataSource implements DataSource<FactRow> {
 
     applyEditCommand(scheme: string) {
         let value = JSON.parse(JSON.stringify(this.financialsSubject.value)) as FactRow[]
-        let commands = scheme.trim().split(",").map(t => t.trim())
+        let commands = scheme.trim().split(",").map(t => t.trim()).filter(t => t != "")
         for(let command of commands) {
           let args = command.split(":")[1].trim().split(" ")
           if (command.startsWith("combine:")) {
@@ -111,8 +121,8 @@ export class FinancialsDataSource implements DataSource<FactRow> {
           } else if (command.startsWith("less:")) {
             this.applyLessCommand(args, value)
           } else if (command.startsWith("hide:")) {
-            let index = value.findIndex(f => f.tag == args[0])
-            value.splice(index, 1)
+            let indices = args.map(arg => value.findIndex(f => f.tag == arg))
+            this.removeMultipleIndices(value, indices)
           }
         }
         this.financialsSubject.next(value.sort((a, b) => a.report != b.report ? a.report - b.report : a.line - b.line))

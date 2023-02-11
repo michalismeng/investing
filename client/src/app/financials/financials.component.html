@@ -3,8 +3,11 @@
 <mat-toolbar color="primary" style="width: 100%">
     <button mat-icon-button (click)="applyEditCommands()"><mat-icon>edit</mat-icon></button>
     <button mat-icon-button (click)="resetEditCommands()"><mat-icon>undo</mat-icon></button>
-    <button mat-icon-button (click)="combineSame()"><mat-icon>shopping_cart</mat-icon></button>
-    <!-- <button mat-icon-button ><mat-icon>percent</mat-icon></button> -->
+    <button mat-icon-button (click)="generateCombineSame()"><mat-icon>shopping_cart</mat-icon></button>
+    <button mat-fab (click)="generate('combine')">combine</button>
+    <button mat-fab (click)="generate('percent')">%</button>
+    <button mat-fab (click)="generate('less')">-</button>
+    <button mat-fab (click)="generate('hide')">hide</button>
 </mat-toolbar>
 
 <textarea [(ngModel)]="scheme" style="width: 95%" rows="5"></textarea>
@@ -26,7 +29,10 @@
             <mat-header-cell *matHeaderCellDef style="font-size: 12px">{{ parseDate(column) }}</mat-header-cell>
             <mat-cell *matCellDef="let fact" style="font-size: 12px">
                 <div *ngIf="column == 'plabel'" style="display: inline">
-                    <button mat-icon-button [cdkCopyToClipboard]='fact.tag'><mat-icon>filter_none</mat-icon></button>
+                    <mat-checkbox (click)="$event.stopPropagation()"
+                                  (change)="$event ? selection.toggle(fact) : null"
+                                  [checked]="selection.isSelected(fact)">
+                    </mat-checkbox>
                 </div>
                 <div *ngIf="staticKeysToShow.includes(column)"
                         matTooltip="{{fact.tag}} ({{fact.report}}.{{fact.line}})" matTooltipShowDelay="800">

@@ -1,6 +1,7 @@
+import { SelectionModel } from '@angular/cdk/collections';
 import { formatDate } from '@angular/common';
 import { Component } from '@angular/core';
-import { filter, map, Observable, take } from 'rxjs';
+import { filter, map, Observable, take, tap } from 'rxjs';
 import { FactRow, factRowStaticKeys } from 'src/models/fact';
 import { Submission } from 'src/models/submission';
 import { FinancialsService } from 'src/services/financials.service';
@@ -28,6 +29,7 @@ export class FinancialsComponent {
     "CF": "Cashflow Statement"
   }
   public scheme: string = "";
+  public selection: SelectionModel<FactRow>;
 
   constructor(
     private financialsService: FinancialsService,
@@ -37,6 +39,7 @@ export class FinancialsComponent {
       this.dataSource.financialsSubject.asObservable().subscribe(
         rows => this.factRows = rows
       )
+    this.selection = new SelectionModel<FactRow>(true, []);
   }
 
   private columnFilter(c: string): boolean {
@@ -69,29 +72,37 @@ export class FinancialsComponent {
   }
 
   public applyEditCommands() {
-    this.financialsService.addScheme({ "name": this.companyName, "stmt": this.currentStmt, value: this.scheme }).pipe(take(1)).subscribe()
+    this.financialsService.addScheme({
+      "name": this.companyName,
+      "stmt": this.currentStmt,
+      value: this.scheme
+    }).pipe(take(1)).subscribe()
     this.dataSource.resetFacts()
     this.dataSource.applyEditCommand(this.scheme)
+    this.selection.clear()
   }  
 
   public resetEditCommands() {
     this.dataSource.resetFacts()
   }
 
-  public combineSame() {
+  // Generate combine command, for fact rows with the same plabel
+  public generateCombineSame() {
     let rows = this.dataSource.financialsSubject.value
     let groups = this.groupBy(rows, item => item.plabel)
-    let combineCommands: [string, string][] = []
+    let sch = Object.keys(groups)
+                    .map(g => groups[g]) // get FactRows for each group of same plabel
+                    .filter(r => r.length > 1) // keep only rows with multiple same plabels
+                    .map(r => r.map(rr => rr.tag)) // keep only tags
+                    .map(r => `combine: ${r.join(" ")},\n`) // convert to combine statement
+                    .join("")
+    this.scheme += sch;
+  }
 
-    for(let key of Object.keys(groups)) {
-      let rows = groups[key]
-      if (rows.length > 1) {
-        for(let row of rows.slice(1)) {
-          combineCommands.push([rows[0].tag, row.tag])
-        }
-      }
-    }
-    this.scheme = combineCommands.map(([a, b]) => `combine: ${a} ${b}`).join(",\n")
+  public generate(command: string) {
+    let args = this.selection.selected.map(f => f.tag).join(" ")
+    let percentCommand = `${command}: ${args}`
+    this.scheme += `${percentCommand},\n`
   }
 
   private groupBy<T>(arr: T[], fn: (item: T) => any) {
