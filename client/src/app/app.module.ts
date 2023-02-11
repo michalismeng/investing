@@ -24,6 +24,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { FormStorageDirective } from 'src/directives/form-storage.directive';
 import { WordizePipe } from 'src/pipes/wordize.pipe';
+import { FlexLayoutModule } from '@angular/flex-layout';
 
 
 @NgModule({
@@ -43,6 +44,7 @@ import { WordizePipe } from 'src/pipes/wordize.pipe';
     HttpClientModule,
     FormsModule,
     ReactiveFormsModule,
+    FlexLayoutModule,
 
     MatTableModule,
     MatPaginatorModule,

@@ -28,8 +28,9 @@
 
         <ng-container *ngFor="let column of columns" [matColumnDef]="column">
             <mat-header-cell *matHeaderCellDef style="font-size: 12px">{{ parseDate(column) }}</mat-header-cell>
-            <mat-cell *matCellDef="let fact" style="font-size: 12px">
-                <div *ngIf="column == 'plabel'" style="display: inline">
+            <mat-cell *matCellDef="let fact" style="font-size: 12px" fxLayout="row" fxLayoutAlign="start center">
+                <div *ngIf="column == 'plabel'" fxLayoutAlign="start center">
+                    <mat-icon>drag_indicator</mat-icon>
                     <mat-checkbox (click)="$event.stopPropagation()"
                                   (change)="$event ? selection.toggle(fact) : null"
                                   [checked]="selection.isSelected(fact)">
