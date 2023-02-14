@@ -27,6 +27,17 @@ entries = pd.concat(data)
 formatted_entries = entries[["adsh", "cik", "name", "fye", "fy", "form", "period", "filed", "accepted"]]
 formatted_entries = formatted_entries.sort_values(by=["name", "fy", "form"])
 
+def scheme_name_from_company_names(company_names):
+    return "-".join(sorted(company_names))
+
+
+def get_scheme(name, stmt):
+    s = model.schemes.select().where((model.schemes.c.name == name) & (model.schemes.c.stmt == stmt))
+    conn = model.engine.connect()
+    result = conn.execute(s)
+    results = [r for r in result]
+    return pd.DataFrame(results, columns=["name", "stmt", "value"])
+
 
 @app.route("/api/submissions")
 def api_show_index():
@@ -49,6 +60,7 @@ def api_show_financial_data():
 
     adsh = request.args.getlist('adsh[]')
     stmt = request.args.get('stmt')
+    view = request.args.get('view')
 
     s = model.facts.select().where(model.facts.c.adsh.in_(adsh)).where(model.facts.c.stmt == stmt)
     conn = model.engine.connect()
@@ -56,6 +68,7 @@ def api_show_financial_data():
 
     results = [r for r in result]
     df = pd.DataFrame(results, columns=["adsh", "name", "cik", "tag", "version", "ddate", "plabel", "report", "line", "stmt", "qtrs", "uom", "value"])
+    company_names = list(df["name"].unique())
 
     # Taking the unique ddates fails when we have an amendment, and therefore have duplicate dates
     # We don't see the initial entries, but only the amended
@@ -76,18 +89,93 @@ def api_show_financial_data():
         result_df["report"][value["tag"]] = value["report"]
 
     result_df = result_df.reset_index().rename(columns={ "index": "tag" })
-    return result_df.to_json(orient="records")
+
+    if view == "scheme":
+        scheme = get_scheme(scheme_name_from_company_names(company_names), stmt)
+        if len(scheme):
+            view_df = apply_scheme(scheme.iloc[0]["value"], result_df)
+        else:
+            view_df = result_df
+        return {
+            "initial": result_df.to_json(orient="records"),
+            "view": view_df.to_json(orient="records"),
+        }
+
+    return {
+        "initial": result_df.to_json(orient="records"),
+        "view": None,
+    }
+
+
+def apply_scheme(scheme, rows):
+    commands = scheme.strip().split(",")
+    commands = map(lambda t: t.strip(), commands)
+    commands = filter(lambda t: t != "", commands)
+    commands = list(commands)
+
+    for command in commands:
+        args = command.split(":")[1].strip().split(" ")
+        if command.startswith("combine:"):
+            rows = apply_combine_command(args, rows)
+        elif command.startswith("percent:"):
+            rows = apply_percent_command(args, rows)
+        elif command.startswith("less:"):
+            rows = apply_less_command(args, rows)
+        elif command.startswith("hide:"):
+            rows = rows.drop(rows[rows["tag"].isin(args)].index)
+    return rows
+
+
+def apply_combine_command(args, rows):
+    facts = rows.set_index('tag').loc[args].reset_index(inplace=False)
+    fact0 = facts.iloc[0]
+    # Fill all Nan values of the first row with data from other rows
+    # Always keep data from the first specified row, if data is available
+    # from multiple rows
+    for i in range(len(facts) - 1):
+        fact0 = fact0.fillna(facts.iloc[i + 1])
+    # Remove rows of the given tags
+    rows = rows.drop(rows[rows["tag"].isin(args)].index)
+    # Add the newly created combined row
+    rows = pd.concat([rows, fact0.to_frame().T], ignore_index=True)
+    return rows
+
+
+def apply_less_command(args, rows):
+    tag0 = rows[rows["tag"] == args[0]].index[0]
+    tag1 = rows[rows["tag"] == args[1]].index[0]
+
+    tag = "less-%s-%s" % (rows.iloc[tag0]["tag"], rows.iloc[tag1]["tag"])
+    data = rows.drop(["tag", "line", "plabel", "report", "uom"], axis=1)
+    less = data.iloc[tag0] - data.iloc[tag1]
+    less["tag"] = tag
+    less["line"] = rows.iloc[tag1]["line"] + 0.1
+    less["plabel"] = args[2] if len(args) == 3 else tag
+    less["report"] = rows.iloc[tag1]["report"]
+    less["uom"] = rows.iloc[tag0]["uom"]
+    return rows.append(less, ignore_index=True)
+
+
+def apply_percent_command(args, rows):
+    tag0 = rows[rows["tag"] == args[0]].index[0]
+    tag1 = rows[rows["tag"] == args[1]].index[0]
+
+    tag = "percent-%s-%s" % (rows.iloc[tag0]["tag"], rows.iloc[tag1]["tag"])
+    data = rows.drop(["tag", "line", "plabel", "report", "uom"], axis=1)
+    less = data.iloc[tag0] / data.iloc[tag1]
+    less["tag"] = tag
+    less["line"] = rows.iloc[tag0]["line"] + 0.1
+    less["plabel"] = args[2] if len(args) == 3 else tag
+    less["report"] = rows.iloc[tag0]["report"]
+    less["uom"] = "percent"
+    return rows.append(less, ignore_index=True)
 
 
 @app.route("/api/financials/schemes")
 def api_show_schemes():
     args = request.args.to_dict()
 
-    s = model.schemes.select().where((model.schemes.c.name == args["name"]) & (model.schemes.c.stmt == args["stmt"]))
-    conn = model.engine.connect()
-    result = conn.execute(s)
-    results = [r for r in result]
-    df = pd.DataFrame(results, columns=["name", "stmt", "value"])
+    df = get_scheme(args["name"], args["stmt"])
     if not len(df):
         return jsonify({ "name": args["name"], "stmt": args["stmt"], "value": ""})
     else:

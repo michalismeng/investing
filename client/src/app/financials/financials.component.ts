@@ -59,7 +59,6 @@ export class FinancialsComponent {
     this.dataSource.loading$.pipe(filter(l => l == false), take(1)).subscribe(_ => {
       this.financialsService.getScheme(this.companyName, this.currentStmt).subscribe(scheme => {
         this.scheme = scheme.value;
-        this.applyEditCommands()
       })
     })
   }
@@ -72,14 +71,12 @@ export class FinancialsComponent {
   }
 
   public applyEditCommands() {
+    this.selection.clear()
     this.financialsService.addScheme({
       "name": this.companyName,
       "stmt": this.currentStmt,
       value: this.scheme
-    }).pipe(take(1)).subscribe()
-    this.dataSource.resetFacts()
-    this.dataSource.applyEditCommand(this.scheme)
-    this.selection.clear()
+    }).pipe(take(1)).subscribe(_ => this.loadStatement(this.currentStmt))
   }  
 
   public resetEditCommands() {
