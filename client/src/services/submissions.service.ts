@@ -18,4 +18,8 @@ export class SubmissionsService {
         
         return this.http.get<Submission[]>(this.url, { params: queryParams });
     }
+
+    public fromAdsh(adsh: string[]): Observable<Submission[]> {
+        return this.http.post<Submission[]>(`${this.url}/from-adsh`, { adsh: adsh })
+    }
 }

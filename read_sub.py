@@ -55,6 +55,14 @@ def api_show_index():
     return result.head(100).to_dict(orient="records")
 
 
+@app.route("/api/submissions/from-adsh", methods=["POST"])
+def api_get_submissions_from_adsh():
+    global formatted_entries
+    data = request.json
+    adsh = data["adsh"]
+    return formatted_entries[formatted_entries["adsh"].isin(adsh)].to_json(orient="records")
+
+
 @app.route("/api/financials")
 def api_show_financial_data():
 
