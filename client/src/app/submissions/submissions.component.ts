@@ -2,6 +2,7 @@ import { SelectionModel } from '@angular/cdk/collections';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Submission } from 'src/models/submission';
+import { FinancialsService } from 'src/services/financials.service';
 import { SubmissionsService } from 'src/services/submissions.service';
 import { SubmissionsFilters } from '../submissions-filters/submissions-filters.component';
 import { SubmissionsDataSource } from './submissions-data-source';
@@ -16,11 +17,13 @@ export class SubmissionsComponent implements OnInit {
   public dataSource: SubmissionsDataSource;
   public columnsToDisplay = ["select", "name", "form", "fy", "period", "filed", "accepted"];
   public selection: SelectionModel<Submission>;
+  public watchlistName: string = "";
 
   private currentSubmissions: Submission[] = [];
 
   constructor(
     private submissionsService: SubmissionsService,
+    private financialsService: FinancialsService,
     private router: Router,
   ) {
       this.dataSource = new SubmissionsDataSource(this.submissionsService);
@@ -49,6 +52,11 @@ export class SubmissionsComponent implements OnInit {
   public navigateToFinancials() {
     localStorage.setItem("selectedSubmissions", JSON.stringify(this.selection.selected))
     this.router.navigate(["/financials"])
+  }
+
+  public addToWatchlist() {
+    this.financialsService.addWatchlist(this.watchlistName, this.selection.selected.map(s => s.adsh))
+                          .subscribe()
   }
 
   isAllSelected() {

@@ -3,7 +3,14 @@
 
 <submissions-filters (onFiltersChanged)="filtersChanged($event)"></submissions-filters>
 
-<a mat-raised-button (click)="navigateToFinancials()" style="margin-top: 1rem" [disabled]="selection.selected.length == 0">View Financial Data</a>
+<div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="1rem" style="margin-top: 1rem">
+  <a mat-raised-button (click)="navigateToFinancials()" [disabled]="selection.selected.length == 0">View Financial Data</a>
+  <button mat-raised-button (click)="addToWatchlist()" [disabled]="selection.selected.length == 0 || watchlistName == ''">Add to watchlist</button>
+  <mat-form-field appearance="outline">
+    <mat-label>Watchlist name</mat-label>
+    <input matInput type="text" [(ngModel)]="watchlistName"/>
+  </mat-form-field>
+</div>
 
 <mat-table class="mat-elevation-z8" [dataSource]="dataSource" style="margin-top: 1rem">
            <!-- matSort matSortActive="creation" matSortDirection="desc" matSortDisableClear> -->
