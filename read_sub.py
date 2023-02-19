@@ -145,14 +145,14 @@ def apply_less_command(args, rows):
     tag0 = rows[rows["tag"] == args[0]].index[0]
     tag1 = rows[rows["tag"] == args[1]].index[0]
 
-    tag = "less-%s-%s" % (rows.iloc[tag0]["tag"], rows.iloc[tag1]["tag"])
+    tag = "less-%s-%s" % (rows.loc[tag0]["tag"], rows.loc[tag1]["tag"])
     data = rows.drop(["tag", "line", "plabel", "report", "uom"], axis=1)
-    less = data.iloc[tag0] - data.iloc[tag1]
+    less = data.loc[tag0] - data.loc[tag1]
     less["tag"] = tag
-    less["line"] = rows.iloc[tag1]["line"] + 0.1
+    less["line"] = rows.loc[tag1]["line"] + 0.1
     less["plabel"] = args[2] if len(args) == 3 else tag
-    less["report"] = rows.iloc[tag1]["report"]
-    less["uom"] = rows.iloc[tag0]["uom"]
+    less["report"] = rows.loc[tag1]["report"]
+    less["uom"] = rows.loc[tag0]["uom"]
     return rows.append(less, ignore_index=True)
 
 
@@ -160,13 +160,13 @@ def apply_percent_command(args, rows):
     tag0 = rows[rows["tag"] == args[0]].index[0]
     tag1 = rows[rows["tag"] == args[1]].index[0]
 
-    tag = "percent-%s-%s" % (rows.iloc[tag0]["tag"], rows.iloc[tag1]["tag"])
+    tag = "percent-%s-%s" % (rows.loc[tag0]["tag"], rows.loc[tag1]["tag"])
     data = rows.drop(["tag", "line", "plabel", "report", "uom"], axis=1)
-    less = data.iloc[tag0] / data.iloc[tag1]
+    less = data.loc[tag0] / data.loc[tag1]
     less["tag"] = tag
-    less["line"] = rows.iloc[tag0]["line"] + 0.1
+    less["line"] = rows.loc[tag0]["line"] + 0.1
     less["plabel"] = args[2] if len(args) == 3 else tag
-    less["report"] = rows.iloc[tag0]["report"]
+    less["report"] = rows.loc[tag0]["report"]
     less["uom"] = "percent"
     return rows.append(less, ignore_index=True)
 
