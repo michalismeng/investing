@@ -18,13 +18,18 @@ import { SubmissionsFiltersComponent } from './submissions-filters/submissions-f
 import { FinancialsComponent } from './financials/financials.component';
 import { FinancialsService } from 'src/services/financials.service';
 import { AmountPipe } from 'src/pipes/amount.pipe';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { MAT_TOOLTIP_DEFAULT_OPTIONS, MatTooltipModule, MatTooltipDefaultOptions } from '@angular/material/tooltip';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { FormStorageDirective } from 'src/directives/form-storage.directive';
 import { WordizePipe } from 'src/pipes/wordize.pipe';
 
+export const customTooltipDefaults: MatTooltipDefaultOptions = {
+  showDelay: 300,
+  hideDelay: 100,
+  touchendHideDelay: 100
+}
 
 @NgModule({
   declarations: [
@@ -58,6 +63,7 @@ import { WordizePipe } from 'src/pipes/wordize.pipe';
   providers: [
     SubmissionsService,
     FinancialsService,
+    { provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: customTooltipDefaults }
   ],
   bootstrap: [AppComponent]
 })
