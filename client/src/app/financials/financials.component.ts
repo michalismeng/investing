@@ -29,6 +29,7 @@ export class FinancialsComponent {
     "CF": "Cashflow Statement"
   }
   public scheme: string = "";
+  public showSchemeEditor: boolean = true;
   public selection: SelectionModel<FactRow>;
 
   constructor(
