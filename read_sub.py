@@ -206,3 +206,32 @@ def api_add_schemes():
     else:
         conn.execute(model.schemes.update().where((model.schemes.c.name == data["name"]) & (model.schemes.c.stmt == data["stmt"])).values(value=data["value"]))
         return jsonify("ok")
+
+
+@app.route("/api/financials/watchlists")
+def api_get_watchlists():
+    s = model.watchlists.select()
+    conn = model.engine.connect()
+    result = conn.execute(s)
+    results = [r for r in result]
+    df = pd.DataFrame(results, columns=["name", "adsh"])
+    df = df.groupby("name").agg(list).reset_index().sort_values(by="name")
+    return df.to_json(orient="records")
+
+
+@app.route("/api/financials/watchlists", methods=["POST"])
+def api_add_watchlists():
+    data = request.json
+    name = data["name"]
+    adsh = data["adsh"]
+    values = list(map(lambda x: { "name": name, "adsh": x }, adsh))
+    conn = model.engine.connect()
+    conn.execute(model.watchlists.insert().values(values))
+    return jsonify("ok")
+
+
+@app.route("/api/financials/watchlists/<name>", methods=["DELETE"])
+def api_delete_watchlists(name):
+    conn = model.engine.connect()
+    conn.execute(model.watchlists.delete().where(model.watchlists.c.name == name))
+    return jsonify("ok")

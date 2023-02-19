@@ -29,5 +29,11 @@ schemes = Table(
     Column("value", TEXT),
 )
 
+watchlists = Table(
+    'watchlists', meta,
+    Column("name", String(256), primary_key=True),
+    Column("adsh", String(20), primary_key=True),
+)
+
 engine = create_engine(connection_string, echo = True)
 meta.create_all(engine)
