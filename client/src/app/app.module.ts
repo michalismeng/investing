@@ -25,6 +25,7 @@ import { ClipboardModule } from '@angular/cdk/clipboard';
 import { FormStorageDirective } from 'src/directives/form-storage.directive';
 import { WordizePipe } from 'src/pipes/wordize.pipe';
 import { FlexLayoutModule } from '@angular/flex-layout';
+import { WatchlistComponent } from './watchlist/watchlist.component';
 
 export const customTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 300,
@@ -41,6 +42,7 @@ export const customTooltipDefaults: MatTooltipDefaultOptions = {
     AmountPipe,
     FormStorageDirective,
     WordizePipe,
+    WatchlistComponent,
   ],
   imports: [
     BrowserModule,

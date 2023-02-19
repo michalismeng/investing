@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { FactRow } from 'src/models/fact';
 import { Scheme } from 'src/models/scheme';
+import { WatchlistEntry } from 'src/models/watchlist';
 
 @Injectable()
 export class FinancialsService {
@@ -39,5 +40,17 @@ export class FinancialsService {
     public addScheme(scheme: Scheme) {
 
         return this.http.post(`${this.url}/schemes`, scheme)
+    }
+
+    public getWatchlists(): Observable<WatchlistEntry[]> {
+        return this.http.get<{ name: string, adsh: string[] }[]>(`${this.url}/watchlists`)
+    }
+
+    public addWatchlist(name: string, adsh: string[]) {
+        return this.http.post(`${this.url}/watchlists`, { name: name, adsh: adsh })
+    }
+
+    public deleteWatchlist(name: string) {
+        return this.http.delete(`${this.url}/watchlists/${name}`)
     }
 }
