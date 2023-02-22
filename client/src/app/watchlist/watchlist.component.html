@@ -9,7 +9,7 @@
 
   <ng-container matColumnDef="name">
     <mat-header-cell *matHeaderCellDef mat-sort-header>Name</mat-header-cell>
-    <mat-cell *matCellDef="let item"> <a style="cursor: pointer;" (click)="navigateToFinancials(item.watchlist)">{{ item.watchlist.name }}</a>
+    <mat-cell *matCellDef="let item"> <a [routerLink]="['/submissions', item.watchlist.name]" style="text-decoration: none; color: black;">{{ item.watchlist.name }}</a>
     </mat-cell>
   </ng-container>
 

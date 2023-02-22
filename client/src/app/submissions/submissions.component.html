@@ -1,9 +1,9 @@
 
 <h2>Financial Data Submissions</h2>
 
-<submissions-filters (onFiltersChanged)="filtersChanged($event)"></submissions-filters>
+<submissions-filters *ngIf="!isDisabled" (onFiltersChanged)="filtersChanged($event)"></submissions-filters>
 
-<div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="1rem" style="margin-top: 1rem">
+<div *ngIf="!isDisabled" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="1rem" style="margin-top: 1rem">
   <button mat-raised-button (click)="addToWatchlist()" [disabled]="selection.selected.length == 0 || watchlistName == ''">Add to watchlist</button>
   <mat-form-field appearance="outline">
     <mat-label>Watchlist name</mat-label>

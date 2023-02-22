@@ -1,6 +1,6 @@
 import { SelectionModel } from '@angular/cdk/collections';
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Submission } from 'src/models/submission';
 import { FinancialsService } from 'src/services/financials.service';
 import { SubmissionsService } from 'src/services/submissions.service';
@@ -20,11 +20,13 @@ export class SubmissionsComponent implements OnInit {
   public watchlistName: string = "";
 
   private currentSubmissions: Submission[] = [];
+  public isDisabled: boolean = false;
 
   constructor(
     private submissionsService: SubmissionsService,
     private financialsService: FinancialsService,
     private router: Router,
+    private route: ActivatedRoute,
   ) {
       this.dataSource = new SubmissionsDataSource(this.submissionsService);
       this.dataSource.submissions$.subscribe(
@@ -35,7 +37,20 @@ export class SubmissionsComponent implements OnInit {
   }
   
   ngOnInit(): void {
-    this.dataSource.loadSubmissions();
+    this.route.params.subscribe(
+      params => {
+        if(params["name"] != null) {
+          this.isDisabled = true;
+          this.financialsService.getWatchlists().subscribe(
+            ws => this.dataSource.loadSubmissionsFromAdsh(
+              ws.find(w => w.name == params["name"])!.adsh
+            )
+          )
+        } else {
+          this.dataSource.loadSubmissions();
+        }
+      }
+    )
   }
 
   public filtersChanged(filters: SubmissionsFilters) {

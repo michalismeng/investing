@@ -8,6 +8,7 @@ const routes: Routes = [
   { path: '', redirectTo: 'watchlist', pathMatch: 'full' },
   { path: 'watchlist', component: WatchlistComponent },
   { path: 'submissions', component: SubmissionsComponent },
+  { path: 'submissions/:name', component: SubmissionsComponent },
   { path: 'financials', component: FinancialsComponent },
   { path: 'financials/:name', component: FinancialsComponent },
 ];

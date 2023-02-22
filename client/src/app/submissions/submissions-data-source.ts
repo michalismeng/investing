@@ -33,4 +33,11 @@ export class SubmissionsDataSource implements DataSource<Submission> {
             subs => this.submissionsSubject.next(subs)
         )
     }
+
+    loadSubmissionsFromAdsh(adsh: string[]) {
+        this.loadingSubject.next(true);
+        this.submissionsService.fromAdsh(adsh).subscribe(
+            subs => this.submissionsSubject.next(subs)
+        )
+    }
 }
