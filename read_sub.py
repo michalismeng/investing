@@ -63,20 +63,27 @@ def api_get_submissions_from_adsh():
     return formatted_entries[formatted_entries["adsh"].isin(adsh)].to_json(orient="records")
 
 
-@app.route("/api/financials")
-def api_show_financial_data():
+@app.route("/api/financials/<name>")
+def api_show_financial_data(name):
 
-    adsh = request.args.getlist('adsh[]')
     stmt = request.args.get('stmt')
     view = request.args.get('view')
 
-    s = model.facts.select().where(model.facts.c.adsh.in_(adsh)).where(model.facts.c.stmt == stmt)
+    s = model.watchlists.select().where(model.watchlists.c.name == name)
+    conn = model.engine.connect()
+    result = conn.execute(s)
+
+    results = [r for r in result]
+    df = pd.DataFrame(results, columns=["name", "adsh"])
+    df = df.groupby("name").agg(list).reset_index().sort_values(by="name")
+    item = df.iloc[0]
+
+    s = model.facts.select().where(model.facts.c.adsh.in_(item["adsh"])).where(model.facts.c.stmt == stmt)
     conn = model.engine.connect()
     result = conn.execute(s)
 
     results = [r for r in result]
     df = pd.DataFrame(results, columns=["adsh", "name", "cik", "tag", "version", "ddate", "plabel", "report", "line", "stmt", "qtrs", "uom", "value"])
-    company_names = list(df["name"].unique())
 
     # Taking the unique ddates fails when we have an amendment, and therefore have duplicate dates
     # We don't see the initial entries, but only the amended
@@ -99,7 +106,7 @@ def api_show_financial_data():
     result_df = result_df.reset_index().rename(columns={ "index": "tag" })
 
     if view == "scheme":
-        scheme = get_scheme(scheme_name_from_company_names(company_names), stmt)
+        scheme = get_scheme(name, stmt)
         if len(scheme):
             view_df = apply_scheme(scheme.iloc[0]["value"], result_df)
         else:

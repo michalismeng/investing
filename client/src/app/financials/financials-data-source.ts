@@ -34,9 +34,9 @@ export class FinancialsDataSource implements DataSource<FactRow> {
         this.loadingSubject.complete();
     }
 
-    loadFacts(adsh: string[] = [], stmt: string = "IS") {
+    loadFacts(name: string, stmt: string = "IS") {
         this.loadingSubject.next(true);
-        this.financialsService.getFacts(adsh, stmt).subscribe(
+        this.financialsService.getFacts(name, stmt).subscribe(
             facts => {
                 let initial = facts.initial.sort((a, b) => a.report != b.report ? a.report - b.report : a.line - b.line);
                 let view = facts.view.sort((a, b) => a.report != b.report ? a.report - b.report : a.line - b.line);

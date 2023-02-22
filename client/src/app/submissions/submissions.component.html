@@ -4,7 +4,6 @@
 <submissions-filters (onFiltersChanged)="filtersChanged($event)"></submissions-filters>
 
 <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="1rem" style="margin-top: 1rem">
-  <a mat-raised-button (click)="navigateToFinancials()" [disabled]="selection.selected.length == 0">View Financial Data</a>
   <button mat-raised-button (click)="addToWatchlist()" [disabled]="selection.selected.length == 0 || watchlistName == ''">Add to watchlist</button>
   <mat-form-field appearance="outline">
     <mat-label>Watchlist name</mat-label>

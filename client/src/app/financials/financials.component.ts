@@ -1,6 +1,7 @@
 import { SelectionModel } from '@angular/cdk/collections';
 import { formatDate } from '@angular/common';
 import { Component } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { filter, map, Observable, take, tap } from 'rxjs';
 import { FactRow, factRowStaticKeys } from 'src/models/fact';
 import { Submission } from 'src/models/submission';
@@ -34,6 +35,7 @@ export class FinancialsComponent {
 
   constructor(
     private financialsService: FinancialsService,
+    private route: ActivatedRoute,
   ) {
       this.dataSource = new FinancialsDataSource(this.financialsService);
       this.columns$ = this.dataSource.columns$.pipe(map(cs => cs.filter(this.columnFilter.bind(this))));
@@ -48,15 +50,16 @@ export class FinancialsComponent {
   }
 
   ngOnInit(): void {
-    let selectedSubmissions = JSON.parse(localStorage.getItem("selectedSubmissions")!) as Submission[]
-    this.companyName = selectedSubmissions[0].name;
-    this.loadStatement("IS")
+    this.route.params.subscribe(
+      params => {
+        this.companyName = params["name"]
+        this.loadStatement("IS")
+      })
   }
 
   public loadStatement(stmt: string) {
     this.currentStmt = stmt;
-    let selectedSubmissions = JSON.parse(localStorage.getItem("selectedSubmissions")!) as Submission[]
-    this.dataSource.loadFacts(selectedSubmissions.map(s => s.adsh), stmt);
+    this.dataSource.loadFacts(this.companyName, stmt);
     this.dataSource.loading$.pipe(filter(l => l == false), take(1)).subscribe(_ => {
       this.financialsService.getScheme(this.companyName, this.currentStmt).subscribe(scheme => {
         this.scheme = scheme.value;

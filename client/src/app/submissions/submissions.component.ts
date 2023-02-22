@@ -49,11 +49,6 @@ export class SubmissionsComponent implements OnInit {
     return date 
   }
 
-  public navigateToFinancials() {
-    localStorage.setItem("selectedSubmissions", JSON.stringify(this.selection.selected))
-    this.router.navigate(["/financials"])
-  }
-
   public addToWatchlist() {
     this.financialsService.addWatchlist(this.watchlistName, this.selection.selected.map(s => s.adsh))
                           .subscribe()

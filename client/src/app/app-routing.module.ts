@@ -9,6 +9,7 @@ const routes: Routes = [
   { path: 'watchlist', component: WatchlistComponent },
   { path: 'submissions', component: SubmissionsComponent },
   { path: 'financials', component: FinancialsComponent },
+  { path: 'financials/:name', component: FinancialsComponent },
 ];
 
 @NgModule({

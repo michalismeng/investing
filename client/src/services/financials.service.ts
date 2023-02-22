@@ -14,13 +14,12 @@ export class FinancialsService {
         protected http: HttpClient,
     ) {}
 
-    public getFacts(adsh: string[] = [], stmt: string = "IS"): Observable<{ initial: FactRow[], view: FactRow[] }> {
+    public getFacts(name: string, stmt: string = "IS"): Observable<{ initial: FactRow[], view: FactRow[] }> {
         let queryParams = new HttpParams();
         queryParams = queryParams.append("stmt", stmt)
         queryParams = queryParams.append("view", "scheme")
-        adsh.forEach(val => { queryParams = queryParams.append("adsh[]", val) })
 
-        return this.http.get<{ initial: any, view: any }>(`${this.url}`, { params: queryParams })
+        return this.http.get<{ initial: any, view: any }>(`${this.url}/${name}`, { params: queryParams })
                         .pipe(map(x => {
                             return {
                                 initial: JSON.parse(x.initial) as FactRow[],

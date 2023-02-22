@@ -37,8 +37,7 @@ export class WatchlistComponent implements OnInit {
   }
 
   public navigateToFinancials(item: WatchlistEntry) {
-    localStorage.setItem("selectedSubmissions", JSON.stringify(item.adsh.map(i => { return { name: item.name, adsh: i } })))
-    this.router.navigate(["/financials"])
+    this.router.navigate(["/financials", item.name])
   }
 
   public submissionsTooltip(subs: Submission[]): string {
