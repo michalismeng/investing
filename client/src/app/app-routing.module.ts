@@ -11,6 +11,8 @@ const routes: Routes = [
   { path: 'submissions/:name', component: SubmissionsComponent },
   { path: 'financials', component: FinancialsComponent },
   { path: 'financials/:name', component: FinancialsComponent },
+  { path: 'financials/:name', component: FinancialsComponent },
+  { path: 'analysis', loadChildren: () => import('./analysis/analysis.module').then(m => m.AnalysisModule) },
 ];
 
 @NgModule({
