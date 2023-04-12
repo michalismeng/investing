@@ -1,0 +1,132 @@
+<form [formGroup]='profile!' (submit)="onFormSubmit()">
+  <div fxLayout="column" fxLayoutAlign="start center" fxLayoutGap="1em" style="margin: 1em 10em">
+    
+    <div fxLayout="row" fxLayoutAlign="start start" fxLayoutGap="1em" style="width: 100%">
+      <mat-form-field appearance="outline" style="width: auto">
+        <mat-label>Analysis as of</mat-label>
+        <input matInput [matDatepicker]="datepicker" formControlName="date">
+        <mat-datepicker-toggle matIconSuffix [for]="datepicker"></mat-datepicker-toggle>
+        <mat-datepicker #datepicker></mat-datepicker>
+      </mat-form-field>
+    </div>
+
+    <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="1em" style="width: 100%">
+      <mat-form-field appearance="outline">
+        <mat-label>Business Description</mat-label>
+        <textarea type="text" matInput formControlName='description'></textarea>
+      </mat-form-field>
+    </div>
+  
+    <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="1em" style="width: 100%">
+      <mat-form-field appearance="outline">
+        <mat-label>Headquarters</mat-label>
+        <input type="text" matInput formControlName='locHQ'>
+      </mat-form-field>
+  
+      <mat-form-field appearance="outline">
+        <mat-label>Founded</mat-label>
+        <input matInput [matDatepicker]="foundedpicker" formControlName="founded">
+        <mat-datepicker-toggle matIconSuffix [for]="foundedpicker"></mat-datepicker-toggle>
+        <mat-datepicker #foundedpicker></mat-datepicker>
+      </mat-form-field>
+  
+      <mat-form-field appearance="outline">
+        <mat-label>IPO</mat-label>
+        <input matInput [matDatepicker]="ipopicker" formControlName="ipo">
+        <mat-datepicker-toggle matIconSuffix [for]="ipopicker"></mat-datepicker-toggle>
+        <mat-datepicker #ipopicker></mat-datepicker>
+      </mat-form-field>
+  
+      <mat-form-field appearance="outline">
+        <mat-label>Website</mat-label>
+        <input type="text" matInput formControlName='website'>
+      </mat-form-field>
+  
+      <mat-form-field appearance="outline">
+        <mat-label>Investor Relations</mat-label>
+        <input type="text" matInput formControlName='irWebsite'>
+      </mat-form-field>
+    </div>
+  
+    <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="1em" style="width: 100%">
+      <mat-form-field appearance="outline">
+        <mat-label>Regions of Operations</mat-label>
+        <input type="text" matInput formControlName='locOperations'>
+      </mat-form-field>
+  
+      <mat-form-field appearance="outline">
+        <mat-label>Products and Services</mat-label>
+        <input type="text" matInput formControlName='prodsAndServices'>
+      </mat-form-field>
+  
+      <mat-form-field appearance="outline">
+        <mat-label>Revenue Generation</mat-label>
+        <input type="text" matInput formControlName='revGeneration'>
+      </mat-form-field>
+  
+      <mat-form-field appearance="outline">
+        <mat-label>Business Sector</mat-label>
+        <input type="text" matInput formControlName='sector'>
+      </mat-form-field>
+    </div>
+  
+    <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="1em" style="width: 100%">
+      <mat-checkbox formControlName="simple">Simple Business</mat-checkbox>
+      <mat-checkbox formControlName="exciting">Exciting Business</mat-checkbox>
+      <mat-checkbox formControlName="dirty">Dirty Business</mat-checkbox>
+      <mat-checkbox formControlName="hot">Hot Business</mat-checkbox>
+    </div>
+  
+    <div  fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="1em" style="width: 100%">
+      <mat-form-field appearance="outline">
+        <mat-label>Competitors</mat-label>
+        <input type="text" matInput formControlName='competitors'>
+      </mat-form-field>
+  
+      <mat-form-field appearance="outline">
+        <mat-label>Competition</mat-label>
+        <input type="text" matInput formControlName='competition'>
+      </mat-form-field>
+  
+      <mat-form-field appearance="outline">
+        <mat-label>Niche Market Domination</mat-label>
+        <input type="text" matInput formControlName='nicheDomination'>
+      </mat-form-field>
+    </div>
+  
+    <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="1em" style="width: 100%">
+      <mat-form-field appearance="outline">
+        <mat-label>Business Lifecycle</mat-label>
+        <textarea type="text" matInput formControlName='lifecycle'></textarea>
+      </mat-form-field>
+  
+      <mat-form-field appearance="outline">
+        <mat-label>Business Nature</mat-label>
+        <textarea type="text" matInput formControlName='nature'></textarea>
+      </mat-form-field>
+    </div>
+  
+    <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="1em" style="width: 100%">
+      <mat-form-field appearance="outline">
+        <mat-label>Business Moat</mat-label>
+        <textarea type="text" matInput formControlName='moat'></textarea>
+      </mat-form-field>
+  
+      <mat-form-field appearance="outline">
+        <mat-label>Business Cyclicality</mat-label>
+        <textarea type="text" matInput formControlName='cyclical'></textarea>
+      </mat-form-field>
+    </div>
+
+    <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="1em" style="width: 100%">
+      <mat-form-field appearance="outline">
+        <mat-label>Comments</mat-label>
+        <textarea type="text" matInput formControlName='comment'></textarea>
+      </mat-form-field>
+    </div>
+
+    <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="1em" style="width: 100%">
+      <button mat-stroked-button style="color: gray; width: 100%; padding: 1.5em" type="submit">Submit</button>
+    </div>
+  </div>
+</form>
