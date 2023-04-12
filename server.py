@@ -242,3 +242,31 @@ def api_delete_watchlists(name):
     conn = model.engine.connect()
     conn.execute(model.watchlists.delete().where(model.watchlists.c.name == name))
     return jsonify("ok")
+
+
+@app.route("/api/analysis/<name>/profile")
+def api_get_profile(name):
+    s = model.profiles.select().where(model.profiles.c.name == name)
+    conn = model.metadata_engine.connect()
+    result = conn.execute(s)
+    results = [r for r in result]
+    columns = map(lambda x: x.name, list(model.profiles.columns))
+    df = pd.DataFrame(results, columns=list(columns))
+    return df.to_json(orient="records")
+
+
+@app.route("/api/analysis/<name>/profile", methods=["POST"])
+def api_add_profile(name):
+    data = request.json
+    p = model.profiles.select().where(model.profiles.c.name == name)
+    conn = model.metadata_engine.connect()
+    result = conn.execute(p)
+    results = [r for r in result]
+    columns = list(map(lambda x: x.name, list(model.profiles.columns)))
+    df = pd.DataFrame(results, columns=columns)
+    if not len(df):
+        conn.execute(model.profiles.insert(), data)
+        return jsonify("ok")
+    else:
+        conn.execute(model.profiles.update().where(model.schemes.c.name == name).values(value=data))
+        return jsonify("ok")

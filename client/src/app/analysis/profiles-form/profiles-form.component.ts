@@ -1,6 +1,9 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
+import { tap } from 'rxjs';
 import { Profile } from 'src/models/profile';
+import { ProfilesService } from 'src/services/profiles.service';
 
 @Component({
   selector: 'app-profiles-form',
@@ -9,45 +12,54 @@ import { Profile } from 'src/models/profile';
 })
 export class ProfilesFormComponent implements OnInit {
 
-  public profile: FormGroup | null = null;
+  public profile: FormGroup;
+  public name: string = "";
   @Input() initial: Profile | null = null;
   @Output() onChange = new EventEmitter<Profile>(); 
 
   constructor(
     private fb: FormBuilder,
+    private route: ActivatedRoute,
+    private profilesService: ProfilesService,
   ) {
-  }
-
-  ngOnInit(): void {
     this.profile = this.fb.group({
-      'date': [this.initial?.date ?? ''],
-      'description': [this.initial?.description ?? ''],
-      'locHQ': [this.initial?.locHQ ?? ''],
-      'locOperations': [this.initial?.locOperations ?? ''],
-      'prodsAndServices': [this.initial?.prodsAndServices ?? ''],
-      'revGeneration': [this.initial?.revGeneration ?? ''],
-      'sector': [this.initial?.sector ?? ''],
-      'simple': [this.initial?.simple ?? false],
-      'lifecycle': [this.initial?.lifecycle ?? ''],
-      'website': [this.initial?.website ?? ''],
-      'irWebsite': [this.initial?.irWebsite ?? ''],
-      'founded': [this.initial?.founded ?? ''],
-      'ipo': [this.initial?.ipo ?? ''],
-      'nature': [this.initial?.nature ?? ''],
-      'exciting': [this.initial?.exciting ?? false],
-      'dirty': [this.initial?.dirty ?? false],
-      'hot': [this.initial?.hot ?? false],
-      'nicheDomination': [this.initial?.nicheDomination ?? ''],
-      'competition': [this.initial?.competition ?? ''],
-      'competitors': [this.initial?.competitors ?? ''],
-      'moat': [this.initial?.moat ?? ''],
-      'cyclical': [this.initial?.cyclical ?? ''],
-      'comment': [this.initial?.comment ?? ''],
+      'date': [''],
+      'description': [''],
+      'locHQ': [''],
+      'locOperations': [''],
+      'prodsAndServices': [''],
+      'revGeneration': [''],
+      'sector': [''],
+      'simple': [false],
+      'lifecycle': [''],
+      'website': [''],
+      'irWebsite': [''],
+      'founded': [''],
+      'ipo': [''],
+      'nature': [''],
+      'exciting': [false],
+      'dirty': [false],
+      'hot': [false],
+      'nicheDomination': [''],
+      'competition': [''],
+      'competitors': [''],
+      'moat': [''],
+      'cyclical': [''],
+      'comment': [''],
+      'name': ['']
+    })
+
+    this.route.params.subscribe(params => {
+      this.name = params["name"]
+      this.profilesService.getProfile(this.name).subscribe(v => this.profile.setValue(v))
     })
   }
 
+  ngOnInit(): void {
+  }
+
   public onFormSubmit() {
-    this.onChange.next(this.profile?.value)
+    this.onChange.next({ name: this.name, ...this.profile?.value })
   }
 
 }

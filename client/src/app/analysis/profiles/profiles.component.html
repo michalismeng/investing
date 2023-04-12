@@ -1,4 +1,4 @@
 <div fxLayout="column" fxLayoutAlign="start center">
   <h2 class="mat-headline-2">Profile for {{ companyName }}</h2>
-  <app-profiles-form [initial]="profile$ | async" (onChange)="profileChanged($event)"></app-profiles-form>
+  <app-profiles-form *ngIf="profile$" [initial]="profile$ | async" (onChange)="profileChanged($event)"></app-profiles-form>
 </div>

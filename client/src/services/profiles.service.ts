@@ -1,26 +1,23 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, tap } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { Profile } from 'src/models/profile';
 
 @Injectable()
 export class ProfilesService {
 
-    private readonly url = `/api/profiles`;
+    private readonly url = `/api/analysis`;
 
     constructor(
         protected http: HttpClient,
     ) {}
 
     public getProfile(companyName: string): Observable<Profile> {
-        return of(JSON.parse(localStorage.getItem(`profile-${companyName}`)!))
-        return this.http.get<Profile>(`${this.url}/profiles/${companyName}`) 
+        return this.http.get<Profile[]>(`${this.url}//${companyName}/profile`).pipe(map(v => v[0]))
     }
 
     public postProfile(companyName: string, profile: Profile) {
-        console.log("posting...")
-        localStorage.setItem(`profile-${companyName}`, JSON.stringify(profile))
-        return this.http.post<Profile>(`${this.url}/profiles/${companyName}`, profile)
+        return this.http.post<Profile>(`${this.url}/${companyName}/profile`, profile)
     }
 }
 

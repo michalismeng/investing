@@ -12,7 +12,7 @@ import { ProfilesService } from 'src/services/profiles.service';
 export class ProfilesComponent {
 
   public companyName: string = "";
-  public profile$: Observable<Profile> = new Observable<Profile>();
+  public profile$: Observable<Profile> | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -25,7 +25,7 @@ export class ProfilesComponent {
   }
 
   public profileChanged(profile: Profile) {
-    this.profilesService.postProfile(this.companyName, profile)
+    this.profilesService.postProfile(this.companyName, profile).subscribe()
   }
 
 }
