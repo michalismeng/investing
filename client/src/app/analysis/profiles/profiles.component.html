@@ -1,4 +1,6 @@
-<div fxLayout="column" fxLayoutAlign="start center">
-  <h2 class="mat-headline-2">Profile for {{ companyName }}</h2>
-  <app-profiles-form *ngIf="profile$" [initial]="profile$ | async" (onChange)="profileChanged($event)"></app-profiles-form>
+<div fxFlex="70%" fxFlex.lt-lg="90%" style="margin: 0 auto; padding-bottom: 1em">
+  <div fxLayout="column" fxLayoutAlign="start center">
+    <h2 class="mat-headline-2">Profile for {{ companyName }}</h2>
+    <app-profiles-form style="width: 100%" *ngIf="profile$" [initial]="profile$ | async" (onChange)="profileChanged($event)"></app-profiles-form>
+  </div>
 </div>
