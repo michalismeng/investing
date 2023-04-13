@@ -1,9 +1,18 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
+import { DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE, NativeDateAdapter } from '@angular/material/core';
 import { ActivatedRoute } from '@angular/router';
-import { tap } from 'rxjs';
 import { Profile } from 'src/models/profile';
 import { ProfilesService } from 'src/services/profiles.service';
+
+export const MY_FORMATS = {
+  display: {
+    dateInput: 'LL',
+    monthYearLabel: 'MMM YYYY',
+    dateA11yLabel: 'LL',
+    monthYearA11yLabel: 'MMMM YYYY',
+  },
+};
 
 @Component({
   selector: 'app-profiles-form',
@@ -51,6 +60,7 @@ export class ProfilesFormComponent implements OnInit {
 
     this.route.params.subscribe(params => {
       this.name = params["name"]
+      this.profile.patchValue({ name: this.name })
       this.profilesService.getProfile(this.name).subscribe(v => this.profile.setValue(v))
     })
   }

@@ -268,5 +268,5 @@ def api_add_profile(name):
         conn.execute(model.profiles.insert(), data)
         return jsonify("ok")
     else:
-        conn.execute(model.profiles.update().where(model.schemes.c.name == name).values(value=data))
+        conn.execute(model.profiles.update().where(model.profiles.c.name == name).values(data))
         return jsonify("ok")

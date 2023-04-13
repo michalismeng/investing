@@ -13,7 +13,7 @@
     <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="1em" style="width: 100%">
       <mat-form-field appearance="outline">
         <mat-label>Business Description</mat-label>
-        <textarea type="text" matInput formControlName='description'></textarea>
+        <textarea cdkTextareaAutosize matInput formControlName='description'></textarea>
       </mat-form-field>
     </div>
   
@@ -39,29 +39,31 @@
   
       <mat-form-field appearance="outline">
         <mat-label>Website</mat-label>
-        <input type="text" matInput formControlName='website'>
+        <input type="text" matInput formControlName='website' #website>
+        <a [href]="website.value" target="_blank" mat-icon-button matSuffix><mat-icon>open_in_new</mat-icon></a>
       </mat-form-field>
   
       <mat-form-field appearance="outline">
         <mat-label>Investor Relations</mat-label>
-        <input type="text" matInput formControlName='irWebsite'>
+        <input type="text" matInput formControlName='irWebsite' #ir>
+        <a [href]="ir.value" target="_blank" mat-icon-button matSuffix><mat-icon>open_in_new</mat-icon></a>
       </mat-form-field>
     </div>
   
-    <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="1em" style="width: 100%">
+    <div fxLayout="row" fxLayoutAlign="start start" fxLayoutGap="1em" style="width: 100%">
       <mat-form-field appearance="outline">
         <mat-label>Regions of Operations</mat-label>
-        <input type="text" matInput formControlName='locOperations'>
+        <textarea cdkTextareaAutosize matInput formControlName='locOperations'></textarea>
       </mat-form-field>
   
       <mat-form-field appearance="outline">
         <mat-label>Products and Services</mat-label>
-        <input type="text" matInput formControlName='prodsAndServices'>
+        <textarea cdkTextareaAutosize matInput formControlName='prodsAndServices'></textarea>
       </mat-form-field>
   
       <mat-form-field appearance="outline">
         <mat-label>Revenue Generation</mat-label>
-        <input type="text" matInput formControlName='revGeneration'>
+        <textarea cdkTextareaAutosize matInput formControlName='revGeneration'></textarea>
       </mat-form-field>
   
       <mat-form-field appearance="outline">
@@ -77,10 +79,10 @@
       <mat-checkbox formControlName="hot">Hot Business</mat-checkbox>
     </div>
   
-    <div  fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="1em" style="width: 100%">
+    <div fxLayout="row" fxLayoutAlign="start start" fxLayoutGap="1em" style="width: 100%">
       <mat-form-field appearance="outline">
         <mat-label>Competitors</mat-label>
-        <input type="text" matInput formControlName='competitors'>
+        <textarea cdkTextareaAutosize matInput formControlName='competitors'></textarea>
       </mat-form-field>
   
       <mat-form-field appearance="outline">
@@ -94,34 +96,34 @@
       </mat-form-field>
     </div>
   
-    <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="1em" style="width: 100%">
+    <div fxLayout="row" fxLayoutAlign="start start" fxLayoutGap="1em" style="width: 100%">
       <mat-form-field appearance="outline">
         <mat-label>Business Lifecycle</mat-label>
-        <textarea type="text" matInput formControlName='lifecycle'></textarea>
+        <textarea cdkTextareaAutosize type="text" matInput formControlName='lifecycle'></textarea>
       </mat-form-field>
   
       <mat-form-field appearance="outline">
         <mat-label>Business Nature</mat-label>
-        <textarea type="text" matInput formControlName='nature'></textarea>
+        <textarea cdkTextareaAutosize type="text" matInput formControlName='nature'></textarea>
       </mat-form-field>
     </div>
   
-    <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="1em" style="width: 100%">
+    <div fxLayout="row" fxLayoutAlign="start start" fxLayoutGap="1em" style="width: 100%">
       <mat-form-field appearance="outline">
         <mat-label>Business Moat</mat-label>
-        <textarea type="text" matInput formControlName='moat'></textarea>
+        <textarea cdkTextareaAutosize type="text" matInput formControlName='moat'></textarea>
       </mat-form-field>
   
       <mat-form-field appearance="outline">
         <mat-label>Business Cyclicality</mat-label>
-        <textarea type="text" matInput formControlName='cyclical'></textarea>
+        <textarea cdkTextareaAutosize type="text" matInput formControlName='cyclical'></textarea>
       </mat-form-field>
     </div>
 
     <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="1em" style="width: 100%">
       <mat-form-field appearance="outline">
         <mat-label>Comments</mat-label>
-        <textarea type="text" matInput formControlName='comment'></textarea>
+        <textarea cdkTextareaAutosize type="text" matInput formControlName='comment'></textarea>
       </mat-form-field>
     </div>
 

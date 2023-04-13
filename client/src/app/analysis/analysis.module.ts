@@ -12,6 +12,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { ProfilesFormComponent } from './profiles-form/profiles-form.component';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 
 const routes: Routes = [
   { path: '', component: ProfilesComponent },
@@ -37,6 +38,7 @@ const routes: Routes = [
     MatNativeDateModule,
     FlexLayoutModule,
     MatButtonModule,
-  ]
+    MatIconModule,
+  ],
 })
 export class AnalysisModule { }

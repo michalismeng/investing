@@ -27,6 +27,7 @@ import { WordizePipe } from 'src/pipes/wordize.pipe';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { WatchlistComponent } from './watchlist/watchlist.component';
 import { ProfilesService } from 'src/services/profiles.service';
+import { MAT_DATE_FORMATS, NativeDateModule } from '@angular/material/core';
 
 export const customTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 300,
