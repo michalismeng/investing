@@ -40,13 +40,13 @@
       <mat-form-field appearance="outline">
         <mat-label>Website</mat-label>
         <input type="text" matInput formControlName='website' #website>
-        <a [href]="website.value" target="_blank" mat-icon-button matSuffix><mat-icon>open_in_new</mat-icon></a>
+        <a [href]="website.value" target="_blank" mat-icon-button matSuffix><mat-icon style="color: gray">open_in_new</mat-icon></a>
       </mat-form-field>
   
       <mat-form-field appearance="outline">
         <mat-label>Investor Relations</mat-label>
         <input type="text" matInput formControlName='irWebsite' #ir>
-        <a [href]="ir.value" target="_blank" mat-icon-button matSuffix><mat-icon>open_in_new</mat-icon></a>
+        <a [href]="ir.value" target="_blank" mat-icon-button matSuffix><mat-icon style="color: gray">open_in_new</mat-icon></a>
       </mat-form-field>
     </div>
   
