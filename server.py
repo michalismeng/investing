@@ -2,6 +2,7 @@ import pandas as pd
 from flask import *
 import os
 import model
+import metadata
 
 app = Flask(__name__)
 
@@ -32,11 +33,8 @@ def scheme_name_from_company_names(company_names):
 
 
 def get_scheme(name, stmt):
-    s = model.schemes.select().where((model.schemes.c.name == name) & (model.schemes.c.stmt == stmt))
-    conn = model.engine.connect()
-    result = conn.execute(s)
-    results = [r for r in result]
-    return pd.DataFrame(results, columns=["name", "stmt", "value"])
+    result = metadata.Company.objects.get(name=name).schemes[stmt]
+    return pd.DataFrame([(stmt, result)], columns=["stmt", "value"])
 
 
 @app.route("/api/submissions")
@@ -69,16 +67,9 @@ def api_show_financial_data(name):
     stmt = request.args.get('stmt')
     view = request.args.get('view')
 
-    s = model.watchlists.select().where(model.watchlists.c.name == name)
-    conn = model.engine.connect()
-    result = conn.execute(s)
+    adsh = metadata.Company.objects.get(name=name).submissions
 
-    results = [r for r in result]
-    df = pd.DataFrame(results, columns=["name", "adsh"])
-    df = df.groupby("name").agg(list).reset_index().sort_values(by="name")
-    item = df.iloc[0]
-
-    s = model.facts.select().where(model.facts.c.adsh.in_(item["adsh"])).where(model.facts.c.stmt == stmt)
+    s = model.facts.select().where(model.facts.c.adsh.in_(adsh)).where(model.facts.c.stmt == stmt)
     conn = model.engine.connect()
     result = conn.execute(s)
 
@@ -200,19 +191,10 @@ def api_show_schemes():
 @app.route("/api/financials/schemes", methods=["POST"])
 def api_add_schemes():
     data = request.json
-
-    s = model.schemes.select().where((model.schemes.c.name == data["name"]) & (model.schemes.c.stmt == data["stmt"]))
-    conn = model.engine.connect()
-    result = conn.execute(s)
-    results = [r for r in result]
-    df = pd.DataFrame(results, columns=["name", "stmt", "value"])
-    if not len(df):
-        value = { "name": data["name"], "stmt": data["stmt"], "value": data["value"] }
-        conn.execute(model.schemes.insert(), value)
-        return jsonify("ok")
-    else:
-        conn.execute(model.schemes.update().where((model.schemes.c.name == data["name"]) & (model.schemes.c.stmt == data["stmt"])).values(value=data["value"]))
-        return jsonify("ok")
+    company = metadata.Company.objects.get(name=data["name"])
+    company.schemes[data["stmt"]] = data["value"]
+    company.save()
+    return jsonify("ok")
 
 
 @app.route("/api/financials/watchlists")
@@ -241,4 +223,13 @@ def api_add_watchlists():
 def api_delete_watchlists(name):
     conn = model.engine.connect()
     conn.execute(model.watchlists.delete().where(model.watchlists.c.name == name))
+    return jsonify("ok")
+
+
+@app.route("/api/companies/<name>/submissions", methods=["POST"])
+def api_set_submissions(name):
+    data = request.json
+    company = metadata.Company.objects().get(name=name)
+    company.submissions = data["submissions"]
+    company.save()
     return jsonify("ok")
