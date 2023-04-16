@@ -1,5 +1,4 @@
 export interface Profile {
-  name: string;
   date: Date;
   description: string;
   locHQ: string;

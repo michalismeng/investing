@@ -55,7 +55,6 @@ export class ProfilesFormComponent implements OnInit {
       'moat': [''],
       'cyclical': [''],
       'comment': [''],
-      'name': ['']
     })
 
     this.route.params.subscribe(params => {
@@ -69,7 +68,7 @@ export class ProfilesFormComponent implements OnInit {
   }
 
   public onFormSubmit() {
-    this.onChange.next({ name: this.name, ...this.profile?.value })
+    this.onChange.next(this.profile?.value)
   }
 
 }

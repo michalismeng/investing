@@ -13,7 +13,7 @@ export class ProfilesService {
     ) {}
 
     public getProfile(companyName: string): Observable<Profile> {
-        return this.http.get<Profile[]>(`${this.url}//${companyName}/profile`).pipe(map(v => v[0]))
+        return this.http.get<Profile>(`${this.url}/${companyName}/profile`)
     }
 
     public postProfile(companyName: string, profile: Profile) {
