@@ -40,6 +40,10 @@ export class WatchlistComponent implements OnInit {
     this.router.navigate(["/financials", item.name])
   }
 
+  public navigateToAnalysis(item: WatchlistEntry) {
+    this.router.navigate(["/analysis", item.name, "profile"])
+  }
+
   public submissionsTooltip(subs: Submission[]): string {
     return subs.map(s => `${s.fy}`).sort().join(" ")
   }
