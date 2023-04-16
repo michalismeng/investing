@@ -235,6 +235,22 @@ def api_set_submissions(name):
     return jsonify("ok")
 
 
+@app.route("/api/analysis/<name>/profile")
+def api_get_profile(name):
+    company = metadata.Company.objects().get(name=name)
+    return company.profiles[-1].to_json()
+
+
+@app.route("/api/analysis/<name>/profile", methods=["POST"])
+def api_add_profile(name):
+    data = request.json
+    company = metadata.Company.objects().get(name=name)
+    profile = metadata.Profile(**data)
+    company.profiles.append(profile)
+    company.save()
+    return jsonify("ok")
+
+
 @app.route("/api/companies")
 def api_get_companies():
     companies = metadata.Company.objects().values_list("name")
