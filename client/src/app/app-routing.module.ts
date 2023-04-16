@@ -9,10 +9,8 @@ const routes: Routes = [
   { path: '', redirectTo: 'companies', pathMatch: 'full' },
   { path: 'companies', component: CompanyComponent },
   { path: 'companies/:name/submissions', component: SubmissionsComponent },
+  { path: 'companies/:name/financials', component: FinancialsComponent },
   { path: 'watchlist', component: WatchlistComponent },
-  { path: 'financials', component: FinancialsComponent },
-  { path: 'financials/:name', component: FinancialsComponent },
-  { path: 'financials/:name', component: FinancialsComponent },
   { path: 'analysis', loadChildren: () => import('./analysis/analysis.module').then(m => m.AnalysisModule) },
 ];
 

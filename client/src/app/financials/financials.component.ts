@@ -4,7 +4,6 @@ import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { filter, map, Observable, take, tap } from 'rxjs';
 import { FactRow, factRowStaticKeys } from 'src/models/fact';
-import { Submission } from 'src/models/submission';
 import { FinancialsService } from 'src/services/financials.service';
 import { FinancialsDataSource } from './financials-data-source';
 
@@ -24,13 +23,8 @@ export class FinancialsComponent {
 
   public factRows: FactRow[] = [];
   public currentStmt: string = "IS";
-  public statementName = {
-    "IS": "Income Statement",
-    "BS": "Balance Sheet",
-    "CF": "Cashflow Statement"
-  }
   public scheme: string = "";
-  public showSchemeEditor: boolean = true;
+  public showSchemeEditor: boolean = false;
   public selection: SelectionModel<FactRow>;
 
   constructor(
@@ -53,7 +47,7 @@ export class FinancialsComponent {
     this.route.params.subscribe(
       params => {
         this.companyName = params["name"]
-        this.loadStatement("IS")
+        this.tabChanged(0);
       })
   }
 
@@ -120,5 +114,31 @@ export class FinancialsComponent {
         group.push(curr);
         return { ...prev, [groupKey]: group };
     }, {});
+  }
+
+  public stmtIcon(stmt: string) {
+    switch(stmt) {
+      case "IS": return "payments";
+      case "BS": return "balance";
+      case "CF": return "air";
+    }
+    return "";
+  }
+
+  public stmtFullName(stmt: string) {
+    switch(stmt) {
+      case "IS": return "Income Statement";
+      case "BS": return "Balance Sheet";
+      case "CF": return "Cash Flow Statement";
+    }
+    return "";
+  }
+
+  public tabChanged(e: number) {
+    switch(e) {
+      case 0: this.loadStatement('IS'); return;
+      case 1: this.loadStatement('BS'); return;
+      case 2: this.loadStatement('CF'); return;
+    }
   }
 }

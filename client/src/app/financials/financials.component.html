@@ -1,55 +1,58 @@
-<h2>Financial Data for {{ companyName }}</h2>
+<div fxLayout="column" fxLayoutAlign="start center" style="margin: 0 auto">
+    <h2 class="mat-headline-2">{{ companyName }} Financials</h2>
 
-<mat-toolbar color="primary" style="width: 100%">
-    <button mat-icon-button (click)="applyEditCommands()" matTooltip="Apply scheme"><mat-icon>edit</mat-icon></button>
-    <button mat-icon-button (click)="resetEditCommands()" matTooltip="Reset"><mat-icon>undo</mat-icon></button>
-    <button mat-icon-button (click)="generateCombineSame()" matTooltip="Combine all rows with same label"><mat-icon>join_full</mat-icon></button>
-    <button mat-icon-button (click)="generate('combine')" matTooltip="Combine rows"><mat-icon>merge_type</mat-icon></button>
-    <button mat-icon-button (click)="generate('percent')" matTooltip="Divide one row by the other"><mat-icon>percent</mat-icon></button>
-    <button mat-icon-button (click)="generate('less')" matTooltip="Subtract one row from the other"><mat-icon>remove</mat-icon></button>
-    <button mat-icon-button (click)="generate('hide')" matTooltip="Hide rows"><mat-icon>hide_source</mat-icon></button>
-    <button mat-icon-button (click)="beautifyScheme()" matTooltip="Clean up scheme text"><mat-icon>cleaning_services</mat-icon></button>
-    <button mat-icon-button style="margin-left: auto" matTooltip="Toggle scheme editor" (click)="showSchemeEditor=!showSchemeEditor">
-        <mat-icon *ngIf="showSchemeEditor">visibility_off</mat-icon>
-        <mat-icon *ngIf="!showSchemeEditor">visibility</mat-icon>
-    </button>
-</mat-toolbar>
+    <mat-toolbar color="primary" style="width: 100%; margin-bottom: 2em">
+        <button mat-icon-button (click)="generateCombineSame()" matTooltip="Combine all rows with same label"><mat-icon>join_full</mat-icon></button>
+        <button mat-icon-button (click)="generate('combine')" matTooltip="Combine rows"><mat-icon>merge_type</mat-icon></button>
+        <button mat-icon-button (click)="generate('percent')" matTooltip="Divide one row by the other"><mat-icon>percent</mat-icon></button>
+        <button mat-icon-button (click)="generate('less')" matTooltip="Subtract one row from the other"><mat-icon>remove</mat-icon></button>
+        <button mat-icon-button (click)="generate('hide')" matTooltip="Hide rows"><mat-icon>hide_source</mat-icon></button>
+        <button mat-icon-button (click)="beautifyScheme()" matTooltip="Clean up scheme text"><mat-icon>cleaning_services</mat-icon></button>
+        <button mat-icon-button (click)="resetEditCommands()" matTooltip="Reset"><mat-icon style="transform: scaleX(-1);">refresh</mat-icon></button>
+        <div style="margin-left: auto">
+            <button mat-icon-button (click)="applyEditCommands()" matTooltip="Apply scheme"><mat-icon>done</mat-icon></button>
+            <button mat-icon-button matTooltip="Toggle scheme editor" (click)="showSchemeEditor=!showSchemeEditor">
+                <mat-icon *ngIf="showSchemeEditor">visibility_off</mat-icon>
+                <mat-icon *ngIf="!showSchemeEditor">visibility</mat-icon>
+            </button>
+        </div>
+    </mat-toolbar>
 
-<textarea [(ngModel)]="scheme" style="width: 95%" rows="5" [hidden]="!showSchemeEditor"></textarea>
+    <textarea matInput cdkTextareaAutosize [(ngModel)]="scheme" style="width: 100%; padding: 1em; margin-bottom: 2em" [hidden]="!showSchemeEditor"></textarea>
 
-<div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="1rem" style="margin-top: 1rem">
-    <button mat-raised-button (click)="loadStatement('IS')">Income Statement</button>
-    <button mat-raised-button (click)="loadStatement('BS')">Balance Sheet</button>
-    <button mat-raised-button (click)="loadStatement('CF')">Cashflow Statement</button>
-</div>
+    <div *ngIf="columns$ | async as columns" style="width: 100%"> 
+        <mat-tab-group (selectedIndexChange)="tabChanged($event)">
+            <mat-tab *ngFor="let stmt of ['IS', 'BS', 'CF']">
+                <ng-template mat-tab-label>
+                  <mat-icon style="margin-right: 8px">{{ stmtIcon(stmt) }}</mat-icon>
+                  {{ stmtFullName(stmt) }}
+                </ng-template>
+              <mat-table [dataSource]="dataSource" style="margin-top: 1rem;">
 
-<h2 style="width: 100%; text-align: center">{{ currentStmt }}</h2>
+              <mat-header-row *matHeaderRowDef="columns; sticky: true"></mat-header-row>
+                  <mat-row *matRowDef="let myRowData; columns: columns"></mat-row>
 
-<div *ngIf="columns$ | async as columns"> 
+                  <ng-container *ngFor="let column of columns" [matColumnDef]="column">
+                      <mat-header-cell *matHeaderCellDef style="font-size: 12px">{{ parseDate(column) }}</mat-header-cell>
+                      <mat-cell *matCellDef="let fact" style="font-size: 12px">
+                          <div *ngIf="column == 'plabel'" style="display: inline">
+                              <mat-checkbox (click)="$event.stopPropagation()"
+                                            (change)="$event ? selection.toggle(fact) : null"
+                                            [checked]="selection.isSelected(fact)">
+                              </mat-checkbox>
+                          </div>
+                          <div *ngIf="staticKeysToShow.includes(column)"
+                                  matTooltip="{{fact.tag}} ({{fact.report}}.{{fact.line}})" matTooltipShowDelay="800">
+                              {{ fact[column] | wordize }}
+                          </div>
+                          <div *ngIf="!factRowStaticKeys.includes(column)" [matTooltip]="fact.uom" matTooltipShowDelay="800">
+                              {{ fact[column] | amount: fact.uom }}
+                          </div>
+                      </mat-cell>
+                  </ng-container>
 
-    <mat-table class="mat-elevation-z8" [dataSource]="dataSource" style="margin-top: 1rem;">
-
-    <mat-header-row *matHeaderRowDef="columns; sticky: true"></mat-header-row>
-        <mat-row *matRowDef="let myRowData; columns: columns"></mat-row>
-
-        <ng-container *ngFor="let column of columns" [matColumnDef]="column">
-            <mat-header-cell *matHeaderCellDef style="font-size: 12px">{{ parseDate(column) }}</mat-header-cell>
-            <mat-cell *matCellDef="let fact" style="font-size: 12px">
-                <div *ngIf="column == 'plabel'" style="display: inline">
-                    <mat-checkbox (click)="$event.stopPropagation()"
-                                  (change)="$event ? selection.toggle(fact) : null"
-                                  [checked]="selection.isSelected(fact)">
-                    </mat-checkbox>
-                </div>
-                <div *ngIf="staticKeysToShow.includes(column)"
-                        matTooltip="{{fact.tag}} ({{fact.report}}.{{fact.line}})" matTooltipShowDelay="800">
-                    {{ fact[column] | wordize }}
-                </div>
-                <div *ngIf="!factRowStaticKeys.includes(column)" [matTooltip]="fact.uom" matTooltipShowDelay="800">
-                    {{ fact[column] | amount: fact.uom }}
-                </div>
-            </mat-cell>
-        </ng-container>
-
-    </mat-table>
+              </mat-table>
+            </mat-tab>
+        </mat-tab-group>
+    </div>
 </div>

@@ -30,6 +30,7 @@ import { ProfilesService } from 'src/services/profiles.service';
 import { CompanyComponent } from './company/company.component';
 import { CompanyService } from 'src/services/company.service';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatTabsModule } from '@angular/material/tabs';
 
 export const customTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 300,
@@ -69,6 +70,7 @@ export const customTooltipDefaults: MatTooltipDefaultOptions = {
     MatToolbarModule,
     ClipboardModule,
     MatChipsModule,
+    MatTabsModule,
   ],
   providers: [
     SubmissionsService,
