@@ -1,11 +1,12 @@
 import { SelectionModel } from '@angular/cdk/collections';
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { Submission } from 'src/models/submission';
-import { FinancialsService } from 'src/services/financials.service';
 import { SubmissionsService } from 'src/services/submissions.service';
 import { SubmissionsFilters } from '../submissions-filters/submissions-filters.component';
 import { SubmissionsDataSource } from './submissions-data-source';
+import { CompanyService } from 'src/services/company.service';
+import { BehaviorSubject } from 'rxjs';
 
 @Component({
   selector: 'app-submissions',
@@ -15,42 +16,47 @@ import { SubmissionsDataSource } from './submissions-data-source';
 export class SubmissionsComponent implements OnInit {
 
   public dataSource: SubmissionsDataSource;
-  public columnsToDisplay = ["select", "name", "form", "fy", "period", "filed", "accepted"];
-  public selection: SelectionModel<Submission>;
-  public watchlistName: string = "";
-
+  public columnsToDisplay = ["select", "name", "form", "fy"];
+  public selection: SelectionModel<Submission> = new SelectionModel<Submission>(true, [], true, (a, b) => a.adsh == b.adsh);
+  private name: string = "";
   private currentSubmissions: Submission[] = [];
-  public isDisabled: boolean = false;
+  public selectedSubmissions: BehaviorSubject<Submission[]> = new BehaviorSubject<Submission[]>([]);
 
   constructor(
     private submissionsService: SubmissionsService,
-    private financialsService: FinancialsService,
-    private router: Router,
+    private companiesService: CompanyService,
     private route: ActivatedRoute,
   ) {
       this.dataSource = new SubmissionsDataSource(this.submissionsService);
       this.dataSource.submissions$.subscribe(
         subs => this.currentSubmissions = subs
       )
-
-    this.selection = new SelectionModel<Submission>(true, []);
   }
   
   ngOnInit(): void {
-    this.route.params.subscribe(
-      params => {
-        if(params["name"] != null) {
-          this.isDisabled = true;
-          this.financialsService.getWatchlists().subscribe(
-            ws => this.dataSource.loadSubmissionsFromAdsh(
-              ws.find(w => w.name == params["name"])!.adsh
-            )
-          )
-        } else {
-          this.dataSource.loadSubmissions();
-        }
-      }
-    )
+    this.route.params.subscribe(params => {
+      this.name = params["name"];
+      this.companiesService.getCompany(params["name"]).subscribe(c => {
+        this.submissionsService.fromAdsh(c.submissions!).subscribe(
+          subs => {
+            this.selectedSubmissions.next(subs);
+            this.selectedSubmissions.subscribe(s => this.companiesService.setSubmissions(this.name, s).subscribe())
+          }
+        )
+      })
+    })
+  }
+
+  public addToSelection() {
+    let value = this.selectedSubmissions.value.concat(...this.selection.selected)
+    // distinct
+    value = value.filter((item, i, ar) => ar.findIndex(s => s.adsh == item.adsh) === i);
+    this.selectedSubmissions.next(value)
+  }
+
+  public removeFromSelection(sub: Submission) {
+    let value = this.selectedSubmissions.value.filter(s => s.adsh != sub.adsh)
+    this.selectedSubmissions.next(value)
   }
 
   public filtersChanged(filters: SubmissionsFilters) {
@@ -62,11 +68,6 @@ export class SubmissionsComponent implements OnInit {
     let dateStr = sub.fy + "-" + sub.fye.slice(0, 2) + "-" + sub.fye.slice(2, 4)
     let date = Date.parse(dateStr)
     return date 
-  }
-
-  public addToWatchlist() {
-    this.financialsService.addWatchlist(this.watchlistName, this.selection.selected.map(s => s.adsh))
-                          .subscribe()
   }
 
   isAllSelected() {

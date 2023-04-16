@@ -8,9 +8,8 @@ import { CompanyComponent } from './company/company.component';
 const routes: Routes = [
   { path: '', redirectTo: 'companies', pathMatch: 'full' },
   { path: 'companies', component: CompanyComponent },
+  { path: 'companies/:name/submissions', component: SubmissionsComponent },
   { path: 'watchlist', component: WatchlistComponent },
-  { path: 'submissions', component: SubmissionsComponent },
-  { path: 'submissions/:name', component: SubmissionsComponent },
   { path: 'financials', component: FinancialsComponent },
   { path: 'financials/:name', component: FinancialsComponent },
   { path: 'financials/:name', component: FinancialsComponent },

@@ -1,74 +1,77 @@
+<div fxFlex="80%" fxLayout="column" fxLayoutAlign="start center" style="margin: 0 auto 1em auto">
+  <h2 class="mat-headline-2">Financial Data Submissions</h2>
 
-<h2>Financial Data Submissions</h2>
+  <div fxLayout="row" fxLayoutAlign="start center" style="margin-bottom: 2em; margin-right: auto">
+    <div class="mat-headline-6" style="margin: 0 1em 0 0; padding: 0; color: gray;">Selected submissions:</div>
+    <mat-chip-listbox>
+      <mat-chip-row *ngFor="let s of selectedSubmissions | async" (removed)="removeFromSelection(s)" [editable]="false">
+        {{ s.fy }}/{{ s.form }} ({{ s.name }})
+        <button matChipRemove><mat-icon>cancel</mat-icon></button>
+      </mat-chip-row>
+    </mat-chip-listbox>
+  </div>
 
-<submissions-filters *ngIf="!isDisabled" (onFiltersChanged)="filtersChanged($event)"></submissions-filters>
+  <submissions-filters style="width: 100%; margin-bottom: 1em" (onFiltersChanged)="filtersChanged($event)"></submissions-filters>
+  <button mat-stroked-button style="color: gray; margin-left: auto" (click)="addToSelection()"><mat-icon>add_box</mat-icon>Add submissions</button>
 
-<div *ngIf="!isDisabled" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="1rem" style="margin-top: 1rem">
-  <button mat-raised-button (click)="addToWatchlist()" [disabled]="selection.selected.length == 0 || watchlistName == ''">Add to watchlist</button>
-  <mat-form-field appearance="outline">
-    <mat-label>Watchlist name</mat-label>
-    <input matInput type="text" [(ngModel)]="watchlistName"/>
-  </mat-form-field>
+  <mat-table [dataSource]="dataSource" style="margin-top: 1rem">
+
+    <mat-header-row *matHeaderRowDef="columnsToDisplay"></mat-header-row>
+      <mat-row *matRowDef="let myRowData; columns: columnsToDisplay"></mat-row>
+
+      <ng-container matColumnDef="select">
+        <mat-header-cell *matHeaderCellDef>
+          <mat-checkbox (change)="$event ? toggleAllRows() : null"
+                        [checked]="selection.hasValue() && isAllSelected()"
+                        [indeterminate]="selection.hasValue() && !isAllSelected()">
+          </mat-checkbox>
+        </mat-header-cell>
+        <mat-cell *matCellDef="let row">
+          <mat-checkbox (click)="$event.stopPropagation()"
+                        (change)="$event ? selection.toggle(row) : null"
+                        [checked]="selection.isSelected(row)">
+          </mat-checkbox>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="adsh">
+        <mat-header-cell *matHeaderCellDef mat-sort-header class='left'>adsh</mat-header-cell>
+        <mat-cell *matCellDef="let sub" class='left'> {{ sub.adsh }} </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="cik">
+        <mat-header-cell *matHeaderCellDef mat-sort-header>cik</mat-header-cell>
+        <mat-cell *matCellDef="let sub"> {{ sub.cik }} </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="name">
+        <mat-header-cell *matHeaderCellDef mat-sort-header>Name</mat-header-cell>
+        <mat-cell *matCellDef="let sub"> {{ sub.name }} </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="fy">
+        <mat-header-cell *matHeaderCellDef>Fiscal Year Ending</mat-header-cell>
+        <mat-cell *matCellDef="let sub">{{ getFiscalYearFormatted(sub) | date:'mediumDate' }}</mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="form">
+        <mat-header-cell *matHeaderCellDef>Form</mat-header-cell>
+        <mat-cell *matCellDef="let sub"> {{ sub.form }} </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="period">
+        <mat-header-cell *matHeaderCellDef mat-sort-header>Period</mat-header-cell>
+        <mat-cell *matCellDef="let sub"> {{ sub.period }} </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="filed">
+        <mat-header-cell *matHeaderCellDef>Filed</mat-header-cell>
+        <mat-cell fxFlex *matCellDef="let sub"> {{ sub.filed }} </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="accepted">
+        <mat-header-cell *matHeaderCellDef>Accepted</mat-header-cell>
+        <mat-cell fxFlex *matCellDef="let sub"> {{ sub.accepted }} </mat-cell>
+      </ng-container>
+  </mat-table>
 </div>
-
-<mat-table class="mat-elevation-z8" [dataSource]="dataSource" style="margin-top: 1rem">
-           <!-- matSort matSortActive="creation" matSortDirection="desc" matSortDisableClear> -->
-
-  <mat-header-row *matHeaderRowDef="columnsToDisplay"></mat-header-row>
-    <mat-row *matRowDef="let myRowData; columns: columnsToDisplay"></mat-row>
-
-    <ng-container matColumnDef="select">
-      <mat-header-cell *matHeaderCellDef>
-        <mat-checkbox (change)="$event ? toggleAllRows() : null"
-                      [checked]="selection.hasValue() && isAllSelected()"
-                      [indeterminate]="selection.hasValue() && !isAllSelected()">
-        </mat-checkbox>
-      </mat-header-cell>
-      <mat-cell *matCellDef="let row">
-        <mat-checkbox (click)="$event.stopPropagation()"
-                      (change)="$event ? selection.toggle(row) : null"
-                      [checked]="selection.isSelected(row)">
-        </mat-checkbox>
-      </mat-cell>
-    </ng-container>
-
-    <ng-container matColumnDef="adsh">
-      <mat-header-cell *matHeaderCellDef mat-sort-header class='left'>adsh</mat-header-cell>
-      <mat-cell *matCellDef="let sub" class='left'> {{ sub.adsh }} </mat-cell>
-    </ng-container>
-
-    <ng-container matColumnDef="cik">
-      <mat-header-cell *matHeaderCellDef mat-sort-header>cik</mat-header-cell>
-      <mat-cell *matCellDef="let sub"> {{ sub.cik }} </mat-cell>
-    </ng-container>
-
-    <ng-container matColumnDef="name">
-      <mat-header-cell *matHeaderCellDef mat-sort-header>Name</mat-header-cell>
-      <mat-cell *matCellDef="let sub"> {{ sub.name }} </mat-cell>
-    </ng-container>
-
-    <ng-container matColumnDef="fy">
-      <mat-header-cell *matHeaderCellDef>Fiscal Year Ending</mat-header-cell>
-      <mat-cell *matCellDef="let sub">{{ getFiscalYearFormatted(sub) | date:'mediumDate' }}</mat-cell>
-    </ng-container>
-
-    <ng-container matColumnDef="form">
-      <mat-header-cell *matHeaderCellDef>Form</mat-header-cell>
-      <mat-cell *matCellDef="let sub"> {{ sub.form }} </mat-cell>
-    </ng-container>
-
-    <ng-container matColumnDef="period">
-      <mat-header-cell *matHeaderCellDef mat-sort-header>Period</mat-header-cell>
-      <mat-cell *matCellDef="let sub"> {{ sub.period }} </mat-cell>
-    </ng-container>
-
-    <ng-container matColumnDef="filed">
-      <mat-header-cell *matHeaderCellDef>Filed</mat-header-cell>
-      <mat-cell fxFlex *matCellDef="let sub"> {{ sub.filed }} </mat-cell>
-    </ng-container>
-
-    <ng-container matColumnDef="accepted">
-      <mat-header-cell *matHeaderCellDef>Accepted</mat-header-cell>
-      <mat-cell fxFlex *matCellDef="let sub"> {{ sub.accepted }} </mat-cell>
-    </ng-container>
-</mat-table>
