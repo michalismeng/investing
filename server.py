@@ -233,3 +233,29 @@ def api_set_submissions(name):
     company.submissions = data["submissions"]
     company.save()
     return jsonify("ok")
+
+
+@app.route("/api/companies")
+def api_get_companies():
+    companies = metadata.Company.objects().values_list("name")
+    return companies.to_json()
+
+
+@app.route("/api/companies/<name>")
+def api_get_company(name):
+    company = metadata.Company.objects.get(name=name)
+    return company.to_json()
+
+
+@app.route("/api/companies", methods=["POST"])
+def api_add_companies():
+    data = request.json
+    name = data["name"]
+    metadata.Company(name=name).save()
+    return jsonify("ok")
+
+
+@app.route("/api/companies/<name>", methods=["DELETE"])
+def api_delete_companies(name):
+    metadata.Company.objects(name=name).delete()
+    return jsonify("ok")
