@@ -33,7 +33,7 @@ def scheme_name_from_company_names(company_names):
 
 
 def get_scheme(name, stmt):
-    result = metadata.Company.objects.get(name=name).schemes[stmt]
+    result = metadata.Company.objects.get(name=name).schemes.get(stmt, "")
     return pd.DataFrame([(stmt, result)], columns=["stmt", "value"])
 
 
