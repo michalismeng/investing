@@ -1,9 +1,11 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
+import { MatChipEditedEvent, MatChipInputEvent } from '@angular/material/chips';
 import { ActivatedRoute } from '@angular/router';
 import { filter } from 'rxjs';
 import { Profile } from 'src/models/profile';
 import { ProfilesService } from 'src/services/profiles.service';
+import {COMMA, ENTER} from '@angular/cdk/keycodes';
 
 export const MY_FORMATS = {
   display: {
@@ -21,6 +23,7 @@ export const MY_FORMATS = {
 })
 export class ProfilesFormComponent implements OnInit {
 
+  readonly separatorKeysCodes = [ENTER, COMMA] as const;
   public profile: FormGroup;
   @Output() onChange = new EventEmitter<Profile>();
 
@@ -33,8 +36,8 @@ export class ProfilesFormComponent implements OnInit {
       'date': [''],
       'description': [''],
       'locHQ': [''],
-      'locOperations': [''],
-      'prodsAndServices': [''],
+      'locOperations': [[]],
+      'prodsAndServices': [[]],
       'revGeneration': [''],
       'sector': [''],
       'simple': [false],
@@ -49,7 +52,7 @@ export class ProfilesFormComponent implements OnInit {
       'hot': [false],
       'nicheDomination': [''],
       'competition': [''],
-      'competitors': [''],
+      'competitors': [[]],
       'moat': [''],
       'cyclical': [''],
       'comment': [''],
@@ -65,6 +68,61 @@ export class ProfilesFormComponent implements OnInit {
 
   public onFormSubmit() {
     this.onChange.next(this.profile?.value)
+  }
+
+  get productsAndServices() {
+    return this.profile.get('prodsAndServices');
+  }
+
+  get locOperations() {
+    return this.profile.get('locOperations');
+  }
+
+  get competitors() {
+    return this.profile.get('competitors');
+  }
+
+  private formField(field: string) {
+    switch(field) {
+      case "comp": return this.competitors;
+      case "prod": return this.productsAndServices;
+      case "ops": return this.locOperations;
+    }
+    return null;
+  }
+
+  add(event: MatChipInputEvent, field: string): void {
+    const value = (event.value || '').trim();
+    if (value) {
+      this.formField(field)?.value.push(value);
+      this.formField(field)?.updateValueAndValidity();
+    }
+    // Clear the input value
+    event.chipInput!.clear();
+  }
+
+  remove(element: string, field: string): void {
+    const index = this.formField(field)?.value.indexOf(element);
+
+    if (index >= 0) {
+      this.formField(field)?.value.splice(index, 1);
+      this.formField(field)?.updateValueAndValidity();
+    }
+  }
+
+  edit(element: string, event: MatChipEditedEvent, field: string) {
+    const value = event.value.trim();
+
+    if (!value) {
+      this.remove(element, field);
+      return;
+    }
+
+    // Edit existing fruit
+    const index = this.formField(field)?.value.indexOf(element);
+    if (index >= 0) {
+      this.formField(field)!.value[index] = value;
+    }
   }
 
 }

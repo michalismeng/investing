@@ -53,12 +53,30 @@
     <div fxLayout="row" fxLayoutAlign="start start" fxLayoutGap="1em" style="width: 100%">
       <mat-form-field appearance="outline">
         <mat-label>Regions of Operations</mat-label>
-        <textarea cdkTextareaAutosize matInput formControlName='locOperations'></textarea>
+        <mat-chip-grid #chipGridOps formControlName="locOperations">
+          <mat-chip-row *ngFor="let c of profile.get('locOperations')!.value" (removed)="remove(c, 'ops')" [editable]="true" (edited)="edit(c, $event, 'ops')">
+            {{ c }}
+            <button matChipRemove>
+              <mat-icon>cancel</mat-icon>
+            </button>
+          </mat-chip-row>
+          <input matInput [matChipInputFor]="chipGridOps" [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+            matChipInputAddOnBlur="true" (matChipInputTokenEnd)="add($event, 'ops')" />
+        </mat-chip-grid>
       </mat-form-field>
 
       <mat-form-field appearance="outline">
         <mat-label>Products and Services</mat-label>
-        <textarea cdkTextareaAutosize matInput formControlName='prodsAndServices'></textarea>
+        <mat-chip-grid #chipGridProds formControlName="prodsAndServices">
+          <mat-chip-row *ngFor="let p of profile.get('prodsAndServices')!.value" (removed)="remove(p, 'prod')" [editable]="true" (edited)="edit(p, $event, 'prod')">
+            {{ p }}
+            <button matChipRemove>
+              <mat-icon>cancel</mat-icon>
+            </button>
+          </mat-chip-row>
+          <input matInput [matChipInputFor]="chipGridProds" [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+            matChipInputAddOnBlur="true" (matChipInputTokenEnd)="add($event, 'prod')" />
+        </mat-chip-grid>
       </mat-form-field>
 
       <mat-form-field appearance="outline">
@@ -82,7 +100,16 @@
     <div fxLayout="row" fxLayoutAlign="start start" fxLayoutGap="1em" style="width: 100%">
       <mat-form-field appearance="outline">
         <mat-label>Competitors</mat-label>
-        <textarea cdkTextareaAutosize matInput formControlName='competitors'></textarea>
+        <mat-chip-grid #chipGrid formControlName="competitors">
+          <mat-chip-row *ngFor="let c of profile.get('competitors')!.value" (removed)="remove(c, 'comp')" [editable]="true" (edited)="edit(c, $event, 'comp')">
+            {{ c }}
+            <button matChipRemove>
+              <mat-icon>cancel</mat-icon>
+            </button>
+          </mat-chip-row>
+          <input matInput [matChipInputFor]="chipGrid" [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+            matChipInputAddOnBlur="true" (matChipInputTokenEnd)="add($event, 'comp')" />
+        </mat-chip-grid>
       </mat-form-field>
 
       <mat-form-field appearance="outline">

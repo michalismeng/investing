@@ -13,6 +13,7 @@ import { FlexLayoutModule } from '@angular/flex-layout';
 import { ProfilesFormComponent } from './profiles-form/profiles-form.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatChipsModule } from '@angular/material/chips';
 
 const routes: Routes = [
   { path: '', component: ProfilesComponent },
@@ -39,6 +40,7 @@ const routes: Routes = [
     FlexLayoutModule,
     MatButtonModule,
     MatIconModule,
+    MatChipsModule,
   ],
 })
 export class AnalysisModule { }
