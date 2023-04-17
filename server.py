@@ -238,7 +238,7 @@ def api_set_submissions(name):
 @app.route("/api/analysis/<name>/profile")
 def api_get_profile(name):
     company = metadata.Company.objects().get(name=name)
-    return company.profiles[-1].to_json()
+    return jsonify(None) if not len(company.profiles) else company.profiles[-1].to_json()
 
 
 @app.route("/api/analysis/<name>/profile", methods=["POST"])
