@@ -2,11 +2,11 @@ from mongoengine import *
 
 database = "financials_metadata"
 connection_string = "mongodb://localhost:27017/%s" % database
-connect(db=database, host=connection_string)
+connect(db=database, host=connection_string, tz_aware=True)
 
 
 class Profile(EmbeddedDocument):
-    date = StringField()
+    date = DateTimeField()
     description = StringField()
     locHQ = StringField()
     locOperations = StringField()
@@ -17,8 +17,8 @@ class Profile(EmbeddedDocument):
     lifecycle = StringField()
     website = StringField()
     irWebsite = StringField()
-    founded = StringField()
-    ipo = StringField()
+    founded = DateTimeField()
+    ipo = DateTimeField()
     nature = StringField()
     exciting = BooleanField()
     dirty = BooleanField()
