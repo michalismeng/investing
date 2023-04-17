@@ -5,7 +5,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { SubmissionsService } from 'src/services/submissions.service';
-import { HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { SubmissionsComponent } from './submissions/submissions.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
@@ -32,6 +32,7 @@ import { CompanyService } from 'src/services/company.service';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatDialogModule } from '@angular/material/dialog';
+import { EJsonHttpInterceptor } from 'src/interceptors/parse-bson.interceptor';
 
 export const customTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 300,
@@ -80,7 +81,12 @@ export const customTooltipDefaults: MatTooltipDefaultOptions = {
     FinancialsService,
     ProfilesService,
     CompanyService,
-    { provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: customTooltipDefaults }
+    { provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: customTooltipDefaults },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: EJsonHttpInterceptor,
+      multi: true
+    }
   ],
   bootstrap: [AppComponent]
 })
