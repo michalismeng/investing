@@ -4,7 +4,7 @@
     <div fxLayout="row" fxLayoutAlign="start start" fxLayoutGap="1em" style="width: 100%">
       <mat-form-field appearance="outline" style="width: auto">
         <mat-label>Analysis as of</mat-label>
-        <input matInput [matDatepicker]="datepicker" formControlName="date">
+        <input matInput [matDatepicker]="datepicker" formControlName="date" required>
         <mat-datepicker-toggle matIconSuffix [for]="datepicker"></mat-datepicker-toggle>
         <mat-datepicker #datepicker></mat-datepicker>
       </mat-form-field>
@@ -25,14 +25,14 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Founded</mat-label>
-        <input matInput [matDatepicker]="foundedpicker" formControlName="founded">
+        <input matInput [matDatepicker]="foundedpicker" formControlName="founded" required>
         <mat-datepicker-toggle matIconSuffix [for]="foundedpicker"></mat-datepicker-toggle>
         <mat-datepicker #foundedpicker></mat-datepicker>
       </mat-form-field>
 
       <mat-form-field appearance="outline">
         <mat-label>IPO</mat-label>
-        <input matInput [matDatepicker]="ipopicker" formControlName="ipo">
+        <input matInput [matDatepicker]="ipopicker" formControlName="ipo" required>
         <mat-datepicker-toggle matIconSuffix [for]="ipopicker"></mat-datepicker-toggle>
         <mat-datepicker #ipopicker></mat-datepicker>
       </mat-form-field>
@@ -128,7 +128,7 @@
     </div>
 
     <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="1em" style="width: 100%">
-      <button mat-stroked-button style="color: gray; width: 100%; padding: 1.5em" type="submit">Submit</button>
+      <button mat-stroked-button style="color: gray; width: 100%; padding: 1.5em" type="submit" [disabled]="profile.invalid">Submit</button>
     </div>
   </div>
 </form>

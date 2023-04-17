@@ -12,7 +12,6 @@ import { ProfilesService } from 'src/services/profiles.service';
 export class ProfilesComponent {
 
   public companyName: string = "";
-  public profile$: Observable<Profile> | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -20,7 +19,6 @@ export class ProfilesComponent {
   ) {
     this.route.params.subscribe(params => {
       this.companyName = params["name"]
-      this.profile$ = this.profilesService.getProfile(this.companyName)
     })
   }
 
