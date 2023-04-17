@@ -1,13 +1,7 @@
 <div fxFlex="60%" fxFlex.lt-lg="90%" fxLayout="column" fxLayoutAlign="start center" style="margin: 0 auto">
   <h2 class="mat-headline-2" style="text-align: center;">Company Research Platform</h2>
 
-  <div fxLayout="row" fxLayoutGap="1em" style="margin-left: auto">
-    <mat-form-field appearance="outline">
-      <mat-label>Company Name</mat-label>
-      <input matInput [(ngModel)]="name">
-    </mat-form-field>
-    <button mat-stroked-button style="color: gray" (click)="addCompany()"><mat-icon>add_box</mat-icon>Add Company</button>
-  </div>
+  <button mat-stroked-button style="color: gray; margin-left: auto" (click)="openDialog($event)" #addCompany><mat-icon>add_box</mat-icon>Add Company</button>
 
   <mat-table [dataSource]="dataSource">
 

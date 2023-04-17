@@ -27,10 +27,11 @@ import { WordizePipe } from 'src/pipes/wordize.pipe';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { WatchlistComponent } from './watchlist/watchlist.component';
 import { ProfilesService } from 'src/services/profiles.service';
-import { CompanyComponent } from './company/company.component';
+import { AddCompanyDialog, CompanyComponent } from './company/company.component';
 import { CompanyService } from 'src/services/company.service';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatDialogModule } from '@angular/material/dialog';
 
 export const customTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 300,
@@ -49,6 +50,7 @@ export const customTooltipDefaults: MatTooltipDefaultOptions = {
     WordizePipe,
     WatchlistComponent,
     CompanyComponent,
+    AddCompanyDialog,
   ],
   imports: [
     BrowserModule,
@@ -71,6 +73,7 @@ export const customTooltipDefaults: MatTooltipDefaultOptions = {
     ClipboardModule,
     MatChipsModule,
     MatTabsModule,
+    MatDialogModule,
   ],
   providers: [
     SubmissionsService,
