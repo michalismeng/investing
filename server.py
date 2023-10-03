@@ -60,6 +60,132 @@ def api_get_submissions_from_adsh():
     adsh = data["adsh"]
     return formatted_entries[formatted_entries["adsh"].isin(adsh)].to_json(orient="records")
 
+def read_pickle(name, keep_tags=[], plabel_map={}, stmt="IS"):
+    df = pd.read_pickle(name)
+    df = df.T.reset_index()
+    df.columns = df.iloc[0]
+    df.rename(columns={"date": "tag"}, inplace=True)
+    df = df[df["tag"].isin(keep_tags)]
+    df["line"] = range(len(df))
+    df["uom"] = df["tag"].apply(lambda x: "shares" if "AverageShs" in x else "USD")
+    df["plabel"] = df["tag"].apply(lambda x: plabel_map[x])
+    df["report"] = df["tag"].apply(lambda x: stmt)
+    return df
+
+@app.route("/api/csv/<stmt>")
+def api_show_csv(stmt):
+    metric_labels_income = {
+    'revenue': 'Revenue',
+    'costOfRevenue': 'Cost of Revenue',
+    'grossProfit': 'Gross Profit',
+    'researchAndDevelopmentExpenses': 'R&D Expenses',
+    'generalAndAdministrativeExpenses': 'G&A Expenses',
+    'sellingAndMarketingExpenses': 'S&M Expenses',
+    'sellingGeneralAndAdministrativeExpenses': 'SG&A Expenses',
+    'otherExpenses': 'Other Expenses',
+    'operatingExpenses': 'Operating Expenses',
+    'costAndExpenses': 'Cost and Expenses',
+    'interestIncome': 'Interest Income',
+    'interestExpense': 'Interest Expense',
+    'depreciationAndAmortization': 'Depreciation & Amortization',
+    'ebitda': 'EBITDA',
+    'operatingIncome': 'Operating Income',
+    'totalOtherIncomeExpensesNet': 'Total Other Income/Expenses',
+    'incomeBeforeTax': 'Income Before Tax',
+    'incomeTaxExpense': 'Income Tax Expense',
+    'netIncome': 'Net Income',
+    'eps': 'Earnings per Share (EPS)',
+    'epsdiluted': 'Diluted Earnings per Share (EPS)',
+    'weightedAverageShsOut': 'Weighted Shares Outstanding',
+    'weightedAverageShsOutDil': 'Diluted Shares Outstanding'
+}
+    
+    metric_labels_balance = {
+    'cashAndCashEquivalents': 'Cash & Equivalents',
+    'shortTermInvestments': 'Short-Term Investments',
+    'cashAndShortTermInvestments': 'Cash & Short-Term Inv.',
+    'netReceivables': 'Net Receivables',
+    'inventory': 'Inventory',
+    'otherCurrentAssets': 'Other Current Assets',
+    'totalCurrentAssets': 'Total Current Assets',
+    'propertyPlantEquipmentNet': 'PPE (Net)',
+    'goodwill': 'Goodwill',
+    'intangibleAssets': 'Intangible Assets',
+    'goodwillAndIntangibleAssets': 'Goodwill & Intangibles',
+    'longTermInvestments': 'Long-Term Investments',
+    'taxAssets': 'Tax Assets',
+    'otherNonCurrentAssets': 'Other Non-Current Assets',
+    'totalNonCurrentAssets': 'Total Non-Current Assets',
+    'otherAssets': 'Other Assets',
+    'totalAssets': 'Total Assets',
+    'accountPayables': 'Accounts Payable',
+    'shortTermDebt': 'Short-Term Debt',
+    'taxPayables': 'Tax Payables',
+    'deferredRevenue': 'Deferred Revenue',
+    'otherCurrentLiabilities': 'Other Current Liabilities',
+    'totalCurrentLiabilities': 'Total Current Liabilities',
+    'longTermDebt': 'Long-Term Debt',
+    'deferredRevenueNonCurrent': 'Deferred Rev. (Non-Current)',
+    'deferredTaxLiabilitiesNonCurrent': 'Deferred Tax Liabilities (Non-Current)',
+    'otherNonCurrentLiabilities': 'Other Non-Current Liabilities',
+    'totalNonCurrentLiabilities': 'Total Non-Current Liabilities',
+    'otherLiabilities': 'Other Liabilities',
+    'capitalLeaseObligations': 'Capital Lease Obligations',
+    'totalLiabilities': 'Total Liabilities',
+    'preferredStock': 'Preferred Stock',
+    'commonStock': 'Common Stock',
+    'retainedEarnings': 'Retained Earnings',
+    'accumulatedOtherComprehensiveIncomeLoss': 'Other Comp. Income/Loss',
+    'othertotalStockholdersEquity': 'Other Total Equity',
+    'totalStockholdersEquity': 'Total Equity',
+    'totalEquity': 'Total Equity',
+    'totalLiabilitiesAndStockholdersEquity': 'Liabilities & Equity',
+    'minorityInterest': 'Minority Interest',
+    'totalLiabilitiesAndTotalEquity': 'Liabilities & Total Equity',
+    'totalInvestments': 'Total Investments',
+    'totalDebt': 'Total Debt',
+    'netDebt': 'Net Debt'
+}
+
+    metric_labels_cashflow = {
+    'netIncome': 'Net Income',
+    'depreciationAndAmortization': 'Depreciation & Amortization',
+    'deferredIncomeTax': 'Deferred Income Tax',
+    'stockBasedCompensation': 'Stock-Based Compensation',
+    'changeInWorkingCapital': 'Change in Working Capital',
+    'accountsReceivables': 'Accounts Receivables',
+    'inventory': 'Inventory',
+    'accountsPayables': 'Accounts Payables',
+    'otherWorkingCapital': 'Other Working Capital',
+    'otherNonCashItems': 'Other Non-Cash Items',
+    'netCashProvidedByOperatingActivities': 'Net Cash from Operations',
+    'investmentsInPropertyPlantAndEquipment': 'Investments in PPE',
+    'acquisitionsNet': 'Net Acquisitions',
+    'purchasesOfInvestments': 'Purchases of Investments',
+    'salesMaturitiesOfInvestments': 'Sales/Maturities of Investments',
+    'otherInvestingActivites': 'Other Investing Activities',
+    'netCashUsedForInvestingActivites': 'Net Cash from Investing',
+    'debtRepayment': 'Debt Repayment',
+    'commonStockIssued': 'Common Stock Issued',
+    'commonStockRepurchased': 'Common Stock Repurchased',
+    'dividendsPaid': 'Dividends Paid',
+    'otherFinancingActivites': 'Other Financing Activities',
+    'netCashUsedProvidedByFinancingActivities': 'Net Cash from Financing',
+    'effectOfForexChangesOnCash': 'Effect of Forex Changes on Cash',
+    'netChangeInCash': 'Net Change in Cash',
+    'cashAtEndOfPeriod': 'Cash at End of Period',
+    'cashAtBeginningOfPeriod': 'Cash at Beginning of Period',
+    'operatingCashFlow': 'Operating Cash Flow',
+    'capitalExpenditure': 'Capital Expenditure',
+    'freeCashFlow': 'Free Cash Flow'
+}
+
+    if stmt.upper() == "IS":
+        return read_pickle("income.pickle", metric_labels_income.keys(), metric_labels_income, "IS").to_json(orient="records")
+    elif stmt.upper() == "BS":
+        return read_pickle("balance.pickle", metric_labels_balance.keys(), metric_labels_balance, "BS").to_json(orient="records")
+    elif stmt.upper() == "CF":
+        return read_pickle("cashflow.pickle", metric_labels_cashflow.keys(), metric_labels_cashflow, "CF").to_json(orient="records")
 
 @app.route("/api/financials/<name>")
 def api_show_financial_data(name):
