@@ -30,9 +30,15 @@ class Profile(EmbeddedDocument):
     cyclical = StringField()
     comment = StringField()
 
+class FinancialEntry(EmbeddedDocument):
+    statement = StringField()
+    calendarYear = IntField()
+    period = StringField()
+    props = DictField(StringField())
 
 class Company(Document):
     name = StringField(required=True)
     profiles = ListField(EmbeddedDocumentField(Profile))
     submissions = ListField(StringField(max_length=20))
     schemes = DictField(StringField())
+    financials = ListField(EmbeddedDocumentField(FinancialEntry))

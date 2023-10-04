@@ -1,11 +1,3 @@
-.facts-container {
-  height: 0px;
-  width: 100%;
-  overflow-x: auto;
-  overflow-y: auto;
-  flex: 1 1 auto;
-}
-
 .bordered {
   border-color: black;
   border-radius: 10px;

@@ -3,6 +3,7 @@ from flask import *
 import os
 import model
 import metadata
+import requests
 
 app = Flask(__name__)
 
@@ -60,20 +61,19 @@ def api_get_submissions_from_adsh():
     adsh = data["adsh"]
     return formatted_entries[formatted_entries["adsh"].isin(adsh)].to_json(orient="records")
 
-def read_pickle(name, keep_tags=[], plabel_map={}, stmt="IS"):
-    df = pd.read_pickle(name)
-    df = df.T.reset_index()
-    df.columns = df.iloc[0]
+def read_pickle(df, keep_tags=[], plabel_map={}, stmt="IS"):
     df.rename(columns={"date": "tag"}, inplace=True)
-    df = df[df["tag"].isin(keep_tags)]
+    df = df.T.reset_index()
+    df.columns = df[df["index"] == "tag"].iloc[0]
+    if keep_tags:
+        df = df[df["tag"].isin(keep_tags)]
     df["line"] = range(len(df))
     df["uom"] = df["tag"].apply(lambda x: "shares" if "AverageShs" in x else "USD")
     df["plabel"] = df["tag"].apply(lambda x: plabel_map[x])
     df["report"] = df["tag"].apply(lambda x: stmt)
     return df
 
-@app.route("/api/csv/<stmt>")
-def api_show_csv(stmt):
+def handleFMPdf(df, stmt):
     metric_labels_income = {
     'revenue': 'Revenue',
     'costOfRevenue': 'Cost of Revenue',
@@ -179,13 +179,12 @@ def api_show_csv(stmt):
     'capitalExpenditure': 'Capital Expenditure',
     'freeCashFlow': 'Free Cash Flow'
 }
-
     if stmt.upper() == "IS":
-        return read_pickle("income.pickle", metric_labels_income.keys(), metric_labels_income, "IS").to_json(orient="records")
+        return read_pickle(df, metric_labels_income.keys(), metric_labels_income, "IS").to_json(orient="records")
     elif stmt.upper() == "BS":
-        return read_pickle("balance.pickle", metric_labels_balance.keys(), metric_labels_balance, "BS").to_json(orient="records")
+        return read_pickle(df, metric_labels_balance.keys(), metric_labels_balance, "BS").to_json(orient="records")
     elif stmt.upper() == "CF":
-        return read_pickle("cashflow.pickle", metric_labels_cashflow.keys(), metric_labels_cashflow, "CF").to_json(orient="records")
+        return read_pickle(df, metric_labels_cashflow.keys(), metric_labels_cashflow, "CF").to_json(orient="records")
 
 @app.route("/api/financials/<name>")
 def api_show_financial_data(name):
@@ -400,4 +399,68 @@ def api_add_companies():
 @app.route("/api/companies/<name>", methods=["DELETE"])
 def api_delete_companies(name):
     metadata.Company.objects(name=name).delete()
+    return jsonify("ok")
+
+def cache_fmp_financials(name, stmt, df):
+    for i in range(len(df)):
+        d = df.iloc[i].to_dict()
+        company = metadata.Company.objects.get(name=name)
+        entry = metadata.FinancialEntry(statement=stmt, **{k: d[k] for k in ["calendarYear", "period"]})
+        entry.props = {k: str(d[k]) for k in d.keys()}
+        company.financials.append(entry)
+        company.save()
+
+@app.route("/api/companies/<name>/financials")
+def api_get_company_financials_list(name):
+    company = metadata.Company.objects.get(name=name)
+    financials = [{"statement": o.statement, "calendarYear": o.calendarYear, "period": o.period} for o in company.financials]
+    return jsonify(financials)
+
+@app.route("/api/companies/<name>/financials/detailed")
+def api_get_company_financials_get(name):
+    company = metadata.Company.objects.get(name=name)
+    result = {}
+    for stmt in ["IS", "BS", "CF"]:
+        financials = [o.props for o in company.financials if o.statement == stmt]
+        result[stmt] = handleFMPdf(pd.DataFrame(financials), stmt)
+    return jsonify(result)
+
+@app.route("/api/companies/<name>/financials/<stmt>/detailed")
+def api_get_company_financials_get_stmt(name, stmt):
+    company = metadata.Company.objects.get(name=name)
+    
+    financials = [o.props for o in company.financials if o.statement == stmt]
+    return handleFMPdf(pd.DataFrame(financials), stmt)
+
+@app.route("/api/fetch-tikr-fmp", methods=["POST"])
+def api_get_from_tikr_fmp():
+    url = 'https://r54xadzxvh.execute-api.us-east-1.amazonaws.com/prod/fmp'
+    headers = {
+        'Content-Type': 'application/json',
+    }
+    response = requests.post(url, data=json.dumps(request.json["payload"]), headers=headers)
+    if response.status_code == 200:
+        return jsonify(response.json())
+    else:
+        return abort(400)
+
+@app.route("/api/cache-tikr-fmp", methods=["POST"])
+def api_cache_tikr_fmp():
+    data = request.json["payload"]
+
+    df = pd.DataFrame(data["is"])
+    cache_fmp_financials(request.json["name"], "IS", df)
+    df = pd.DataFrame(data["bs"])
+    cache_fmp_financials(request.json["name"], "BS", df)
+    df = pd.DataFrame(data["cf"])
+    cache_fmp_financials(request.json["name"], "CF", df)
+
+    return jsonify("ok")
+
+@app.route("/api/delete-tikr-fmp", methods=["POST"])
+def api_delete_tikr_fmp():
+    name = request.json["name"]
+    company = metadata.Company.objects.get(name=name)
+    company.financials = []
+    company.save()
     return jsonify("ok")

@@ -27,7 +27,7 @@ function CompanyProfile({ profile }: any) {
                 <div className="datagrid-title">Investor Relations</div>
                 <div className="datagrid-content"><a target="_blank" href={profile.profiles[0].irWebsite} className="badge badge-outline text-azure text-start text-wrap text-break" style={{ textDecoration: "none" }}>{profile.profiles[0].irWebsite}</a></div>
             </div>
-            <div className="datagrid-item" style={{ gridColumn: "span 2"}}>
+            <div className="datagrid-item" style={{ gridColumn: "1/-1"}}>
                 <div className="datagrid-title">Description</div>
                 <div className="datagrid-content">{profile.profiles[0].description}</div>
             </div>
@@ -51,17 +51,17 @@ function CompanyProfile({ profile }: any) {
                 <div className="datagrid-title">Sector</div>
                 <div className="datagrid-content">{profile.profiles[0].sector}</div>
             </div>
-            <div className="datagrid-item" style={{ gridColumn: "span 2"}}>
+            <div className="datagrid-item" style={{ gridColumn: "1/-1"}}>
                 <div className="datagrid-title">Competitors</div>
                 <div className="datagrid-content">{profile.profiles[0].competitors.map((l: string) => (
                     <span className="badge badge-outline text-danger me-1 mb-1 text-wrap text-start text-break">{l}</span>
                 ))}</div>
             </div>
-            <div className="datagrid-item" style={{ gridColumn: "span 2"}}>
+            <div className="datagrid-item" style={{ gridColumn: "1/-1"}}>
                 <div className="datagrid-title">Cyclicality</div>
                 <div className="datagrid-content">{profile.profiles[0].cyclical}</div>
             </div>
-            <div className="datagrid-item" style={{ gridColumn: "span 2"}}>
+            <div className="datagrid-item" style={{ gridColumn: "1/-1"}}>
                 <div className="datagrid-title">Comment</div>
                 <div className="datagrid-content">{profile.profiles[0].comment}</div>
             </div>

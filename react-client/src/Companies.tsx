@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import { companiesAPI } from "./companiesAPI";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { CompanyProfile } from "./CompanyProfile";
+import { FinancialsSourceModal } from "./FinancialsSourceModal";
+import { IconTrash, IconWorldDownload, IconZoomMoney } from "@tabler/icons-react";
 
 function Companies() {
     const [companies, setCompanies] = useState<any[]>([]);
     const [error, setError] = useState<string | undefined>(undefined);
     const [loading, setLoading] = useState(false);
     const [profile, setProfile] = useState<any | null>(null);
+    const [selectedCompany, setSelectedCompany] = useState<any | null>(null);
 
     useEffect(() => {
         async function loadCompanies() {
@@ -27,6 +30,19 @@ function Companies() {
         loadCompanies();
     }, [])
 
+    async function deleteFMPData(name: string) {
+        setProfile(null)
+        try {
+            const data = await companiesAPI.deleteFMPData(name);
+        } catch (e) {
+            if (e instanceof Error) {
+                setError(e.message)
+            }
+        } finally {
+            setLoading(false);
+        }
+    }
+
     async function loadProfile(name: string) {
         setProfile(null)
         try {
@@ -41,8 +57,13 @@ function Companies() {
         }
     }
 
+    const financialsSourceInput: string = "financialsSourceInput";
+    const createID = (str: string) => `#${str}`;
+    const navigate = useNavigate();
+
     return (
         <div className="d-flex flex-row flex-wrap" style={{width: "100%", height: "100%"}}>
+            <FinancialsSourceModal modalName={financialsSourceInput} company={selectedCompany} navigate={navigate}></FinancialsSourceModal>
             {profile &&
             <div className="d-flex flex-column mt-auto ms-auto me-auto col-md-6 h-100">
                 <h2 className="text-center">&nbsp; </h2>
@@ -75,23 +96,15 @@ function Companies() {
                                                    <path d="M6.168 18.849a4 4 0 0 1 3.832 -2.849h4a4 4 0 0 1 3.834 2.855"></path>
                                                 </svg>
                                             </button>
-                                            <NavLink to="/company" className="btn btn-icon me-2" style={{transform: "scale(0.9"}}>
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                                                   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                                                   <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"></path>
-                                                   <path d="M21 21l-6 -6"></path>
-                                                </svg>
+                                            <NavLink to={"/companies/" + c.name + "/fmp"} className="btn btn-icon" style={{transform: "scale(0.9"}}>
+                                                <IconZoomMoney stroke={1}/>
                                             </NavLink>
-                                            <NavLink to="/company" className="btn btn-icon" style={{transform: "scale(0.9"}}>
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="icon icon-tabler icon-tabler-trash" width="24" height="24" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                                                   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                                                   <path d="M4 7l16 0"></path>
-                                                   <path d="M10 11l0 6"></path>
-                                                   <path d="M14 11l0 6"></path>
-                                                   <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path>
-                                                   <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path>
-                                                </svg>
+                                            <NavLink to={"/companies/" + c.name + "/download-fmp"} className="btn btn-icon" style={{transform: "scale(0.9"}}>
+                                                <IconWorldDownload stroke={1} />
                                             </NavLink>
+                                            <button onClick={() => deleteFMPData(c.name)}  className="btn btn-icon me-2" style={{transform: "scale(0.9"}}>
+                                                <IconTrash stroke={1}/>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>    
