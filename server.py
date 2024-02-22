@@ -434,7 +434,7 @@ def api_get_company_financials_get_stmt(name, stmt):
 
 @app.route("/api/fetch-tikr-fmp", methods=["POST"])
 def api_get_from_tikr_fmp():
-    url = 'https://r54xadzxvh.execute-api.us-east-1.amazonaws.com/prod/fmp'
+    url = 'https://ledagc7ova.execute-api.us-east-1.amazonaws.com/prod/altFin'
     headers = {
         'Content-Type': 'application/json',
     }
