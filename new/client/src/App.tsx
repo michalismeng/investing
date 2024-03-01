@@ -1,15 +1,8 @@
-import DDMValuationComponent from "./components/DDMValuation";
-import './App.css'
+import "./App.css";
+import { Outlet } from "react-router-dom";
 
 function App() {
-  return (
-    <>
-      <div className="text-3xl">Dividend Discount Valuation Model</div>
-      <hr className="mb-10" />
-
-      <DDMValuationComponent></DDMValuationComponent>
-    </>
-  );
+  return <Outlet />;
 }
 
 export default App;

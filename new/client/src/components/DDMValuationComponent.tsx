@@ -89,6 +89,9 @@ const DDMValuationComponent: FC<InputProps> = ({}) => {
   };
   return (
     <>
+      <div className="text-3xl">Dividend Discount Valuation Model</div>
+      <hr className="mb-10" />
+
       <div className="flex flex-row gap-4 justify-between">
         <DDMValuationInputForm performValuation={performValuation} />
         {valuationOutput && (
