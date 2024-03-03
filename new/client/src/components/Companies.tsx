@@ -1,7 +1,7 @@
-import { Button } from "@material-tailwind/react";
 import { useState, useEffect } from "react";
 import { DDMValuation, currencyFormatter } from "../models/Valuation";
 import companiesAPI from "../services/companies";
+import { Link } from "react-router-dom";
 
 const CompaniesComponent = () => {
   let [companies, setCompanies] = useState<
@@ -41,9 +41,8 @@ const CompaniesComponent = () => {
                 </div>
               </td>
               <td>
-                <div className="flex flex-row justify-center gap-2">
-                  <Button>New Valuation</Button>
-                  <Button>More...</Button>
+                <div className="flex flex-row justify-center items-center gap-2 my-2">
+                  <Link to={`/companies/${id}`}>More...</Link>
                 </div>
               </td>
             </tr>

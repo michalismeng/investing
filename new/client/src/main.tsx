@@ -6,6 +6,7 @@ import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import ErrorPage from "./components/ErrorPage.tsx";
 import DDMValuationComponent from "./components/DDMValuationComponent.tsx";
 import CompaniesComponent from "./components/Companies.tsx";
+import CompanyDetailsComponent from "./components/CompanyDetailsComponent.tsx";
 
 const router = createBrowserRouter([
   {
@@ -20,6 +21,10 @@ const router = createBrowserRouter([
       {
         path: "/companies",
         element: <CompaniesComponent />,
+      },
+      {
+        path: "/companies/:id",
+        element: <CompanyDetailsComponent />,
       },
       {
         path: "/valuation",
