@@ -4,6 +4,7 @@ import companiesAPI from "../services/companies";
 import { DDMValuation } from "../models/Valuation";
 import ValuationResultComponent from "./ValuationResult";
 import { DDMValuationInputForm } from "./DDMValuationInput";
+import { Editor } from "./Editor";
 
 const CompanyDetailsComponent = () => {
   let { id } = useParams();
@@ -22,6 +23,7 @@ const CompanyDetailsComponent = () => {
         <>
           <div className="text-3xl border-b mb-10">{company.name}</div>
           <div className="w-full">
+            <Editor />
             {company.valuations.map((v: DDMValuation) => (
               <div className="flex flex-col mb-10">
                 <div>{new Date(v.date).toDateString()}</div>
