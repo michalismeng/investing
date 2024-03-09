@@ -7,9 +7,10 @@ import '../styles/editor.css'
 // type FormData = z.infer<typeof PostValidator>
 
 interface EditorProps {
+  id: string;
 }
 
-export const Editor: React.FC<EditorProps> = () => {
+export const Editor: React.FC<EditorProps> = ({ id }: EditorProps) => {
 //   const {
 //     register,
 //     handleSubmit,
@@ -69,7 +70,7 @@ export const Editor: React.FC<EditorProps> = () => {
 
     if (!ref.current) {
       const editor = new EditorJS({
-        holder: 'editor',
+        holder: id,
         onReady() {
           ref.current = editor
         },
@@ -131,13 +132,13 @@ export const Editor: React.FC<EditorProps> = () => {
   }
 
   return (
-    <div className='w-full p-4 bg-zinc-50 rounded-lg border border-zinc-200'>
+    <div className='p-4 bg-zinc-50 rounded border border-dark' style={{ height: "100%" }}>
       <form
         className='w-fit'
         // onSubmit={handleSubmit(onSubmit)}
         >
         <div className='prose prose-stone dark:prose-invert'>
-          <TextareaAutosize
+          {/* <TextareaAutosize
             ref={(e) => {
             //   titleRef(e)
               // @ts-ignore
@@ -146,12 +147,12 @@ export const Editor: React.FC<EditorProps> = () => {
             // {...rest}
             placeholder='Title'
             className='w-full resize-none appearance-none overflow-hidden bg-transparent text-5xl font-bold focus:outline-none'
-          />
-          <div id='editor' />
-          {/* <p className='text-sm text-gray-500'>
+          /> */}
+          <div id={id}/>
+          {/* <p className='mt-auto'>
             Use{' '}
-            <kbd className='rounded-md border bg-muted px-1 text-xs uppercase'>
-              Tab
+            <kbd className='rounded border px-1 text-sm uppercase'>
+              /
             </kbd>{' '}
             to open the command menu.
           </p> */}

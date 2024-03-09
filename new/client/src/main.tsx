@@ -7,6 +7,7 @@ import ErrorPage from "./components/ErrorPage.tsx";
 import DDMValuationComponent from "./components/DDMValuationComponent.tsx";
 import CompaniesComponent from "./components/Companies.tsx";
 import CompanyDetailsComponent from "./components/CompanyDetailsComponent.tsx";
+import 'bootstrap/dist/css/bootstrap.css';
 
 const router = createBrowserRouter([
   {

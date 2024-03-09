@@ -5,6 +5,7 @@ import { DDMValuation } from "../models/Valuation";
 import ValuationResultComponent from "./ValuationResult";
 import { DDMValuationInputForm } from "./DDMValuationInput";
 import { Editor } from "./Editor";
+import { Col, Container, Row, Stack } from "react-bootstrap";
 
 const CompanyDetailsComponent = () => {
   let { id } = useParams();
@@ -20,33 +21,40 @@ const CompanyDetailsComponent = () => {
   return (
     <>
       {company && (
-        <>
-          <div className="text-3xl border-b mb-10">{company.name}</div>
-          <div className="w-full">
-            <Editor />
-            {company.valuations.map((v: DDMValuation) => (
-              <div className="flex flex-col mb-10">
-                <div>{new Date(v.date).toDateString()}</div>
-                <div className="flex flex-row justify-between">
-                  <div className="border rounded p-4 max-w-96 h-fit">
-                    Profi acquisition On October 30, 2023, Ahold Delhaize
-                    announced it has agreed to acquire 100% of Romanian grocery
-                    retailer Profi Rom Food SRL (Profi) from MidEuropa. Will be
-                    completed in the second half of 2024. Will double the size
-                    of Romania. Will cost around EUR 1.3 billion. Debt funded.
+        <Container fluid>
+          <div className="h2">{company.name}</div>
+          {company.valuations.map((v: DDMValuation, i: number) => (
+            <>
+              <Row key={"date" + i}>
+                <Col xs={7}></Col>
+                <Col>
+                  <div className="h4 text-start">
+                    {new Date(v.date).toDateString()}
                   </div>
-                  <div className="flex flex-col">
-                    <div className="text-sm italic mb-2">
+                </Col>
+                <Col xs={3}></Col>
+              </Row>
+              <Row key={"company" + i} className="mb-5">
+                <Col xs={7}>
+                  <Editor id={"editor" + i} />
+                </Col>
+                <Col></Col>
+                <Col xs={4}>
+                  <Stack gap={4}>
+                    <div
+                      className="text-muted fst-italic text-decoration-underline"
+                      style={{ marginBottom: "-16px" }}
+                    >
                       Valuation based on {v.referenceReport} numbers
                     </div>
-                    <DDMValuationInputForm performValuation={() => {}} />
+                    <DDMValuationInputForm readonly />
                     <ValuationResultComponent result={v.output} />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
+                  </Stack>
+                </Col>
+              </Row>
+            </>
+          ))}
+        </Container>
       )}
     </>
   );

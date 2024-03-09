@@ -16,6 +16,7 @@ import {
 } from "../models/Valuation";
 import ValuationBoardComponent from "./ValuationBoard";
 import ValuationResultComponent from "./ValuationResult";
+import { Col, Container, Row } from "react-bootstrap";
 
 interface InputProps {}
 
@@ -84,20 +85,31 @@ const DDMValuationComponent: FC<InputProps> = ({}) => {
     };
 
     setValuationOutput(valuation.output);
-
-    console.log(valuation);
   };
   return (
     <>
-      <div className="text-3xl">Dividend Discount Valuation Model</div>
-      <hr className="mb-10" />
+      <Container>
+        <Row>
+          <div className="h2">Dividend Discount Valuation Model</div>
+        </Row>
 
-      <div className="flex flex-row gap-4 justify-between">
-        <DDMValuationInputForm performValuation={performValuation} />
-        {valuationOutput && (
-          <ValuationResultComponent result={valuationOutput} />
-        )}
-      </div>
+        <Row>
+          <hr className="mb-4" />
+        </Row>
+
+        <Row>
+          <Col>
+            <DDMValuationInputForm performValuation={performValuation} />
+          </Col>
+          <Col xs={3}>
+            <div className="mt-auto">
+              {valuationOutput && (
+                <ValuationResultComponent result={valuationOutput} />
+              )}
+            </div>
+          </Col>
+        </Row>
+      </Container>
 
       <div className="mt-10">
         {valuation && <ValuationBoardComponent valuation={valuation} />}
