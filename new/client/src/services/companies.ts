@@ -10,7 +10,7 @@ const companiesAPI = {
         return {
           name: n,
           id: i + 1,
-          valuations: vals[n] ?? [],
+          valuations: vals[i + 1] ?? [],
         };
       })
     );

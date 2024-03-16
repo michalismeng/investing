@@ -21,15 +21,15 @@ const ValuationResultComponent: FC<InputProps> = ({ result }) => {
         <tbody>
           <tr>
             <th className="text-start">PV of High Growth</th>
-            <td>{currencyFormatter(result.pvHighGrowth)}</td>
+            <td className="text-end">{currencyFormatter(result.pvHighGrowth)}</td>
           </tr>
           <tr>
             <th className="text-start">PV of stable phase</th>
-            <td>{currencyFormatter(result.pvStable)}</td>
+            <td className="text-end">{currencyFormatter(result.pvStable)}</td>
           </tr>
           <tr>
             <th className="text-start">Value of stock</th>
-            <td>{currencyFormatter(result.pvStock)}</td>
+            <td className="text-end">{currencyFormatter(result.pvStock)}</td>
           </tr>
         </tbody>
       </Table>
