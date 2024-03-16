@@ -6,8 +6,9 @@ import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import ErrorPage from "./components/ErrorPage.tsx";
 import DDMValuationComponent from "./components/DDMValuationComponent.tsx";
 import CompaniesComponent from "./components/Companies.tsx";
-import CompanyDetailsComponent from "./components/CompanyDetailsComponent.tsx";
+import CompanyDetailsComponent from "./components/TimelineComponent.tsx";
 import 'bootstrap/dist/css/bootstrap.css';
+import DiaryComponent from "./components/Diary.tsx";
 
 const router = createBrowserRouter([
   {
@@ -30,6 +31,10 @@ const router = createBrowserRouter([
       {
         path: "/valuation",
         element: <DDMValuationComponent />,
+      },
+      {
+        path: "/diary",
+        element: <DiaryComponent />,
       },
     ],
   },
