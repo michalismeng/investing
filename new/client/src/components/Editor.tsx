@@ -1,163 +1,101 @@
-import type EditorJS from '@editorjs/editorjs'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import TextareaAutosize from 'react-textarea-autosize'
-
-import '../styles/editor.css'
-
-// type FormData = z.infer<typeof PostValidator>
+import type EditorJS from "@editorjs/editorjs";
+import { useCallback, useEffect, useRef, useState } from "react";
+import "../styles/editor.css";
+import { useForm } from "react-hook-form";
+import { OutputData } from "@editorjs/editorjs";
+import { Button } from "react-bootstrap";
 
 interface EditorProps {
-  id: string;
+  editorId?: string;
+  readonly?: boolean;
+  initialContent?: OutputData;
+  onSubmit?: (blocks: OutputData) => void;
 }
 
-export const Editor: React.FC<EditorProps> = ({ id }: EditorProps) => {
-//   const {
-//     register,
-//     handleSubmit,
-//     formState: { errors },
-//   } = useForm<FormData>({
-//     resolver: zodResolver(PostValidator),
-//     defaultValues: {
-//       subredditId,
-//       title: '',
-//       content: null,
-//     },
-//   })
-  const ref = useRef<EditorJS>()
-  const _titleRef = useRef<HTMLTextAreaElement>(null)
-//   const router = useRouter()
-  const [isMounted, setIsMounted] = useState<boolean>(false)
-//   const pathname = usePathname()
-
-//   const { mutate: createPost } = useMutation({
-//     mutationFn: async ({
-//       title,
-//       content,
-//       subredditId,
-//     }: PostCreationRequest) => {
-//       const payload: PostCreationRequest = { title, content, subredditId }
-//       const { data } = await axios.post('/api/subreddit/post/create', payload)
-//       return data
-//     },
-//     onError: () => {
-//       return toast({
-//         title: 'Something went wrong.',
-//         description: 'Your post was not published. Please try again.',
-//         variant: 'destructive',
-//       })
-//     },
-//     onSuccess: () => {
-//       // turn pathname /r/mycommunity/submit into /r/mycommunity
-//       const newPathname = pathname.split('/').slice(0, -1).join('/')
-//       router.push(newPathname)
-
-//       router.refresh()
-
-//       return toast({
-//         description: 'Your post has been published.',
-//       })
-//     },
-//   })
+export const Editor: React.FC<EditorProps> = ({
+  editorId = "editorjs",
+  readonly = false,
+  initialContent = { blocks: [] },
+  onSubmit = () => {},
+}: EditorProps) => {
+  const {
+    handleSubmit,
+  } = useForm<FormData & { content: string | null }>({
+    defaultValues: {
+      content: null,
+    },
+  });
+  const ref = useRef<EditorJS>();
+  const _titleRef = useRef<HTMLTextAreaElement>(null);
+  const [isMounted, setIsMounted] = useState<boolean>(false);
 
   const initializeEditor = useCallback(async () => {
-    const EditorJS = (await import('@editorjs/editorjs')).default
-    const Header = (await import('@editorjs/header')).default
-    const Embed = (await import('@editorjs/embed')).default
-    const Table = (await import('@editorjs/table')).default
-    const List = (await import('@editorjs/list')).default
-    const Code = (await import('@editorjs/code')).default
-    const InlineCode = (await import('@editorjs/inline-code')).default
+    const EditorJS = (await import("@editorjs/editorjs")).default;
+    const Header = (await import("@editorjs/header")).default;
+    const Embed = (await import("@editorjs/embed")).default;
+    const Table = (await import("@editorjs/table")).default;
+    const List = (await import("@editorjs/list")).default;
 
     if (!ref.current) {
       const editor = new EditorJS({
-        holder: id,
+        holder: editorId,
+        readOnly: readonly,
         onReady() {
-          ref.current = editor
+          ref.current = editor;
         },
-        placeholder: 'Type here to write your post...',
+        placeholder: "Type here to write your diary entry...",
         inlineToolbar: true,
-        data: { blocks: [] },
+        data: initialContent,
         tools: {
           header: Header,
           list: List,
-          code: Code,
-          inlineCode: InlineCode,
           table: Table,
           embed: Embed,
         },
-      })
+      });
     }
-  }, [])
-
-//   useEffect(() => {
-//     if (Object.keys(errors).length) {
-//       for (const [_key, value] of Object.entries(errors)) {
-//         value
-//         toast({
-//           title: 'Something went wrong.',
-//           description: (value as { message: string }).message,
-//           variant: 'destructive',
-//         })
-//       }
-//     }
-//   }, [errors])
+  }, []);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setIsMounted(true)
+    if (typeof window !== "undefined") {
+      setIsMounted(true);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
     const init = async () => {
-      await initializeEditor()
+      await initializeEditor();
 
       setTimeout(() => {
-        _titleRef?.current?.focus()
-      }, 0)
-    }
+        _titleRef?.current?.focus();
+      }, 0);
+    };
 
     if (isMounted) {
-      init()
+      init();
 
       return () => {
-        ref.current?.destroy()
-        ref.current = undefined
-      }
+        ref.current?.destroy();
+        ref.current = undefined;
+      };
     }
-  }, [isMounted, initializeEditor])
+  }, [isMounted, initializeEditor]);
 
-  if (!isMounted) {
-    return null
+  async function onSubmitForm(_: FormData) {
+    const blocks = await ref.current?.save();
+    onSubmit(blocks!);
   }
 
   return (
-    <div className='p-4 bg-zinc-50 rounded border border-dark' style={{ height: "100%" }}>
-      <form
-        className='w-fit'
-        // onSubmit={handleSubmit(onSubmit)}
-        >
-        <div className='prose prose-stone dark:prose-invert'>
-          {/* <TextareaAutosize
-            ref={(e) => {
-            //   titleRef(e)
-              // @ts-ignore
-              _titleRef.current = e
-            }}
-            // {...rest}
-            placeholder='Title'
-            className='w-full resize-none appearance-none overflow-hidden bg-transparent text-5xl font-bold focus:outline-none'
-          /> */}
-          <div id={id}/>
-          {/* <p className='mt-auto'>
-            Use{' '}
-            <kbd className='rounded border px-1 text-sm uppercase'>
-              /
-            </kbd>{' '}
-            to open the command menu.
-          </p> */}
-        </div>
+    <div className="p-4" style={{ height: "100%" }}>
+      <form className="w-fit" onSubmit={handleSubmit(onSubmitForm)}>
+        <div id={editorId} />
+        {readonly === false && (
+          <Button variant="dark" type="submit">
+            Submit
+          </Button>
+        )}
       </form>
     </div>
-  )
-}
+  );
+};

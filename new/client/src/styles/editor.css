@@ -61,7 +61,13 @@
 .dark .cdx-notify__cross::before {
   background: white;
 }
-
+ */
 .codex-editor__redactor {
-  padding-bottom: 0 !important;
-} */
+  padding-bottom: 4rem !important;
+}
+
+.ce-block__content,
+.ce-toolbar__content {
+  max-width: 75%;
+  text-align: start;
+}
