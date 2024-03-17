@@ -9,6 +9,7 @@ interface EditorProps {
   editorId?: string;
   readonly?: boolean;
   initialContent?: OutputData;
+  placeholder?: string | false,
   onSubmit?: (blocks: OutputData) => void;
 }
 
@@ -16,6 +17,7 @@ export const Editor: React.FC<EditorProps> = ({
   editorId = "editorjs",
   readonly = false,
   initialContent = { blocks: [] },
+  placeholder = "Type here to write your diary entry...",
   onSubmit = () => {},
 }: EditorProps) => {
   const {
@@ -43,7 +45,7 @@ export const Editor: React.FC<EditorProps> = ({
         onReady() {
           ref.current = editor;
         },
-        placeholder: "Type here to write your diary entry...",
+        placeholder: placeholder,
         inlineToolbar: true,
         data: initialContent,
         tools: {

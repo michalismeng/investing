@@ -57,6 +57,7 @@ const CompanyDetailsComponent = () => {
                     </h3>
                     <div className="border rounded">
                       <Editor
+                        placeholder={false}
                         editorId={"editor-" + i}
                         readonly={true}
                         initialContent={t.entry}
