@@ -63,11 +63,16 @@
 }
  */
 .codex-editor__redactor {
-  padding-bottom: 4rem !important;
+  padding-bottom: 0rem !important;
 }
 
 .ce-block__content,
 .ce-toolbar__content {
-  max-width: 75%;
+  max-width: 100%;
   text-align: start;
+}
+
+/* Hide empty blocks. This is a workaround until https://github.com/codex-team/editor.js/issues/2495 is fixed */
+.ce-paragraph.cdx-block:empty[data-placeholder=""] {
+  display: None;
 }

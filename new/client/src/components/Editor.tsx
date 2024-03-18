@@ -9,7 +9,7 @@ interface EditorProps {
   editorId?: string;
   readonly?: boolean;
   initialContent?: OutputData;
-  placeholder?: string | false,
+  placeholder?: string | false;
   onSubmit?: (blocks: OutputData) => void;
 }
 
@@ -20,9 +20,7 @@ export const Editor: React.FC<EditorProps> = ({
   placeholder = "Type here to write your diary entry...",
   onSubmit = () => {},
 }: EditorProps) => {
-  const {
-    handleSubmit,
-  } = useForm<FormData & { content: string | null }>({
+  const { handleSubmit } = useForm<FormData & { content: string | null }>({
     defaultValues: {
       content: null,
     },
@@ -89,7 +87,7 @@ export const Editor: React.FC<EditorProps> = ({
   }
 
   return (
-    <div className="p-4" style={{ height: "100%" }}>
+    <div style={{ height: "100%" }}>
       <form className="w-fit" onSubmit={handleSubmit(onSubmitForm)}>
         <div id={editorId} />
         {readonly === false && (

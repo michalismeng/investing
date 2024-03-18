@@ -1,15 +1,18 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import companiesAPI from "../services/companies";
-import ValuationResultComponent from "./ValuationResult";
 import { DDMValuationInputForm } from "./DDMValuationInput";
 import { Editor } from "./Editor";
-import { Container, Stack } from "react-bootstrap";
+import { Alert, Col, Container, Row, Stack } from "react-bootstrap";
 import { TimelineEntry } from "../models/TimelineEntry";
 import diaryAPI from "../services/diary";
 import moment from "moment";
+import { Timeline } from "rsuite";
+import "rsuite/Timeline/styles/index.css";
+import { currencyFormatter } from "../models/Valuation";
+import { CurrencyDollar } from "react-bootstrap-icons";
 
-const CompanyDetailsComponent = () => {
+const TimelineComponent = () => {
   let { id } = useParams();
   let [company, setCompany] = useState<any>(null);
   let [timeline, setTimeline] = useState<TimelineEntry[]>([]);
@@ -35,42 +38,66 @@ const CompanyDetailsComponent = () => {
 
   return (
     <Container>
-      {company && (
-        <Stack gap={4}>
-          {timeline &&
-            timeline.map(
-              (t, i) =>
-                (t.type === "Diary" && (
-                  <div key={"diary-" + i}>
-                    <h3>As of {moment(t.date).format("MMMM Do YYYY")}</h3>
-                    <div className="border rounded">
-                      <Editor
-                        placeholder={false}
-                        editorId={"editor-" + i}
-                        readonly={true}
-                        initialContent={t.entry}
-                      />
-                    </div>
+      <Timeline isItemActive={() => false}>
+        {company &&
+          timeline.map((t, i) => (
+            <Timeline.Item
+              key={"timelineitem-" + i}
+              className="pb-4"
+              dot={
+                t.type == "Valuation" ? (
+                  <CurrencyDollar
+                    size={32}
+                    className="border rounded-circle p-1"
+                    style={{
+                      marginLeft: "-12px",
+                      backgroundColor: "whitesmoke",
+                      marginTop: "-4px",
+                    }}
+                  />
+                ) : undefined
+              }
+            >
+              <h3>{moment(t.date).format("MMMM DD, YYYY")}</h3>
+              <Row>
+                <Col lg={12} xl={8}>
+                  <div className="border rounded p-3">
+                    {(t.type === "Diary" && (
+                      <div key={"diary-" + i}>
+                        <Editor
+                          placeholder={false}
+                          editorId={"editor-" + i}
+                          readonly={true}
+                          initialContent={t.entry}
+                        />
+                      </div>
+                    )) ||
+                      (t.type === "Valuation" && (
+                        <Stack key={"valuation-" + i} gap={4}>
+                          <div
+                            className="text-muted fst-italic text-decoration-underline"
+                            style={{ marginBottom: "-16px" }}
+                          >
+                            Valuation based on {t.referenceReport} numbers
+                          </div>
+                          <DDMValuationInputForm readonly />
+                          <Alert
+                            variant="primary"
+                            className="fw-bold w-50 mx-auto text-center"
+                          >
+                            Stock valued at{" "}
+                            {currencyFormatter(t.output.pvStock)}
+                          </Alert>
+                        </Stack>
+                      ))}
                   </div>
-                )) ||
-                (t.type === "Valuation" && (
-                  <Stack key={"valuation-" + i} gap={4}>
-                    <h3>As of {moment(t.date).format("MMMM Do YYYY")}</h3>
-                    <div
-                      className="text-muted fst-italic text-decoration-underline"
-                      style={{ marginBottom: "-16px" }}
-                    >
-                      Valuation based on {t.referenceReport} numbers
-                    </div>
-                    <DDMValuationInputForm readonly />
-                    <ValuationResultComponent result={t.output} />
-                  </Stack>
-                ))
-            )}
-        </Stack>
-      )}
+                </Col>
+              </Row>
+            </Timeline.Item>
+          ))}
+      </Timeline>
     </Container>
   );
 };
 
-export default CompanyDetailsComponent;
+export default TimelineComponent;
