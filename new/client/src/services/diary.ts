@@ -2,14 +2,14 @@ import { DiaryEntry } from "../models/TimelineEntry";
 
 
 const diaryAPI = {
-  post({ companyId, timelineDate, entry, type}: DiaryEntry): Promise<DiaryEntry> {
+  post({ companyId, date, entry, type}: DiaryEntry): Promise<DiaryEntry> {
     let diary = localStorage.getItem("diary");
     if (!diary) localStorage.setItem("diary", JSON.stringify([]));
 
     let diaryObject = JSON.parse(localStorage.getItem("diary")!) as any[];
     let obj: DiaryEntry = {
       companyId: companyId,
-      timelineDate: timelineDate,
+      date: date,
       entry: entry,
       type: type,
     }

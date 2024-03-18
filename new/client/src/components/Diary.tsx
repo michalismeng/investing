@@ -32,7 +32,7 @@ const DiaryComponent = () => {
     let metadata = getValues();
     await diaryAPI.post({
       companyId: +metadata.company,
-      timelineDate: metadata.timelineDate,
+      date: metadata.timelineDate,
       entry: blocks,
       type: "Diary",
     });

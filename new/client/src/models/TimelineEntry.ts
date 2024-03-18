@@ -3,7 +3,7 @@ import { DDMValuation } from "./Valuation";
 
 export interface DiaryEntry {
   companyId: number;
-  timelineDate: Date;
+  date: Date;
   entry: OutputData;
   type: "Diary";
 }

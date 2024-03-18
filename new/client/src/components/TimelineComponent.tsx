@@ -26,17 +26,7 @@ const CompanyDetailsComponent = () => {
       let diaryEntries: TimelineEntry[] = await diaryAPI.getById(company.id);
       let timeline = valuationEntries.concat(diaryEntries);
       timeline.sort(
-        (b, a) =>
-          (
-            (a.type === "Diary" && new Date(a.timelineDate)) ||
-            (a.type === "Valuation" && new Date(a.date)) ||
-            new Date()
-          ).getTime() -
-          (
-            (b.type === "Diary" && new Date(b.timelineDate)) ||
-            (b.type === "Valuation" && new Date(b.date)) ||
-            new Date()
-          ).getTime()
+        (b, a) => new Date(a.date).getTime() - new Date(b.date).getTime()
       );
       setTimeline(timeline);
     }
@@ -52,9 +42,7 @@ const CompanyDetailsComponent = () => {
               (t, i) =>
                 (t.type === "Diary" && (
                   <div key={"diary-" + i}>
-                    <h3>
-                      As of {moment(t.timelineDate).format("MMMM Do YYYY")}
-                    </h3>
+                    <h3>As of {moment(t.date).format("MMMM Do YYYY")}</h3>
                     <div className="border rounded">
                       <Editor
                         placeholder={false}
