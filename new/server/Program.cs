@@ -22,9 +22,20 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller}/{action=Index}/{id?}"
+);
+
+if(app.Environment.IsProduction())
+    app.MapFallbackToFile("index.html");
+else if(app.Environment.IsDevelopment())
+    app.UseSpa(spa => spa.UseProxyToSpaDevelopmentServer("https://localhost:3001"));
 
 app.Run();
