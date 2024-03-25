@@ -2,3 +2,5 @@ __pycache__
 20*q*
 *.db
 test-env
+
+*.sln
