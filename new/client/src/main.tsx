@@ -25,8 +25,12 @@ const router = createBrowserRouter([
         element: <CompaniesComponent />,
       },
       {
-        path: "/companies/:id",
+        path: "/companies/:id/timeline",
         element: <TimelineComponent />,
+      },
+      {
+        path: "/companies/:id/diary",
+        element: <DiaryComponent />,
       },
       {
         path: "/valuation",

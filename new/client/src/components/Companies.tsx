@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { DDMValuation, currencyFormatter } from "../models/Valuation";
 import companiesAPI from "../services/companies";
-import { Link } from "react-router-dom";
 import { Button, Container, Stack, Table } from "react-bootstrap";
+import { Calendar3Week, CurrencyDollar, Newspaper } from "react-bootstrap-icons";
 
 const CompaniesComponent = () => {
   let [companies, setCompanies] = useState<
@@ -45,14 +45,36 @@ const CompaniesComponent = () => {
                   </div>
                 </td>
                 <td>
-                  <Stack direction="horizontal">
+                  <Stack direction="horizontal" gap={2}>
                     <Button
                       variant="outline-dark"
                       as="a"
-                      href={`/companies/${id}`}
+                      href={`/valuation`}
                       className="mx-auto"
                     >
-                      More...
+                      <div className="d-flex align-items-center">
+                        <CurrencyDollar className="me-1" /> Valuation
+                      </div>
+                    </Button>
+                    <Button
+                      variant="outline-dark"
+                      as="a"
+                      href={`/companies/${id}/diary`}
+                      className="mx-auto"
+                    >
+                      <div className="d-flex align-items-center">
+                        <Newspaper className="me-1" /> Event
+                      </div>
+                    </Button>
+                    <Button
+                      variant="outline-dark"
+                      as="a"
+                      href={`/companies/${id}/timeline`}
+                      className="mx-auto"
+                    >
+                      <div className="d-flex align-items-center">
+                        <Calendar3Week className="me-1" /> Timeline
+                      </div>
                     </Button>
                   </Stack>
                 </td>
