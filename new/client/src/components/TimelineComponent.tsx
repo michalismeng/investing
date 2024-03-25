@@ -9,12 +9,12 @@ import diaryAPI from "../services/diary";
 import moment from "moment";
 import { Timeline } from "rsuite";
 import "rsuite/Timeline/styles/index.css";
-import { currencyFormatter } from "../models/Valuation";
+import { DDMValuation, currencyFormatter } from "../models/Valuation";
 import { CurrencyDollar } from "react-bootstrap-icons";
 
 const TimelineComponent = () => {
   let { id } = useParams();
-  let [company, setCompany] = useState<any>(null);
+  let [company, setCompany] = useState<{name: string, id: number, valuations: DDMValuation[]} | null>(null);
   let [timeline, setTimeline] = useState<TimelineEntry[]>([]);
 
   useEffect(() => {
@@ -38,6 +38,8 @@ const TimelineComponent = () => {
 
   return (
     <Container>
+      <div className="h1 mb-5">{company && company.name + " Timeline"}</div>
+
       <Timeline isItemActive={() => false}>
         {company &&
           timeline.map((t, i) => (
