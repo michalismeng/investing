@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
 import companiesAPI from "../services/companies";
 import { DDMValuationInputForm } from "./DDMValuationInput";
 import { Editor } from "./Editor";
@@ -12,8 +11,7 @@ import "rsuite/Timeline/styles/index.css";
 import { DDMValuation, currencyFormatter } from "../models/Valuation";
 import { CurrencyDollar } from "react-bootstrap-icons";
 
-const TimelineComponent = () => {
-  let { id } = useParams();
+const TimelineComponent = ({ id }: { id: number }) => {
   let [company, setCompany] = useState<{name: string, id: number, valuations: DDMValuation[]} | null>(null);
   let [timeline, setTimeline] = useState<TimelineEntry[]>([]);
 
@@ -38,7 +36,7 @@ const TimelineComponent = () => {
 
   return (
     <Container>
-      <div className="h1 mb-5">{company && company.name + " Timeline"}</div>
+      <div className="h1 mb-5 text-center">{company && company.name + " Timeline"}</div>
 
       <Timeline isItemActive={() => false}>
         {company &&

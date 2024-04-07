@@ -1,10 +1,10 @@
-import "../../index.css";
-import { ClientOnly } from "./client";
-
-export function generateStaticParams() {
-  return [{ slug: [""] }];
-}
+import Link from "next/link";
 
 export default function Page() {
-  return <ClientOnly />
+  return (
+    <>
+      <h2>Page Not Found!</h2>
+      <Link href={"/companies"}>Click to go to main page</Link>
+    </>
+  );
 }

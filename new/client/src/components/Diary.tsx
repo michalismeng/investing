@@ -41,7 +41,7 @@ const DiaryComponent = () => {
   return (
     <Container>
       <Row>
-        <div className="h2 mb-5">Write your diary entry</div>
+        <div className="h2 mb-5 text-center">Write your diary entry</div>
       </Row>
 
       <Form onSubmit={handleSubmit((e) => console.log(e))} className="mb-5">
