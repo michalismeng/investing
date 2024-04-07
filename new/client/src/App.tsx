@@ -1,8 +1,8 @@
 import "./App.css";
-import { Outlet } from "react-router-dom";
+import CompaniesComponent from "./components/Companies";
 
 function App() {
-  return <Outlet />;
+  return <CompaniesComponent />;
 }
 
 export default App;
