@@ -3,6 +3,7 @@ import { DDMValuation, currencyFormatter } from "../models/Valuation";
 import companiesAPI from "../services/companies";
 import { Button, Container, Stack, Table } from "react-bootstrap";
 import { Calendar3Week, CurrencyDollar, Newspaper } from "react-bootstrap-icons";
+import { signIn } from "next-auth/react";
 
 const CompaniesComponent = () => {
   let [companies, setCompanies] = useState<
@@ -18,6 +19,8 @@ const CompaniesComponent = () => {
     <>
       <Container>
         <div className="h1 mb-5 text-center">Stock Research Platform</div>
+
+        <button onClick={() => signIn("github", { callbackUrl: '/login-success' })}>Click to sign in</button>
 
         <Table className="mx-auto" hover>
           <thead>
