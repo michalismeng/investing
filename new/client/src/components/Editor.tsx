@@ -54,7 +54,7 @@ export const Editor: React.FC<EditorProps> = ({
         },
       });
     }
-  }, []);
+  }, [editorId, initialContent, placeholder, readonly]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -81,7 +81,7 @@ export const Editor: React.FC<EditorProps> = ({
     }
   }, [isMounted, initializeEditor]);
 
-  async function onSubmitForm(_: FormData) {
+  async function onSubmitForm() {
     const blocks = await ref.current?.save();
     onSubmit(blocks!);
   }

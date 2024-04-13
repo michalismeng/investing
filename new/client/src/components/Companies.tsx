@@ -1,16 +1,14 @@
 import { useState, useEffect } from "react";
-import { DDMValuation, currencyFormatter } from "../models/Valuation";
+import { currencyFormatter } from "../models/Valuation";
 import companiesAPI from "../services/companies";
 import { Button, Container, Stack, Table } from "react-bootstrap";
 import { Calendar3Week, CurrencyDollar, Newspaper } from "react-bootstrap-icons";
-import { signIn } from "next-auth/react";
+import { CompanyWithValuations } from "../lib/prismaModels";
 
 const CompaniesComponent = () => {
-  let [companies, setCompanies] = useState<
-    { name: string; id: number; valuations: DDMValuation[] }[]
-  >([]);
+  const [companies, setCompanies] = useState<CompanyWithValuations[]>([]);
   useEffect(() => {
-    companiesAPI.get().then((companies) => {
+    companiesAPI.getWithValuations().then((companies) => {
       setCompanies(companies);
     });
   }, []);
@@ -19,8 +17,6 @@ const CompaniesComponent = () => {
     <>
       <Container>
         <div className="h1 mb-5 text-center">Stock Research Platform</div>
-
-        <button onClick={() => signIn("github", { callbackUrl: '/login-success' })}>Click to sign in</button>
 
         <Table className="mx-auto" hover>
           <thead>
@@ -32,19 +28,19 @@ const CompaniesComponent = () => {
             </tr>
           </thead>
           <tbody>
-            {companies.map(({ id, name, valuations }) => (
-              <tr key={id}>
-                <td>{name}</td>
+            {companies.map(c => (
+              <tr key={c.id}>
+                <td>{c.name}</td>
                 <td>
                   <div>
-                    {valuations.length > 0 &&
-                      new Date(valuations[0].date).toDateString()}
+                    {c.ddmValuations.length > 0 &&
+                      new Date(c.ddmValuations[0].date).toDateString() || "-"}
                   </div>
                 </td>
                 <td>
                   <div className="">
-                    {valuations.length > 0 &&
-                      currencyFormatter(valuations[0].output.pvStock)}
+                    {c.ddmValuations.length > 0 &&
+                      currencyFormatter(c.ddmValuations[0].pvStock) || "-"}
                   </div>
                 </td>
                 <td>
@@ -62,7 +58,7 @@ const CompaniesComponent = () => {
                     <Button
                       variant="outline-dark"
                       as="a"
-                      href={`/companies/${id}/diary`}
+                      href={`/companies/${c.id}/diary`}
                       className="mx-auto"
                     >
                       <div className="d-flex align-items-center">
@@ -72,7 +68,7 @@ const CompaniesComponent = () => {
                     <Button
                       variant="outline-dark"
                       as="a"
-                      href={`/companies/${id}/timeline`}
+                      href={`/companies/${c.id}/timeline`}
                       className="mx-auto"
                     >
                       <div className="d-flex align-items-center">

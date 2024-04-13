@@ -4,28 +4,36 @@ import { DDMValuationInputForm } from "./DDMValuationInput";
 import { Editor } from "./Editor";
 import { Alert, Col, Container, Row, Stack } from "react-bootstrap";
 import { TimelineEntry } from "../models/TimelineEntry";
-import diaryAPI from "../services/diary";
 import moment from "moment";
 import { Timeline } from "rsuite";
 import "rsuite/Timeline/styles/index.css";
-import { DDMValuation, currencyFormatter } from "../models/Valuation";
+import { currencyFormatter } from "../models/Valuation";
 import { CurrencyDollar } from "react-bootstrap-icons";
+import { OutputData } from "@editorjs/editorjs";
+import { CompanyWithValuations } from "../lib/prismaModels";
 
 const TimelineComponent = ({ id }: { id: number }) => {
-  let [company, setCompany] = useState<{name: string, id: number, valuations: DDMValuation[]} | null>(null);
-  let [timeline, setTimeline] = useState<TimelineEntry[]>([]);
+  const [company, setCompany] = useState<CompanyWithValuations | null>(null);
+  const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
 
   useEffect(() => {
     async function doit() {
-      let companies = await companiesAPI.get();
-      let company = companies.filter((c) => c.id === +(id ?? 0) || 0)[0];
+      const company = await companiesAPI.getByIdWithValuationsAndEvents(+id);
       setCompany(company);
 
-      let valuationEntries: TimelineEntry[] = company.valuations.map((v) => {
-        return { ...v, type: "Valuation" };
+      const valuationEntries: TimelineEntry[] = company.ddmValuations.map(
+        (v) => {
+          return { ...v, type: "Valuation" };
+        }
+      );
+      const diaryEntries = company.events.map((d) => {
+        return {
+          ...d,
+          entry: d.entry as object as OutputData,
+          type: "Diary",
+        } as TimelineEntry;
       });
-      let diaryEntries: TimelineEntry[] = await diaryAPI.getById(company.id);
-      let timeline = valuationEntries.concat(diaryEntries);
+      const timeline = valuationEntries.concat(diaryEntries);
       timeline.sort(
         (b, a) => new Date(a.date).getTime() - new Date(b.date).getTime()
       );
@@ -36,7 +44,9 @@ const TimelineComponent = ({ id }: { id: number }) => {
 
   return (
     <Container>
-      <div className="h1 mb-5 text-center">{company && company.name + " Timeline"}</div>
+      <div className="h1 mb-5 text-center">
+        {company && company.name + " Timeline"}
+      </div>
 
       <Timeline isItemActive={() => false}>
         {company &&
@@ -86,7 +96,7 @@ const TimelineComponent = ({ id }: { id: number }) => {
                             className="fw-bold w-50 mx-auto text-center"
                           >
                             Stock valued at{" "}
-                            {currencyFormatter(t.output.pvStock)}
+                            {currencyFormatter(t.pvStock)}
                           </Alert>
                         </Stack>
                       ))}

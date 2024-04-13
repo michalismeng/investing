@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 import { z } from "zod";
 import Form from "react-bootstrap/Form";
-import { Button, FormCheck, InputGroup, Stack } from "react-bootstrap";
+import { Button, InputGroup, Stack } from "react-bootstrap";
 
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
@@ -31,12 +31,10 @@ interface ValuationInputProps extends React.HTMLAttributes<HTMLFormElement> {
 export const DDMValuationInputForm: FC<ValuationInputProps> = ({
   performValuation,
   readonly = false,
-  ...props
 }) => {
   const {
     handleSubmit,
     register,
-    formState: { errors },
   } = useForm<DDMValuationInput>({
     resolver: zodResolver(DDMValuationInputsValidator),
     defaultValues: {

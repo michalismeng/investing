@@ -1,21 +1,17 @@
 import { Card, Col, Container, Form, Row } from "react-bootstrap";
 import { Editor } from "./Editor";
 import { useEffect, useState } from "react";
-import { DDMValuation } from "../models/Valuation";
 import companiesAPI from "../services/companies";
 import { useForm } from "react-hook-form";
 import moment from "moment";
 import { OutputData } from "@editorjs/editorjs";
-import diaryAPI from "../services/diary";
+import eventsAPI from "../services/events";
+import { Company } from "@prisma/client";
 
 const DiaryComponent = () => {
-  let [companies, setCompanies] = useState<
-    { name: string; id: number; valuations: DDMValuation[] }[]
-  >([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   useEffect(() => {
-    companiesAPI.get().then((companies) => {
-      setCompanies(companies);
-    });
+    companiesAPI.get().then(setCompanies);
   }, []);
 
   const {
@@ -29,12 +25,12 @@ const DiaryComponent = () => {
   });
 
   const onSubmit = async (blocks: OutputData) => {
-    let metadata = getValues();
-    await diaryAPI.post({
-      companyId: +metadata.company,
-      date: metadata.timelineDate,
-      entry: blocks,
-      type: "Diary",
+    const metadata = getValues();
+    const companyId = companies.find(c => c.id == +metadata.company)!.id
+    await eventsAPI.post({
+      companyId: companyId,
+      date: new Date(metadata.timelineDate),
+      entry: blocks as object,
     });
   };
 

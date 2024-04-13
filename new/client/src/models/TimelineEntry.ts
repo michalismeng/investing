@@ -1,5 +1,5 @@
 import { OutputData } from "@editorjs/editorjs";
-import { DDMValuation } from "./Valuation";
+import { DDMValuation } from "@prisma/client";
 
 export interface DiaryEntry {
   companyId: number;

@@ -10,28 +10,28 @@ import {
   stablePhase,
 } from "../models/Engine";
 import {
-  DDMValuation,
   DDMValuationOutput,
   ValuationBoard,
 } from "../models/Valuation";
 import ValuationBoardComponent from "./ValuationBoard";
 import ValuationResultComponent from "./ValuationResult";
 import { Col, Container, Row } from "react-bootstrap";
+import valuationsAPI from "../services/valuations";
 
 interface InputProps {}
 
-const DDMValuationComponent: FC<InputProps> = ({}) => {
+const DDMValuationComponent: FC<InputProps> = () => {
   const [valuation, setValuation] = useState<ValuationBoard | null>(null);
   const [valuationOutput, setValuationOutput] =
     useState<DDMValuationOutput | null>(null);
-  const performValuation = (d: DDMValuationInput) => {
+  const performValuation = async (d: DDMValuationInput) => {
     let val: ValuationBoard | null = null;
 
     const years = 10;
     if (d.gradualAdj == false) {
       val = ddmGenerator(d.eps, d.epsGrowth, d.payout, d.returnRate, years);
     } else {
-      let val_start = ddmGenerator(
+      const val_start = ddmGenerator(
         d.eps,
         d.epsGrowth,
         d.payout,
@@ -47,7 +47,7 @@ const DDMValuationComponent: FC<InputProps> = ({}) => {
         Math.ceil(years / 2)
       );
       const eps = grow(epsBase, growth);
-      let val_end = ddmGeneratorBase(
+      const val_end = ddmGeneratorBase(
         growth,
         eps,
         payout,
@@ -71,20 +71,19 @@ const DDMValuationComponent: FC<InputProps> = ({}) => {
       true
     )[0];
 
-    const valuation: DDMValuation = {
-      input: d,
-      board: val,
-      output: {
-        pvHighGrowth: pvHigh,
-        pvStable: pvStable,
-        pvStock: pvHigh + pvStable,
-      },
-      company: "Ahold Delhaize",
+    setValuationOutput({
+      pvHighGrowth: pvHigh,
+      pvStable: pvStable,
+      pvStock: pvHigh + pvStable,
+    });
+
+    await valuationsAPI.postDDM({
+      companyId: 1,
       date: new Date(),
       referenceReport: "FY2023",
-    };
-
-    setValuationOutput(valuation.output);
+      ...d,
+      pvStock: pvHigh + pvStable,
+    });
   };
   return (
     <>

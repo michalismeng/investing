@@ -50,11 +50,11 @@ export const ddmGenerator = (
   costOfEquity: number,
   years = 5
 ): ValuationBoard => {
-  let epsGrowth_array = stable(epsGrowth, years);
-  let eps_array = grow(eps, epsGrowth_array);
-  let payout_array = stable(payout, years);
-  let dps_array = zip(eps_array, payout_array).map(([e, p]) => e * p);
-  let costOfEquity_array = stable(costOfEquity, years);
+  const epsGrowth_array = stable(epsGrowth, years);
+  const eps_array = grow(eps, epsGrowth_array);
+  const payout_array = stable(payout, years);
+  const dps_array = zip(eps_array, payout_array).map(([e, p]) => e * p);
+  const costOfEquity_array = stable(costOfEquity, years);
 
   return ddmGeneratorBase(
     epsGrowth_array,
@@ -86,14 +86,14 @@ export const ddmGeneratorBase = (
   costOfEquity: number[] | null = null,
   startValuation: ValuationBoard | null = null
 ): ValuationBoard => {
-  let years = expectedGrowthRate.length;
-  let baseCostOfEquity =
+  const years = expectedGrowthRate.length;
+  const baseCostOfEquity =
     startValuation?.rows["Cumulative Cost of Equity"].slice(-1)[0] || 1;
-  let cumulativeCostOfEquity = accumulate(
+  const cumulativeCostOfEquity = accumulate(
     costOfEquity?.map((c) => 1 + c) || [],
     baseCostOfEquity
   );
-  let dps =
+  const dps =
     dividedsPerShare ||
     zip(earningsPerShare!, payoutRatio!).map(([e, p]) => e * p);
   return {
@@ -120,13 +120,13 @@ export const ddmGeneratorBase = (
 };
 
 export const mergeBoards = (b1: ValuationBoard, b2: ValuationBoard) => {
-  let val = {
+  const val = {
     index: b1.index,
     columns: b1.columns.concat(b2.columns),
     rows: b1.rows,
   };
 
-  for (let v of Object.keys(val.rows)) {
+  for (const v of Object.keys(val.rows)) {
     val.rows[v] = val.rows[v].concat(b2.rows[v]);
   }
 
