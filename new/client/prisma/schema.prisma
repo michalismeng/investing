@@ -14,9 +14,52 @@ datasource db {
 }
 
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  companies Company[]
+}
+
+model Company {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+
+  ddmValuations DDMValuation[]
+  events        StockEvent[]
+}
+
+model DDMValuation {
+  id              Int      @id @default(autoincrement())
+  date            DateTime
+  referenceReport String
+
+  eps        Float
+  epsGrowth  Float
+  gradualAdj Boolean
+  payout     Float
+  returnRate Float
+
+  stableGrowth     Float
+  stablePayout     Float
+  stableReturnRate Float
+
+  pvStock Float
+
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId Int
+}
+
+model StockEvent {
+  id    Int      @id @default(autoincrement())
+  date  DateTime
+  entry Json
+
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId Int
 }
