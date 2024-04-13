@@ -4,13 +4,17 @@ import companiesAPI from "../services/companies";
 import { Button, Container, Stack, Table } from "react-bootstrap";
 import { Calendar3Week, CurrencyDollar, Newspaper } from "react-bootstrap-icons";
 import { CompanyWithValuations } from "../lib/prismaModels";
+import { useSession } from "next-auth/react";
 
 const CompaniesComponent = () => {
+  const { data: session } = useSession();
   const [companies, setCompanies] = useState<CompanyWithValuations[]>([]);
   useEffect(() => {
-    companiesAPI.getWithValuations().then((companies) => {
-      setCompanies(companies);
-    });
+    if(session) {
+      companiesAPI.getWithValuations(1).then((companies) => {
+        setCompanies(companies);
+      });
+    }
   }, []);
 
   return (
