@@ -20,7 +20,6 @@ const CompaniesComponent = () => {
   return (
     <>
       <Container>
-        <div className="h1 mb-5 text-center">Stock Research Platform</div>
 
         <Table className="mx-auto" hover>
           <thead>

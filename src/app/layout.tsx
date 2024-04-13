@@ -1,14 +1,14 @@
+import "./globals.css";
 import { Metadata } from "next";
-import 'bootstrap/dist/css/bootstrap.min.css';
-import { getServerSession } from 'next-auth';
+import { getServerSession } from "next-auth";
 import SessionProvider from "../components/SessionProvider";
 import NavMenu from "../components/NavMenu";
+import Footer from "../components/Footer";
 
- 
 export const metadata: Metadata = {
-  title: 'Stock Research Platform',
-  description: 'Organize your investment thesis!',
-}
+  title: "Stock Research Platform",
+  description: "Organize your investment thesis!",
+};
 
 export default async function RootLayout({
   children,
@@ -18,13 +18,12 @@ export default async function RootLayout({
   const session = await getServerSession();
 
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" data-theme="light">
+      <body className="flex flex-col h-screen">
         <SessionProvider session={session}>
-          <main>
-            <NavMenu />
-            {children}
-          </main>
+          <NavMenu />
+          <main className="mt-5 mb-auto">{children}</main>
+          <Footer />
         </SessionProvider>
       </body>
     </html>
