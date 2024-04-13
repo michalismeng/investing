@@ -54,7 +54,7 @@ export const Editor: React.FC<EditorProps> = ({
         },
       });
     }
-  }, [editorId, initialContent, placeholder, readonly]);
+  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
