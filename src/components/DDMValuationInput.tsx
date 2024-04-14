@@ -1,15 +1,8 @@
-import { FC } from "react";
-
+import { Dispatch, FC, SetStateAction, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-
 import { z } from "zod";
-import Form from "react-bootstrap/Form";
-import { Button, InputGroup, Stack } from "react-bootstrap";
-
-import Container from "react-bootstrap/Container";
-import Row from "react-bootstrap/Row";
-import Col from "react-bootstrap/Col";
+import LabelledInput from "./Inputs/LabelledInput";
 
 const DDMValuationInputsValidator = z.object({
   eps: z.coerce.number(),
@@ -24,18 +17,13 @@ const DDMValuationInputsValidator = z.object({
 
 export type DDMValuationInput = z.infer<typeof DDMValuationInputsValidator>;
 interface ValuationInputProps extends React.HTMLAttributes<HTMLFormElement> {
-  performValuation?: (f: DDMValuationInput) => void;
-  readonly?: boolean;
+  setValuationInput?: Dispatch<SetStateAction<DDMValuationInput | undefined>>;
 }
 
 export const DDMValuationInputForm: FC<ValuationInputProps> = ({
-  performValuation,
-  readonly = false,
+  setValuationInput,
 }) => {
-  const {
-    handleSubmit,
-    register,
-  } = useForm<DDMValuationInput>({
+  const { register, getValues } = useForm<DDMValuationInput>({
     resolver: zodResolver(DDMValuationInputsValidator),
     defaultValues: {
       eps: 2.29,
@@ -49,112 +37,63 @@ export const DDMValuationInputForm: FC<ValuationInputProps> = ({
     },
   });
 
+  useEffect(() => {
+    setValuationInput?.(getValues())
+  }, [])
+
   return (
-    <Container fluid>
-      <Form onSubmit={handleSubmit((e) => performValuation?.(e))}>
-        <Stack direction="vertical" gap={4}>
-          <Row>
-            <Col>
-              <InputGroup>
-                <InputGroup.Text>EPS</InputGroup.Text>
-                <Form.Control
-                  placeholder="Enter the company's EPS ..."
-                  aria-label="EPS"
-                  {...register("eps")}
-                />
-              </InputGroup>
-            </Col>
-            <Col>
-              <Form.Check
-                type="checkbox"
-                label="Gradually adjust values to stable phase"
-                {...register("gradualAdj")}
-                className="text-start mt-1"
-              />
-            </Col>
-          </Row>
+    <div>
+      <form onChange={() => setValuationInput?.(getValues())}>
+        <div className="grid grid-cols-2 w-fit gap-4">
+          <div className="flex flex-col gap-4 w-fit">
+            <LabelledInput
+              label="EPS"
+              placeholder="Enter the company's EPS..."
+              {...register("eps")}
+            />
+            <LabelledInput
+              label="EPS Growth"
+              placeholder="Enter the company's EPS growth rate ..."
+              {...register("epsGrowth")}
+            />
+            <LabelledInput
+              label="Payout"
+              placeholder="Enter the company's payout ratio ..."
+              {...register("payout")}
+            />
+            <LabelledInput
+              label="Return Rate"
+              placeholder="Enter the desired return rate ..."
+              {...register("returnRate")}
+            />
+          </div>
 
-          <Row>
-            <Col>
-              <InputGroup>
-                <InputGroup.Text>EPS Growth</InputGroup.Text>
-                <Form.Control
-                  placeholder="Enter the company's EPS growth rate ..."
-                  aria-label="EPS Growth"
-                  {...register("epsGrowth")}
-                />
-              </InputGroup>
-            </Col>
-            <Col>
-              <InputGroup>
-                <InputGroup.Text>Stable Growth</InputGroup.Text>
-                <Form.Control
-                  placeholder="Enter the company's growth rate in the stable phase ..."
-                  aria-label="Stable Growth"
-                  {...register("stableGrowth")}
-                />
-              </InputGroup>
-            </Col>
-          </Row>
-
-          <Row>
-            <Col>
-              <InputGroup>
-                <InputGroup.Text>Payout</InputGroup.Text>
-                <Form.Control
-                  placeholder="Enter the company's payout ratio ..."
-                  aria-label="Payout Ratio"
-                  {...register("payout")}
-                />
-              </InputGroup>
-            </Col>
-            <Col>
-              <InputGroup>
-                <InputGroup.Text>Stable Payout</InputGroup.Text>
-                <Form.Control
-                  placeholder="Enter the company's payout ratio in the stable phase ..."
-                  aria-label="Stable Payout"
-                  {...register("stablePayout")}
-                />
-              </InputGroup>
-            </Col>
-          </Row>
-
-          <Row>
-            <Col>
-              <InputGroup>
-                <InputGroup.Text>Return Rate</InputGroup.Text>
-                <Form.Control
-                  placeholder="Enter the desired return rate ..."
-                  aria-label="Return Rate"
-                  {...register("returnRate")}
-                />
-              </InputGroup>
-            </Col>
-            <Col>
-              <InputGroup>
-                <InputGroup.Text>Stable Return Rate</InputGroup.Text>
-                <Form.Control
-                  placeholder="Enter the desired return rate in the stable phase ..."
-                  aria-label="Stable Return Rate"
-                  {...register("stableReturnRate")}
-                />
-              </InputGroup>
-            </Col>
-          </Row>
-
-          {!readonly && (
-            <Row>
-              <Col></Col>
-              <Col>
-                <Button type="submit" variant="outline-dark" className="w-100">
-                  Valuate!
-                </Button>
-              </Col>
-            </Row>
-          )}
-        </Stack>
-      </Form>
-    </Container>
+          <div className="flex flex-col gap-4 w-fit">
+            <LabelledInput
+              type="checkbox"
+              divider={false}
+              className="checkbox"
+              label="Gradually adjust values to stable phase"
+              {...register("gradualAdj")}
+            />
+            <LabelledInput
+              label="Stable Growth"
+              placeholder="Enter the company's growth rate in the stable..."
+              {...register("stableGrowth")}
+            />
+            <LabelledInput
+              label="Stable Payout"
+              placeholder="Enter the company's payout ratio in the stable phase ..."
+              {...register("stablePayout")}
+            />
+            <LabelledInput
+              label="Stable Return Rate"
+              placeholder="Enter the desired return rate in the stable phase ..."
+              {...register("stableReturnRate")}
+            />
+          </div>
+        </div>
+      </form>
+    </div>
   );
 };

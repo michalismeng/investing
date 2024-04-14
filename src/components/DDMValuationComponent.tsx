@@ -9,22 +9,27 @@ import {
   mergeBoards,
   stablePhase,
 } from "../models/Engine";
-import {
-  DDMValuationOutput,
-  ValuationBoard,
-} from "../models/Valuation";
+import { DDMValuationOutput, ValuationBoard } from "../models/Valuation";
 import ValuationBoardComponent from "./ValuationBoard";
 import ValuationResultComponent from "./ValuationResult";
-import { Col, Container, Row } from "react-bootstrap";
 import valuationsAPI from "../services/valuations";
 
-interface InputProps {}
+interface InputProps {
+  companyId?: number;
+  referenceReport?: string;
+}
 
-const DDMValuationComponent: FC<InputProps> = () => {
+const DDMValuationComponent: FC<InputProps> = ({ companyId, referenceReport }: InputProps) => {
   const [valuation, setValuation] = useState<ValuationBoard | null>(null);
   const [valuationOutput, setValuationOutput] =
     useState<DDMValuationOutput | null>(null);
-  const performValuation = async (d: DDMValuationInput) => {
+  const [valuationInput, setValuationInput] = useState<DDMValuationInput>();
+
+  const performValuation = async () => {
+    const d = valuationInput;
+    if (!d) {
+      return;
+    }
     let val: ValuationBoard | null = null;
 
     const years = 10;
@@ -78,40 +83,42 @@ const DDMValuationComponent: FC<InputProps> = () => {
     });
 
     await valuationsAPI.postDDM({
-      companyId: 1,
+      companyId: companyId!,
       date: new Date(),
-      referenceReport: "FY2023",
+      referenceReport: referenceReport || "unspecified",
       ...d,
       pvStock: pvHigh + pvStable,
     });
   };
   return (
     <>
-      <Container>
-        <Row>
-          <div className="h2">Dividend Discount Valuation Model</div>
-        </Row>
+      <div className="container mx-auto flex flex-col">
+        <h1 className="text-3xl font-bold text-center mb-8">
+          Dividend Discount Valuation Model
+        </h1>
 
-        <Row>
-          <hr className="mb-4" />
-        </Row>
+        <div className="flex flex-row gap-8 mb-4">
+          <DDMValuationInputForm setValuationInput={setValuationInput} />
+          <div className="flex flex-col flex-grow gap-2">
+            <button
+              type="submit"
+              className="btn btn-outline"
+              onClick={async () => await performValuation()}
+            >
+              Valuate!
+            </button>
+            {valuationOutput && (
+              <ValuationResultComponent result={valuationOutput} />
+            )}
+          </div>
+        </div>
 
-        <Row>
-          <Col>
-            <DDMValuationInputForm performValuation={performValuation} />
-          </Col>
-          <Col xs={3}>
-            <div className="mt-auto">
-              {valuationOutput && (
-                <ValuationResultComponent result={valuationOutput} />
-              )}
-            </div>
-          </Col>
-        </Row>
-      </Container>
-
-      <div className="mt-10">
-        {valuation && <ValuationBoardComponent valuation={valuation} />}
+        {valuation && (
+          <>
+            <div className="divider w-full"></div>
+            <ValuationBoardComponent valuation={valuation} />
+          </>
+        )}
       </div>
     </>
   );

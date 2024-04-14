@@ -7,26 +7,26 @@ interface InputProps {
 
 const ValuationBoardComponent: FC<InputProps> = ({ valuation }) => {
   return (
-    <div className="border border-white rounded-xl p-4 overflow-x-auto">
-      <table className="table-auto select-none w-full">
-        <thead className="border-b">
+    <div className="card shadow-lg overflow-x-auto">
+      <table className="table select-none">
+        <thead>
           <tr>
-            <th></th>
+            <th>Year</th>
             {valuation.columns.map((c) => (
-              <th>{c}</th>
+              <th className="text-center text-nowrap">{c}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {valuation.index.map(([index, formatter]) => (
-            <tr className="hover:bg-blue-gray-400">
+            <tr className="hover:bg-gray-200">
               <th className="">
-                <div className="text-start p-2 mr-5">{index}</div>
+                <div className="text-start text-nowrap">{index}</div>
               </th>
               {valuation.rows[index] &&
                 valuation.rows[index].map((d) => (
                   <td>
-                    <div className="text-center mx-2">
+                    <div className="text-center text-nowrap">
                       {formatter?.(d) || d}
                     </div>
                   </td>

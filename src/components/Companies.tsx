@@ -61,7 +61,7 @@ const CompaniesComponent = () => {
                 </td>
                 <td>
                   <div className="flex flex-row justify-start gap-4">
-                    <a className="btn btn-outline btn-sm" href={`/valuation`}>
+                    <a className="btn btn-outline btn-sm" href={`/companies/${c.id}/valuation`}>
                       <CurrencyDollarIcon className="h-6 w-6" />
                       Valuate
                     </a>

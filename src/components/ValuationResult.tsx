@@ -1,6 +1,5 @@
 import { FC } from "react";
 import { DDMValuationOutput, currencyFormatter } from "../models/Valuation";
-import { Table } from "react-bootstrap";
 
 interface InputProps {
   result: DDMValuationOutput;
@@ -8,8 +7,8 @@ interface InputProps {
 
 const ValuationResultComponent: FC<InputProps> = ({ result }) => {
   return (
-    <div className="border border-black rounded p-1">
-      <Table size="sm" borderless className="mb-0">
+    <div className="card shadow-lg overflow-x-auto mt-auto">
+      <table className="table table-sm">
         <thead>
           <tr>
             <th className="text-center" colSpan={2}>
@@ -28,11 +27,11 @@ const ValuationResultComponent: FC<InputProps> = ({ result }) => {
             <td className="text-end">{currencyFormatter(result.pvStable)}</td>
           </tr>
           <tr>
-            <th className="text-start">Value of stock</th>
-            <td className="text-end">{currencyFormatter(result.pvStock)}</td>
+            <th className="text-start">Present Value of Stock</th>
+            <th className="text-end">{currencyFormatter(result.pvStock)}</th>
           </tr>
         </tbody>
-      </Table>
+      </table>
     </div>
   );
 };
