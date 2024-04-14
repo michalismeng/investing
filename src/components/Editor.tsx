@@ -84,8 +84,13 @@ export const Editor: React.FC<EditorProps> = ({
     }
   }, [isMounted, initializeEditor]);
 
+  const className =
+    readonly == false
+      ? "card shadow-lg w-5/6 p-4 ps-16 outline outline-1 outline-gray-200 min-h-16"
+      : "card shadow-lg w-full p-4 outline outline-1 outline-gray-200 min-h-16";
+
   return (
-    <div className="card shadow-lg w-5/6 p-4 ps-16 outline outline-1 outline-gray-200 min-h-16">
+    <div className={className}>
       <div className="h-full w-full" id={editorId} />
     </div>
   );
