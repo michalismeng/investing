@@ -67,7 +67,7 @@ const CompaniesComponent = () => {
                     </a>
                     <a
                       className="btn btn-outline btn-sm"
-                      href={`/companies/${c.id}/diary`}
+                      href={`/companies/${c.id}/stock-events`}
                     >
                       <NewspaperIcon className="h-5 w-5" />
                       Events
