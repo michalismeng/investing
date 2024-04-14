@@ -1,16 +1,21 @@
 import { useState, useEffect } from "react";
 import { currencyFormatter } from "../models/Valuation";
 import companiesAPI from "../services/companies";
-import { Button, Container, Stack, Table } from "react-bootstrap";
-import { Calendar3Week, CurrencyDollar, Newspaper } from "react-bootstrap-icons";
 import { CompanyWithValuations } from "../lib/prismaModels";
 import { useSession } from "next-auth/react";
+import {
+  CurrencyDollarIcon,
+  NewspaperIcon,
+  CalendarDaysIcon,
+  ClipboardDocumentListIcon,
+} from "@heroicons/react/24/outline";
+import { CalendarIcon } from "@heroicons/react/20/solid";
 
 const CompaniesComponent = () => {
   const { data: session } = useSession();
   const [companies, setCompanies] = useState<CompanyWithValuations[]>([]);
   useEffect(() => {
-    if(session) {
+    if (session) {
       companiesAPI.getWithValuations(1).then((companies) => {
         setCompanies(companies);
       });
@@ -19,72 +24,67 @@ const CompaniesComponent = () => {
 
   return (
     <>
-      <Container>
-
-        <Table className="mx-auto" hover>
+      <div className="container mx-auto">
+        <table className="table table-pin-rows">
           <thead>
             <tr>
               <th>Name</th>
-              <th>Latest Valuation Date</th>
-              <th>Latest Valuation Price</th>
+              <th>Latest Valuation</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {companies.map(c => (
+            {companies.map((c) => (
               <tr key={c.id}>
                 <td>{c.name}</td>
                 <td>
-                  <div>
-                    {c.ddmValuations.length > 0 &&
-                      new Date(c.ddmValuations[0].date).toDateString() || "-"}
+                  <div className="flex flex-row justify-start items-center select-none">
+                    {(c.ddmValuations.length > 0 && (
+                      <>
+                        <div className="w-36 flex flex-row gap-2 justify-start items-center">
+                          <CalendarIcon className="h-6 w-6" />
+                          {new Date(c.ddmValuations[0].date).toDateString()}
+                        </div>
+                        <div className="divider divider-horizontal"></div>
+                        <div className="w-24 flex flex-row gap-2 justify-start items-center">
+                          <ClipboardDocumentListIcon className="h-6 w-6" />
+                          {c.ddmValuations[0].referenceReport}
+                        </div>
+                        <div className="divider divider-horizontal"></div>
+                        <div className="flex flex-row gap-2 justify-start items-center">
+                          <CurrencyDollarIcon className="h-6 w-6" />
+                          {currencyFormatter(c.ddmValuations[0].pvStock)}
+                        </div>
+                      </>
+                    )) || <div>No valuations for this company yet.</div>}
                   </div>
                 </td>
                 <td>
-                  <div className="">
-                    {c.ddmValuations.length > 0 &&
-                      currencyFormatter(c.ddmValuations[0].pvStock) || "-"}
-                  </div>
-                </td>
-                <td>
-                  <Stack direction="horizontal" gap={2}>
-                    <Button
-                      variant="outline-dark"
-                      as="a"
-                      href={`/valuation`}
-                      className="mx-auto"
-                    >
-                      <div className="d-flex align-items-center">
-                        <CurrencyDollar className="me-1" /> Valuation
-                      </div>
-                    </Button>
-                    <Button
-                      variant="outline-dark"
-                      as="a"
+                  <div className="flex flex-row justify-start gap-4">
+                    <a className="btn btn-outline btn-sm" href={`/valuation`}>
+                      <CurrencyDollarIcon className="h-6 w-6" />
+                      Valuate
+                    </a>
+                    <a
+                      className="btn btn-outline btn-sm"
                       href={`/companies/${c.id}/diary`}
-                      className="mx-auto"
                     >
-                      <div className="d-flex align-items-center">
-                        <Newspaper className="me-1" /> Event
-                      </div>
-                    </Button>
-                    <Button
-                      variant="outline-dark"
-                      as="a"
+                      <NewspaperIcon className="h-5 w-5" />
+                      Events
+                    </a>
+                    <a
+                      className="btn btn-outline btn-sm"
                       href={`/companies/${c.id}/timeline`}
-                      className="mx-auto"
                     >
-                      <div className="d-flex align-items-center">
-                        <Calendar3Week className="me-1" /> Timeline
-                      </div>
-                    </Button>
-                  </Stack>
+                      <CalendarDaysIcon className="h-5 w-5" /> Timeline
+                    </a>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
-        </Table>
-      </Container>
+        </table>
+      </div>
     </>
   );
 };
