@@ -1,78 +1,97 @@
-import { Card, Col, Container, Form, Row } from "react-bootstrap";
 import { Editor } from "./Editor";
 import { useEffect, useState } from "react";
 import companiesAPI from "../services/companies";
 import { useForm } from "react-hook-form";
-import moment from "moment";
 import { OutputData } from "@editorjs/editorjs";
 import eventsAPI from "../services/events";
 import { Company } from "@prisma/client";
+import { useParams } from "next/navigation";
+import { format } from "date-fns";
 
 const StockEventComponent = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [blocks, setBlocks] = useState<OutputData>();
+
+  const selectedCompany = useParams().id
+    ? +useParams().id || undefined
+    : undefined;
+
   useEffect(() => {
-    companiesAPI.get().then(setCompanies);
+    companiesAPI
+      .get()
+      .then(setCompanies)
+      .then(() => {
+        resetField("companyId", { defaultValue: selectedCompany });
+      });
   }, []);
 
-  const {
-    handleSubmit,
-    register,
-    getValues,
-  } = useForm<FormData & { company: string; timelineDate: Date }>({
+  const { handleSubmit, register, resetField } = useForm<
+    FormData & { companyId: number; timelineDate: string }
+  >({
     defaultValues: {
-      timelineDate: moment().toDate(),
+      timelineDate: format(new Date(), "yyyy-MM-dd"),
     },
   });
 
-  const onSubmit = async (blocks: OutputData) => {
-    const metadata = getValues();
-    const companyId = companies.find(c => c.id == +metadata.company)!.id
+  const onSubmit = async (
+    values: FormData & {
+      companyId: number;
+      timelineDate: string;
+    }
+  ) => {
+    const { companyId, timelineDate } = values;
     await eventsAPI.post({
-      companyId: companyId,
-      date: new Date(metadata.timelineDate),
+      companyId: +companyId,
+      date: new Date(timelineDate),
       entry: blocks as object,
     });
   };
 
   return (
-    <Container>
-      <Row>
-        <div className="h2 mb-5 text-center">Write your diary entry</div>
-      </Row>
+    <div className="container mx-auto">
+      <h1 className="text-3xl font-bold text-center mb-4">Write your event</h1>
 
-      <Form onSubmit={handleSubmit((e) => console.log(e))} className="mb-5">
-        <Row>
-          <Col>
-            <Form.Select
-              aria-label="Default select example"
-              {...register("company")}
-            >
-              <option value={undefined}>Select your company...</option>
-              {companies &&
-                companies.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-            </Form.Select>
-          </Col>
-          <Col>
-            <Form.Control
-              type="date"
-              {...register("timelineDate")}
-            ></Form.Control>
-          </Col>
-        </Row>
-      </Form>
+      <div className="flex flex-row gap-4 items-start justify-between">
+        <Editor setBlocks={setBlocks} />
 
-      <Row>
-        <Card className="shadow">
-          <Card.Body>
-            <Editor onSubmit={onSubmit} />
-          </Card.Body>
-        </Card>
-      </Row>
-    </Container>
+        <form onSubmit={handleSubmit(onSubmit)} className="w-fit">
+          <div className="flex flex-col gap-4 justify-center items-end">
+            <label className="form-control w-full">
+              <div className="label pt-0">
+                <span className="label-text">Pick the date:</span>
+              </div>
+              <input
+                type="date"
+                className="select select-bordered w-full max-w-xs focus:outline-none"
+                {...register("timelineDate")}
+              />
+            </label>
+
+            <label className="form-control w-full">
+              <div className="label pt-0">
+                <span className="label-text">Pick your company:</span>
+              </div>
+              <select
+                className="select select-bordered w-full max-w-xs focus:outline-none"
+                {...register("companyId")}
+              >
+                <option value={0}>Select your company...</option>
+                {companies &&
+                  companies.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+              </select>
+            </label>
+
+            <button type="submit" className="btn btn-outline w-full">
+              Submit
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 };
 

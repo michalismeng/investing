@@ -1,30 +1,30 @@
 import type EditorJS from "@editorjs/editorjs";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import "../styles/editor.css";
-import { useForm } from "react-hook-form";
 import { OutputData } from "@editorjs/editorjs";
-import { Button } from "react-bootstrap";
 
 interface EditorProps {
   editorId?: string;
   readonly?: boolean;
   initialContent?: OutputData;
   placeholder?: string | false;
-  onSubmit?: (blocks: OutputData) => void;
+  setBlocks?: Dispatch<SetStateAction<OutputData | undefined>>;
 }
 
 export const Editor: React.FC<EditorProps> = ({
   editorId = "editorjs",
   readonly = false,
   initialContent = { blocks: [] },
-  placeholder = "Type here to write your diary entry...",
-  onSubmit = () => {},
+  placeholder = "Type here to start writing...",
+  setBlocks,
 }: EditorProps) => {
-  const { handleSubmit } = useForm<FormData & { content: string | null }>({
-    defaultValues: {
-      content: null,
-    },
-  });
   const ref = useRef<EditorJS>();
   const _titleRef = useRef<HTMLTextAreaElement>(null);
   const [isMounted, setIsMounted] = useState<boolean>(false);
@@ -42,6 +42,9 @@ export const Editor: React.FC<EditorProps> = ({
         readOnly: readonly,
         onReady() {
           ref.current = editor;
+        },
+        async onChange() {
+          setBlocks?.(await ref.current?.save());
         },
         placeholder: placeholder,
         inlineToolbar: true,
@@ -81,21 +84,9 @@ export const Editor: React.FC<EditorProps> = ({
     }
   }, [isMounted, initializeEditor]);
 
-  async function onSubmitForm() {
-    const blocks = await ref.current?.save();
-    onSubmit(blocks!);
-  }
-
   return (
-    <div style={{ height: "100%" }}>
-      <form className="w-fit" onSubmit={handleSubmit(onSubmitForm)}>
-        <div id={editorId} />
-        {readonly === false && (
-          <Button variant="dark" type="submit">
-            Submit
-          </Button>
-        )}
-      </form>
+    <div className="card shadow-lg w-5/6 p-4 ps-16 outline outline-1 outline-gray-200 min-h-16">
+      <div className="h-full w-full" id={editorId} />
     </div>
   );
 };
