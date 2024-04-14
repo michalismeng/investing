@@ -1,8 +1,8 @@
 'use client'
 
-import DiaryComponent from "../../../../components/StockEvent"
+import StockEventComponent from "../../../../components/StockEvent"
 
 export default function Page() {
-  return <DiaryComponent />
+  return <StockEventComponent />
 }
 

@@ -8,7 +8,7 @@ import { OutputData } from "@editorjs/editorjs";
 import eventsAPI from "../services/events";
 import { Company } from "@prisma/client";
 
-const DiaryComponent = () => {
+const StockEventComponent = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
   useEffect(() => {
     companiesAPI.get().then(setCompanies);
@@ -76,4 +76,4 @@ const DiaryComponent = () => {
   );
 };
 
-export default DiaryComponent;
+export default StockEventComponent;
