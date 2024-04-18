@@ -46,7 +46,7 @@ const CompaniesComponent = () => {
                           {new Date(c.ddmValuations[0].date).toDateString()}
                         </div>
                         <div className="divider divider-horizontal"></div>
-                        <div className="w-24 flex flex-row gap-2 justify-start items-center">
+                        <div className="w-28 flex flex-row gap-2 justify-start items-center">
                           <ClipboardDocumentListIcon className="h-6 w-6" />
                           {c.ddmValuations[0].referenceReport}
                         </div>

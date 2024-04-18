@@ -92,8 +92,8 @@ const DDMValuationComponent: FC<InputProps> = ({ companyId, referenceReport }: I
   };
   return (
     <>
-      <div className="container mx-auto flex flex-col">
-        <h1 className="text-3xl font-bold text-center mb-8">
+      <div className="container mx-auto flex flex-col gap-4">
+        <h1 className="text-3xl font-bold text-center mb-4">
           Dividend Discount Valuation Model
         </h1>
 
@@ -115,7 +115,6 @@ const DDMValuationComponent: FC<InputProps> = ({ companyId, referenceReport }: I
 
         {valuation && (
           <>
-            <div className="divider w-full"></div>
             <ValuationBoardComponent valuation={valuation} />
           </>
         )}
