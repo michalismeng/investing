@@ -35,7 +35,7 @@ const companiesAPI = {
     return (await resp.json()) as CompanyWithValuations;
   },
 
-  async getWithValuations(userId: number | undefined = undefined) {
+  async getWithValuations(userId: string | undefined = undefined) {
     let url = `/api/companies?include=valuations`;
     if (userId) {
       url += `&user=${userId}`;

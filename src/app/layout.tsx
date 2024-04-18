@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import SessionProvider from "../components/SessionProvider";
 import NavMenu from "../components/NavMenu";
 import Footer from "../components/Footer";
+import { authOptions } from "./api/auth/[...nextauth]/route";
 
 export const metadata: Metadata = {
   title: "Stock Research Platform",
@@ -15,7 +16,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
 
   return (
     <html lang="en" data-theme="light">

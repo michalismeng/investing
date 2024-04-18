@@ -25,6 +25,6 @@
     "forceConsistentCasingInFileNames": true,
     "incremental": true,
   },
-  "include": ["src", "./dist/types/**/*.ts", "./next-env.d.ts"],
+  "include": ["src", "./dist/types/**/*.ts", "./next-env.d.ts", "./next-auth.d.ts"],
   "exclude": ["./node_modules"]
 }

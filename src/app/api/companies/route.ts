@@ -7,7 +7,7 @@ export async function GET(request: Request) {
 
   const companies = await prisma.company.findMany({
     where: {
-      userId: user ? +user : undefined,
+      userId: user ?? undefined,
     },
     include: {
       ddmValuations: inc === "valuations",

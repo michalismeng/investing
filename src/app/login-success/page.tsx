@@ -1,23 +1,12 @@
 import { getServerSession } from "next-auth";
-import prisma from "../../lib/prisma";
 import { redirect } from 'next/navigation';
 import Link from "next/link";
+import { authOptions } from "../api/auth/[...nextauth]/route";
 
 export default async function Page() {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
 
   if (session && session.user?.email) {
-    await prisma.user.upsert({
-      where: {
-        email: session.user?.email,
-      },
-      update: {},
-      create: {
-        email: session.user?.email,
-        name: session.user?.name,
-      },
-    });
-
     return redirect("/companies")
   }
 

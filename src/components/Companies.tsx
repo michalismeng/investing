@@ -12,11 +12,11 @@ import {
 import { CalendarIcon } from "@heroicons/react/20/solid";
 
 const CompaniesComponent = () => {
-  const { data: session } = useSession();
+  const session = useSession();
   const [companies, setCompanies] = useState<CompanyWithValuations[]>([]);
   useEffect(() => {
-    if (session) {
-      companiesAPI.getWithValuations(1).then((companies) => {
+    if (session.status == "authenticated") {
+      companiesAPI.getWithValuations(session.data.userId).then((companies) => {
         setCompanies(companies);
       });
     }
