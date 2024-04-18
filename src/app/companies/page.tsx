@@ -1,5 +1,3 @@
-'use client'
-
 import CompaniesComponent from "../../components/Companies";
 
 export default function Page() {
