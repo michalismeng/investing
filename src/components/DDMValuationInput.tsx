@@ -38,8 +38,8 @@ export const DDMValuationInputForm: FC<ValuationInputProps> = ({
   });
 
   useEffect(() => {
-    setValuationInput?.(getValues())
-  }, [])
+    setValuationInput?.(getValues());
+  }, []);
 
   return (
     <div>
@@ -49,22 +49,22 @@ export const DDMValuationInputForm: FC<ValuationInputProps> = ({
             <LabelledInput
               label="EPS"
               placeholder="Enter the company's EPS..."
-              {...register("eps")}
+              {...register("eps", { valueAsNumber: true })}
             />
             <LabelledInput
               label="EPS Growth"
               placeholder="Enter the company's EPS growth rate ..."
-              {...register("epsGrowth")}
+              {...register("epsGrowth", { valueAsNumber: true })}
             />
             <LabelledInput
               label="Payout"
               placeholder="Enter the company's payout ratio ..."
-              {...register("payout")}
+              {...register("payout", { valueAsNumber: true })}
             />
             <LabelledInput
               label="Return Rate"
               placeholder="Enter the desired return rate ..."
-              {...register("returnRate")}
+              {...register("returnRate", { valueAsNumber: true })}
             />
           </div>
 
@@ -79,17 +79,17 @@ export const DDMValuationInputForm: FC<ValuationInputProps> = ({
             <LabelledInput
               label="Stable Growth"
               placeholder="Enter the company's growth rate in the stable..."
-              {...register("stableGrowth")}
+              {...register("stableGrowth", { valueAsNumber: true })}
             />
             <LabelledInput
               label="Stable Payout"
               placeholder="Enter the company's payout ratio in the stable phase ..."
-              {...register("stablePayout")}
+              {...register("stablePayout", { valueAsNumber: true })}
             />
             <LabelledInput
               label="Stable Return Rate"
               placeholder="Enter the desired return rate in the stable phase ..."
-              {...register("stableReturnRate")}
+              {...register("stableReturnRate", { valueAsNumber: true })}
             />
           </div>
         </div>
