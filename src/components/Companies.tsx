@@ -3,17 +3,18 @@ import { CompanyInTableComponent } from "./CompanyComponent";
 import prisma from "../lib/prisma";
 import { getServerSession } from "next-auth";
 import AddCompanyButtonDialog from "./AddCompanyButtonDialog";
+import { authOptions } from "../app/api/auth/[...nextauth]/route";
 
 async function CompaniesLoader() {
-  const session = await getServerSession();
-  const companies = await prisma.company.findMany({
+  const session = await getServerSession(authOptions);
+  const companies = session?.userId && await prisma.company.findMany({
     where: {
-      userId: session?.userId ?? undefined,
+      userId: session.userId,
     },
     include: {
       ddmValuations: true,
     },
-  });
+  }) || [];
   return (
     <>
       {companies.map((c) => (
