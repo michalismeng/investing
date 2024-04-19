@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { CompanyInTableComponent } from "./CompanyComponent";
 import prisma from "../lib/prisma";
 import { getServerSession } from "next-auth";
+import AddCompanyButtonDialog from "./AddCompanyButtonDialog";
 
 async function CompaniesLoader() {
   const session = await getServerSession();
@@ -37,7 +38,11 @@ function Skeleton() {
 const CompaniesComponent = () => {
   return (
     <>
-      <div className="container mx-auto">
+      <div className="container flex flex-col justify-between mx-auto">
+        <h1 className="text-3xl font-bold text-center mb-4">
+          Companies Watchlist
+        </h1>
+        <AddCompanyButtonDialog />
         <table className="table table-pin-rows">
           <thead>
             <tr>

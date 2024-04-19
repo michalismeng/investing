@@ -1,4 +1,4 @@
-import { Company } from "@prisma/client";
+import { Company, Prisma } from "@prisma/client";
 import {
   CompanyWithValuations,
   CompanyWithValuationsAndEvents,
@@ -61,6 +61,17 @@ const companiesAPI = {
     );
     return (await resp.json()) as CompanyWithValuationsAndEvents;
   },
+
+  async post(company: Prisma.CompanyUncheckedCreateInput) {
+    const resp = await fetch(`/api/companies`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(company),
+    });
+    return (await resp.json()) as Company;
+  }
 };
 
 export default companiesAPI;

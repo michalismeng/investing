@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import prisma from "../../../lib/prisma";
 
 export async function GET(request: Request) {
@@ -12,6 +13,15 @@ export async function GET(request: Request) {
     include: {
       ddmValuations: inc === "valuations",
     },
+  });
+  return Response.json(companies);
+}
+
+export async function POST(request: Request) {
+  const company = (await request.json()) as Prisma.CompanyUncheckedCreateInput;
+
+  const companies = await prisma.company.create({
+    data: company,
   });
   return Response.json(companies);
 }
