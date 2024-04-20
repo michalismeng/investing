@@ -17,13 +17,9 @@ export default function NavMenu() {
   return (
     <>
       <div className="navbar bg-base-300">
-        <div className="flex-none">
-          <button className="btn btn-square btn-ghost">
+        <div className="flex flex-1">
+          <a href="/" className="flex flex-row gap-4 items-end flex-1 font-bold text-xl align-middle">
             <img src="/icon.png"></img>
-          </button>
-        </div>
-        <div className="flex-1">
-          <a href="/" className="btn btn-ghost text-xl align-middle">
             Stock Research Platform
           </a>
         </div>
