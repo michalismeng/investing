@@ -7,7 +7,7 @@ import { currencyFormatter } from "../models/Valuation";
 import { OutputData } from "@editorjs/editorjs";
 import { CompanyWithValuationsAndEvents } from "../lib/prismaModels";
 import { format } from "date-fns";
-import { CurrencyDollarIcon, NewspaperIcon } from "@heroicons/react/24/outline";
+import { CurrencyDollarIcon, NewspaperIcon, PlusCircleIcon } from "@heroicons/react/24/outline";
 
 const TimelineComponent = ({ id }: { id: number }) => {
   const [company, setCompany] = useState<CompanyWithValuationsAndEvents | null>(
@@ -89,7 +89,19 @@ const TimelineComponent = ({ id }: { id: number }) => {
                         <div className="italic text-decoration-underline mb-2">
                           Valuation based on {t.referenceReport} numbers
                         </div>
-                        <DDMValuationInputForm defaultValuation={t} readonly={true} />
+                        <div className="collapse">
+                          <input type="checkbox" />
+                          <div className="collapse-title text-lg font-medium flex flex-row gap-2 items-center">
+                            <PlusCircleIcon className="w-6 h-6" />
+                            <div>Show valuation inputs</div>
+                          </div>
+                          <div className="collapse-content">
+                            <DDMValuationInputForm
+                              defaultValuation={t}
+                              readonly={true}
+                            />
+                          </div>
+                        </div>
                       </div>
                     ))}
                 </div>
