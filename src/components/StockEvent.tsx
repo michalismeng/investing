@@ -11,9 +11,10 @@ import { format } from "date-fns";
 const StockEventComponent = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [blocks, setBlocks] = useState<OutputData>();
+  const params = useParams();
 
-  const selectedCompany = useParams().id
-    ? +useParams().id || undefined
+  const selectedCompany = params.id
+    ? +params.id || undefined
     : undefined;
 
   useEffect(() => {

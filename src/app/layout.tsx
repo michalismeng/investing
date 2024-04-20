@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import SessionProvider from "../components/SessionProvider";
 import NavMenu from "../components/NavMenu";
 import Footer from "../components/Footer";
-import { authOptions } from "./api/auth/[...nextauth]/route";
+import { authOptions } from "../lib/nextAuthOptions";
 
 export const metadata: Metadata = {
   title: "Stock Research Platform",

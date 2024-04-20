@@ -24,10 +24,11 @@ const AddCompanyButtonDialog = () => {
   const createCompany = async () => {
     const company: Prisma.CompanyUncheckedCreateInput = {
       name: getValues("name"),
-      userId: session.data?.userId!,
+      userId: session.data?.userId ?? "undefined",
     };
 
     await companiesAPI.post(company);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (document.getElementById("add-company")! as any).close()
   };
 
@@ -36,6 +37,7 @@ const AddCompanyButtonDialog = () => {
       <button
         className="btn btn-outline ms-auto"
         onClick={() =>
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (document.getElementById("add-company")! as any).showModal()
         }
       >
