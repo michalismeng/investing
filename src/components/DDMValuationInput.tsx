@@ -5,6 +5,8 @@ import { z } from "zod";
 import LabelledInput from "./Inputs/LabelledInput";
 
 const DDMValuationInputsValidator = z.object({
+  highGrowthYears: z.coerce.number(),
+  referenceReport: z.string(),
   eps: z.coerce.number(),
   epsGrowth: z.coerce.number(),
   payout: z.coerce.number(),
@@ -18,14 +20,19 @@ const DDMValuationInputsValidator = z.object({
 export type DDMValuationInput = z.infer<typeof DDMValuationInputsValidator>;
 interface ValuationInputProps extends React.HTMLAttributes<HTMLFormElement> {
   setValuationInput?: Dispatch<SetStateAction<DDMValuationInput | undefined>>;
+  defaultValuation?: DDMValuationInput | null;
+  readonly?: boolean;
 }
 
 export const DDMValuationInputForm: FC<ValuationInputProps> = ({
   setValuationInput,
+  defaultValuation = null,
+  readonly = false,
 }) => {
   const { register, getValues } = useForm<DDMValuationInput>({
     resolver: zodResolver(DDMValuationInputsValidator),
-    defaultValues: {
+    defaultValues: defaultValuation || {
+      highGrowthYears: 10,
       eps: 2.29,
       epsGrowth: 0.0859,
       payout: 0.4716,
@@ -47,6 +54,11 @@ export const DDMValuationInputForm: FC<ValuationInputProps> = ({
       <form onChange={() => setValuationInput?.(getValues())}>
         <div className="grid grid-cols-2 w-fit gap-4">
           <div className="flex flex-col gap-4 w-fit">
+            <LabelledInput
+              label="Years"
+              placeholder="Enter the years of high growth..."
+              {...register("highGrowthYears", { valueAsNumber: true })}
+            />
             <LabelledInput
               label="EPS"
               placeholder="Enter the company's EPS..."
@@ -70,6 +82,12 @@ export const DDMValuationInputForm: FC<ValuationInputProps> = ({
           </div>
 
           <div className="flex flex-col gap-4 w-fit">
+            <LabelledInput
+              label="Report"
+              placeholder="Enter the fiscal year the numbers are based on..."
+              className="flex-grow"
+              {...register("referenceReport")}
+            />
             <LabelledInput
               type="checkbox"
               divider={false}

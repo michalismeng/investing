@@ -16,10 +16,11 @@ import valuationsAPI from "../services/valuations";
 
 interface InputProps {
   companyId?: number;
-  referenceReport?: string;
 }
 
-const DDMValuationComponent: FC<InputProps> = ({ companyId, referenceReport }: InputProps) => {
+const DDMValuationComponent: FC<InputProps> = ({
+  companyId,
+}: InputProps) => {
   const [valuation, setValuation] = useState<ValuationBoard | null>(null);
   const [valuationOutput, setValuationOutput] =
     useState<DDMValuationOutput | null>(null);
@@ -32,7 +33,7 @@ const DDMValuationComponent: FC<InputProps> = ({ companyId, referenceReport }: I
     }
     let val: ValuationBoard | null = null;
 
-    const years = 10;
+    const years = d.highGrowthYears;
     if (d.gradualAdj == false) {
       val = ddmGenerator(d.eps, d.epsGrowth, d.payout, d.returnRate, years);
     } else {
@@ -82,14 +83,16 @@ const DDMValuationComponent: FC<InputProps> = ({ companyId, referenceReport }: I
       pvStock: pvHigh + pvStable,
     });
 
+  };
+
+  const saveValuation = async (d: DDMValuationInput, output: DDMValuationOutput) => {
     await valuationsAPI.postDDM({
       companyId: companyId!,
       date: new Date(),
-      referenceReport: referenceReport || "unspecified",
       ...d,
-      pvStock: pvHigh + pvStable,
+      pvStock: output.pvStock
     });
-  };
+  }
   return (
     <>
       <div className="container mx-auto flex flex-col gap-4">
@@ -99,7 +102,7 @@ const DDMValuationComponent: FC<InputProps> = ({ companyId, referenceReport }: I
 
         <div className="flex flex-row gap-8 mb-4">
           <DDMValuationInputForm setValuationInput={setValuationInput} />
-          <div className="flex flex-col flex-grow gap-2">
+          <div className="flex flex-col flex-grow gap-4">
             <button
               type="submit"
               className="btn btn-outline"
@@ -107,17 +110,22 @@ const DDMValuationComponent: FC<InputProps> = ({ companyId, referenceReport }: I
             >
               Valuate!
             </button>
-            {valuationOutput && (
-              <ValuationResultComponent result={valuationOutput} />
+            {valuationOutput && valuationInput && (
+              <>
+                <ValuationResultComponent result={valuationOutput} />
+                <button
+                  type="submit"
+                  className="btn btn-outline mt-auto"
+                  onClick={async () => await saveValuation(valuationInput, valuationOutput)}
+                >
+                  Save Valuation
+                </button>
+              </>
             )}
           </div>
         </div>
 
-        {valuation && (
-          <>
-            <ValuationBoardComponent valuation={valuation} />
-          </>
-        )}
+        {valuation && <ValuationBoardComponent valuation={valuation} />}
       </div>
     </>
   );
