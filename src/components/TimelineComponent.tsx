@@ -89,7 +89,7 @@ const TimelineComponent = ({ id }: { id: number }) => {
                         <div className="italic text-decoration-underline mb-2">
                           Valuation based on {t.referenceReport} numbers
                         </div>
-                        <DDMValuationInputForm />
+                        <DDMValuationInputForm defaultValuation={t} readonly={true} />
                       </div>
                     ))}
                 </div>

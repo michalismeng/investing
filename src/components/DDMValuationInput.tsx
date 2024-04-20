@@ -35,6 +35,7 @@ export const DDMValuationInputForm: FC<ValuationInputProps> = ({
       stableGrowth: 0.005,
       stablePayout: 0.6667,
     },
+    disabled: readonly,
   });
 
   useEffect(() => {

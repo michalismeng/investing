@@ -9,7 +9,7 @@ export interface InputProps
 const LabelledInput = React.forwardRef<HTMLInputElement, InputProps>(
   ({ label, type = "text", divider = true, ...props }, ref) => {
     return (
-      <label className="input input-bordered flex items-center">
+      <label className="input input-bordered flex items-center select-none">
         <div className={type == "checkbox" ? "order-last ms-4" : ""}>{label}</div>
         {divider && (
           <div className="divider divider-horizontal"></div>
