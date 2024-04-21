@@ -18,7 +18,7 @@ export default function NavMenu() {
     <>
       <div className="navbar bg-base-300">
         <div className="flex flex-1">
-          <a href="/" className="flex flex-row gap-4 items-end flex-1 font-bold text-xl align-middle">
+          <a href="/" className="flex flex-row gap-4 items-end font-bold text-xl align-middle">
             <img src="/icon.png"></img>
             Stock Research Platform
           </a>
