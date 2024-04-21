@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
   app:
-    image: investing:latest
+    image: investing:${VERSION}
     ports:
     - 3000:3000
     depends_on:

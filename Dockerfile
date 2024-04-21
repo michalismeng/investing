@@ -19,11 +19,13 @@ RUN \
 
 # Rebuild the source code only when needed
 FROM base AS builder
+RUN apk update && apk add git
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Create the production env file. This is required because prisma only reads .env by default.
 ADD .env.production .env
+RUN ./version.sh
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry

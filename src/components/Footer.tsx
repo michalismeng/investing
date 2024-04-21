@@ -1,4 +1,5 @@
 import { FC } from "react";
+import { VERSION } from "../lib/version";
 
 interface FooterProps extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -7,7 +8,7 @@ const Footer: FC<FooterProps> = () => {
     <footer className="footer footer-center p-4 bg-base-300 text-base-content">
       <aside>
         <p>
-          Copyright © 2024 - All right reserved by Stock Research Platform Ltd
+          Copyright © 2024 - All right reserved by Stock Research Platform Ltd - {VERSION}
         </p>
       </aside>
     </footer>

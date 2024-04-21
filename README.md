@@ -10,7 +10,8 @@
 
 ## How to - production
 
-1. Run `docker build -t investing .`
+1. Run `export VERSION=$(git describe --tags --first-parent --dirty --match "v[0-9]*")`
+1. Run `docker build -t investing:${VERSION?} .`
 2. Run `docker compose up -d`
 
 ## Environment files
