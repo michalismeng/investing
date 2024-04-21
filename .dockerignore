@@ -1,0 +1,2 @@
+# Ignore the development env file
+.env

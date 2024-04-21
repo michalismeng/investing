@@ -1,8 +1,16 @@
+import { PrismaPlugin } from "@prisma/nextjs-monorepo-workaround-plugin"
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // If the below is uncommented, there are problem with dynamic routing and the `generateStaticParams` function
-  // output: 'export', // Outputs a Single-Page Application (SPA).
-  distDir: './dist', // Changes the build output directory to `./dist/`.
-}
- 
-export default nextConfig
+  output: "standalone",
+};
+
+export default nextConfig;
+
+export const webpack = (config, { isServer }) => {
+  if (isServer) {
+    config.plugins = [...config.plugins, new PrismaPlugin()];
+  }
+
+  return config;
+};

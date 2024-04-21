@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "next dev -p 5173",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "start:prod": "node server.js",
+    "start:migrate:prod": "npx prisma migrate deploy && npm run start:prod"
   },
   "dependencies": {
     "@editorjs/code": "^2.8.0",
@@ -37,6 +39,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@prisma/nextjs-monorepo-workaround-plugin": "^5.12.1",
     "@tailwindcss/typography": "^0.5.12",
     "@types/editorjs__header": "^2.6.0",
     "@types/node": "20.12.5",
