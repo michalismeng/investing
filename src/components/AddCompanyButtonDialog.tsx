@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import companiesAPI from "../services/companies";
 import { useSession } from "next-auth/react";
 import { Prisma } from "@prisma/client";
+import { useRouter } from "next/navigation";
 
 const CompanyInputValidator = z.object({
   name: z.string(),
@@ -16,6 +17,7 @@ const CompanyInputValidator = z.object({
 export type CompanyInput = z.infer<typeof CompanyInputValidator>;
 
 const AddCompanyButtonDialog = () => {
+  const router = useRouter();
   const session = useSession();
   const { register, getValues } = useForm<CompanyInput>({
     resolver: zodResolver(CompanyInputValidator),
@@ -30,6 +32,7 @@ const AddCompanyButtonDialog = () => {
     await companiesAPI.post(company);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (document.getElementById("add-company")! as any).close()
+    router.refresh();
   };
 
   return (
