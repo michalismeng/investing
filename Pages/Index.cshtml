@@ -93,66 +93,44 @@
             <thead>
                 <tr>
                     <th class="col-1"></th>
-                    <th class="col-1 border-end">Base</th>
-                    <th class="col-1">2024</th>
-                    <th class="col-1">2024</th>
-                    <th class="col-1">2024</th>
-                    <th class="col-1">2024</th>
-                    <th class="col-1">2024</th>
-                    <th class="col-1">2024</th>
-                    <th class="col-1">2024</th>
-                    <th class="col-1 border-start">Terminal</th>
+                    @{
+                        var ordinals = Model.Valuation.Data.Select(d => d.Ordinal).Distinct().Order();
+                        var maxOrdinal = ordinals.Max();
+                        foreach(var o in ordinals)
+                        {
+                            if(o == 0) {
+                                <th class="col-1 border-end">Base</th>
+                            } else if (o == maxOrdinal) {
+                                <th class="col-1 border-start">Terminal</th>
+                            } else {
+                                <th class="col-1">@(Model.Valuation.Date.AddYears(o).Year)</th>
+                            }
+                        }
+                    }
                 </tr>
             </thead>
             <tbody class="text-nowrap">
-                <tr>
-                    <th class="text-start">Growth</th>
-                    <td class="cell-hover border-end">5</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover border-start">10</td>
-                </tr>
-                <tr>
-                    <th class="text-start">Cost of Equity</th>
-                    <td class="cell-hover border-end">5</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover border-start">10</td>
-                </tr>
-                <tr>
-                    <th class="text-start">Dividends Per Share</th>
-                    <td class="cell-hover border-end">5</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover border-start">10</td>
-                </tr>
-                <tr>
-                    <th class="text-start">Value</th>
-                    <td class="cell-hover border-end">5</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover">10</td>
-                    <td class="cell-hover border-start">10</td>
-                </tr>
+                @{
+                    var descriptors = Model.Valuation.Data.Select(d => d.Characteristic)
+                                                          .Distinct()
+                                                          .Order()
+                                                          .Select(d => ValuationDescriptors.DDMValuationDescriptors.Single(dd => dd.Characteristic == d));
+                }
+                @foreach (var desc in descriptors)
+                {
+                    <tr>
+                        <th class="text-start">@desc.Characteristic</th>
+                        @{
+                            var ordinalMax = Model.Valuation.Data.Where(d => d.Characteristic == desc.Characteristic).Max(d => d.Ordinal);
+                        }
+                        @foreach (var data in Model.Valuation.Data.Where(d => d.Characteristic == desc.Characteristic).OrderBy(d => d.Ordinal))
+                        {
+                            <td
+                                class="cell-hover @(data.Ordinal == ordinalMax ? "border-start" : "") @(data.Ordinal == 0 ? "border-end" : "")">
+                                @data.Value</td>
+                        }
+                    </tr>
+                }
             </tbody>
         </table>
     </div>
