@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE `DDMValuation` ADD COLUMN `highGrowthYears` INTEGER NOT NULL DEFAULT 10;
