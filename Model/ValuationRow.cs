@@ -50,6 +50,26 @@ public class Valuation
     public List<ValuationData> Data { get; set; } = [];
 }
 
+public class DDMValuationInput
+{
+    public int Id { get; set; }
+
+    public int? ValuationId { get; set; }
+
+    public decimal BaseEPS { get; set; }
+    public bool GraduallyAdjust { get; set; }
+
+    public decimal EpsGrowth { get; set; }
+    public decimal PayoutRatio { get; set; }
+    public decimal ReturnRate { get; set; }
+
+    public int GrowthYears { get; set; }
+
+    public decimal StableEPSGrowth { get; set; }
+    public decimal StablePayoutRatio { get; set; }
+    public decimal StableReturnRate { get; set; }
+}
+
 public static class ValuationExtensions
 {
     public static Valuation CalculateEarningsPerShare(this Valuation valuation, decimal baseEPS)
@@ -108,7 +128,7 @@ public static class ValuationExtensions
         return valuation;
     }
 
-    public static IEnumerable<ValuationData> ToValuationData(this IEnumerable<decimal> values, ValuationCharacteristic characteristic, int valuationId) =>
+    public static IEnumerable<ValuationData> ToValuationData(this IEnumerable<decimal> values, ValuationCharacteristic characteristic, int valuationId = 0) =>
         values.Select((v, i) => new ValuationData()
         {
             Characteristic = characteristic,
