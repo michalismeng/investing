@@ -41,20 +41,25 @@ public class IndexModel : PageModel
         };
     }
 
-    public async Task<IActionResult> OnPostPerformValuationAsync(string report)
+    public async Task<IActionResult> OnPostPerformValuationAsync(string report = "")
     {
         var data = new List<ValuationData>();
+        var lerpSteps = ValuationInput.GraduallyAdjust ? ValuationInput.GrowthYears / 2 : 0;
+        var stableSteps = ValuationInput.GrowthYears - lerpSteps;
         data.AddRange([
-            ..Enumerable.Range(1, ValuationInput.GrowthYears)
-                        .Select(_ => ValuationInput.EpsGrowth / 100)
-                        .ToValuationData(ValuationCharacteristic.ExpectedGrowthRate),
-            ..Enumerable.Range(1, ValuationInput.GrowthYears)
-                        .Select(_ => ValuationInput.PayoutRatio / 100)
-                        .ToValuationData(ValuationCharacteristic.PayoutRatio),
-            ..Enumerable.Range(1, ValuationInput.GrowthYears)
-                        .Select(_ => ValuationInput.ReturnRate / 100)
-                        .ToValuationData(ValuationCharacteristic.CostOfEquity)
+            ..((decimal[])[..(ValuationInput.EpsGrowth / 100).Stable(stableSteps),
+                           ..(ValuationInput.EpsGrowth / 100, ValuationInput.StableEPSGrowth / 100).Lerp(lerpSteps)])
+                .ToValuationData(ValuationCharacteristic.ExpectedGrowthRate),
+
+            ..((decimal[])[..(ValuationInput.PayoutRatio / 100).Stable(stableSteps),
+                           ..(ValuationInput.PayoutRatio / 100, ValuationInput.StablePayoutRatio / 100).Lerp(lerpSteps)])
+                .ToValuationData(ValuationCharacteristic.PayoutRatio),
+
+            ..((decimal[])[..(ValuationInput.ReturnRate / 100).Stable(stableSteps),
+                           ..(ValuationInput.ReturnRate / 100, ValuationInput.StableReturnRate / 100).Lerp(lerpSteps)])
+                .ToValuationData(ValuationCharacteristic.CostOfEquity),
         ]);
+
 
         Valuation = new Valuation()
         {

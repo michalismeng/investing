@@ -136,6 +136,15 @@ public static class ValuationExtensions
             Value = v,
             ValuationId = valuationId,
         });
+
+    public static IEnumerable<decimal> Stable(this decimal value, int steps) =>
+        Enumerable.Range(1, steps).Select(_ => value);
+
+    public static IEnumerable<decimal> Lerp(this decimal start, decimal end, int steps) =>
+        Enumerable.Range(1, steps).Select(s => start - (start - end) / steps * s);
+    
+    public static IEnumerable<decimal> Lerp(this (decimal start, decimal end) x, int steps) =>
+        x.start.Lerp(x.end, steps);
 }
 
 public static class Initializer
