@@ -20,5 +20,9 @@ public class IndexModel : PageModel
     public void OnGet()
     {
         Valuation = context.Valuations.Include(v => v.Data).First();
+        Valuation.CalculateEarningsPerShare(2.29M)
+                 .CalculateDividendsPerShare()
+                 .CalculateCumulativeCostOfEquity()
+                 .CalculatePresentValue(ValuationCharacteristic.DividendsPerShare);
     }
 }

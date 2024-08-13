@@ -98,9 +98,7 @@
                         var maxOrdinal = ordinals.Max();
                         foreach(var o in ordinals)
                         {
-                            if(o == 0) {
-                                <th class="col-1 border-end">Base</th>
-                            } else if (o == maxOrdinal) {
+                            if (o == maxOrdinal) {
                                 <th class="col-1 border-start">Terminal</th>
                             } else {
                                 <th class="col-1">@(Model.Valuation.Date.AddYears(o).Year)</th>
@@ -114,7 +112,7 @@
                     var descriptors = Model.Valuation.Data.Select(d => d.Characteristic)
                                                           .Distinct()
                                                           .Order()
-                                                          .Select(d => ValuationDescriptors.DDMValuationDescriptors.Single(dd => dd.Characteristic == d));
+                                                          .Select(d => ValuationDescriptors.DDMValuationDescriptors.SingleOrDefault(dd => dd.Characteristic == d));
                 }
                 @foreach (var desc in descriptors)
                 {
@@ -126,8 +124,20 @@
                         @foreach (var data in Model.Valuation.Data.Where(d => d.Characteristic == desc.Characteristic).OrderBy(d => d.Ordinal))
                         {
                             <td
-                                class="cell-hover @(data.Ordinal == ordinalMax ? "border-start" : "") @(data.Ordinal == 0 ? "border-end" : "")">
-                                @data.Value</td>
+                                class="cell-hover @(data.Ordinal == ordinalMax ? "border-start" : "")">
+                                @if(desc.DisplayFormat == DisplayFormat.Currency)
+                                {
+                                    @data.Value.ToString("C2")
+                                }
+                                else if(desc.DisplayFormat == DisplayFormat.Percent)
+                                {
+                                    @data.Value.ToString("P2")
+                                }
+                                else
+                                {
+                                    @data.Value
+                                }
+                            </td>
                         }
                     </tr>
                 }

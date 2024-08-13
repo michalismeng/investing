@@ -18,5 +18,9 @@ public class ApplicationDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelbuilder)
     {
         base.OnModelCreating(modelbuilder);
+        
+        modelbuilder.Entity<ValuationData>()
+           .Property(t => t.Value)
+           .HasPrecision(19, 4);
     }
 }
