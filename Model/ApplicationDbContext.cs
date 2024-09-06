@@ -7,6 +7,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<ValuationData> ValuationData { get; set; }
     public DbSet<DDMValuationInput> DDMValuationInputs { get; set; }
     public DbSet<Valuation> Valuations { get; set; }
+    public DbSet<Company> Companies { get; set; }
 
     public ApplicationDbContext()
     {
@@ -31,6 +32,11 @@ public class ApplicationDbContext : DbContext
         modelbuilder.Entity<Valuation>()
             .HasOne(v => v.ValuationInput)
             .WithOne(t => t.Valuation);
+
+        modelbuilder.Entity<Valuation>()
+            .HasOne(v => v.Company)
+            .WithMany(t => t.Valuations)
+            .OnDelete(DeleteBehavior.Cascade);
 
         modelbuilder.Entity<DDMValuationInput>()
            .Property(t => t.BaseEPS)

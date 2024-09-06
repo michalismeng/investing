@@ -1,0 +1,124 @@
+@page "{id?}"
+@model ValuationModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<div class="d-flex flex-column justify-content-between gap-4">
+
+    <h1 class="text-center">Dividend Discount Model</h1>
+
+    <form method="post" class="d-flex flex-column gap-4">
+        <div class="d-flex justify-content-between gap-4">
+            <div class="card">
+                <div class="card-header">
+                    <div class="text-center fw-bold">Base Assumptions</div>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-column justify-content-around h-100">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-white">Growth Years</span>
+                            <input type="number" class="form-control" placeholder="10"
+                                asp-for="ValuationInput.GrowthYears">
+                        </div>
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-white">Dividend WHT</span>
+                            <input type="number" class="form-control" placeholder="0"
+                                asp-for="ValuationInput.DividendWitholdingTax">
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-white">Report</span>
+                            <input type="text" class="form-control" placeholder="FY24Q2" name="Report">
+                        </div>
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-white">Base EPS</span>
+                            <input type="number" step="any" class="form-control" placeholder="2.29"
+                                asp-for="ValuationInput.BaseEPS">
+                            <span class="input-group-text">$</span>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" asp-for="ValuationInput.GraduallyAdjust">
+                            <label class="form-check-label">
+                                Gradually adjust values to stable phase
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="text-center fw-bold">Growth Assumptions</div>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-column justify-content-around h-100">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-white">EPS Growth</span>
+                            <input type="text" class="form-control text-end" placeholder="8.59"
+                                asp-for="ValuationInput.EpsGrowth">
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-white">Payout</span>
+                            <input type="text" class="form-control text-end" placeholder="47.16"
+                                asp-for="ValuationInput.PayoutRatio">
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-white">Return Rate</span>
+                            <input type="text" class="form-control text-end" placeholder="5.1"
+                                asp-for="ValuationInput.ReturnRate">
+                            <span class="input-group-text">%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="text-center fw-bold">Stable Assumptions</div>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-column justify-content-around h-100">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-white">EPS Growth</span>
+                            <input type="number" step="any" class="form-control" placeholder="0.5"
+                                asp-for="ValuationInput.StableEPSGrowth">
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-white">Payout</span>
+                            <input type="number" step="any" class="form-control" placeholder="66.67"
+                                asp-for="ValuationInput.StablePayoutRatio">
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-white">Return Rate</span>
+                            <input type="number" step="any" class="form-control" placeholder="9"
+                                asp-for="ValuationInput.StableReturnRate">
+                            <span class="input-group-text">%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @Html.AntiForgeryToken()
+
+        @if(Model.ReadOnly == false)
+        {
+            <div class="d-flex gap-4 w-100 justify-content-between">
+                <button class="btn btn-outline-dark" hx-post hx-page-handler="PerformValuation" hx-target="#valuation-details">Valuate</button>
+                <button class="btn btn-outline-dark" type="submit">Save Valuation</button>
+            </div>
+        }
+    </form>
+
+    <div id="valuation-details">
+        @if(Model.Valuation != null)
+        {
+            <partial name="_ValuationDetails" model="@Model.Valuation" />
+        }
+    </div>
+</div>

@@ -36,6 +36,13 @@ public static class ValuationDescriptors
     ];
 }
 
+public class Company
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public List<Valuation> Valuations { get; set; }
+}
+
 public class ValuationData
 {
     public int Id { get; set; }
@@ -49,6 +56,7 @@ public class ValuationData
 public class Valuation
 {
     public int Id { get; set; }
+    public int CompanyId { get; set; }
     public DateTimeOffset Date { get; set; }
     public string Report { get; set; } = "N/A";
     public List<ValuationData> Data { get; set; } = [];
@@ -56,6 +64,7 @@ public class Valuation
     public decimal IntrinsicValue { get; set; }
 
     public DDMValuationInput ValuationInput { get; set; }
+    public Company Company { get; set; }
 }
 
 public class DDMValuationInput
