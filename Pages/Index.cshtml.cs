@@ -16,6 +16,8 @@ public class IndexModel : PageModel
     }
 
     public Valuation? Valuation { get; set; } = null;
+    public decimal Terminal { get; set; } = 0;
+    public bool ReadOnly { get; set; } = false;
 
     [BindProperty]
     public DDMValuationInput ValuationInput { get; set; }
@@ -26,6 +28,7 @@ public class IndexModel : PageModel
         {
             Valuation = await context.Valuations.Include(v => v.Data)
                                                 .SingleAsync(v => v.Id == id);
+            ReadOnly = true;
         }
 
         ValuationInput = new DDMValuationInput()
@@ -41,41 +44,66 @@ public class IndexModel : PageModel
         };
     }
 
-    public async Task<IActionResult> OnPostPerformValuationAsync(string report = "")
+    public async Task<IActionResult> OnPostAsync(string report="")
     {
-        var data = new List<ValuationData>();
-        var lerpSteps = ValuationInput.GraduallyAdjust ? ValuationInput.GrowthYears / 2 : 0;
-        var stableSteps = ValuationInput.GrowthYears - lerpSteps;
-        data.AddRange([
-            ..((decimal[])[..(ValuationInput.EpsGrowth / 100).Stable(stableSteps),
-                           ..(ValuationInput.EpsGrowth / 100, ValuationInput.StableEPSGrowth / 100).Lerp(lerpSteps)])
-                .ToValuationData(ValuationCharacteristic.ExpectedGrowthRate),
-
-            ..((decimal[])[..(ValuationInput.PayoutRatio / 100).Stable(stableSteps),
-                           ..(ValuationInput.PayoutRatio / 100, ValuationInput.StablePayoutRatio / 100).Lerp(lerpSteps)])
-                .ToValuationData(ValuationCharacteristic.PayoutRatio),
-
-            ..((decimal[])[..(ValuationInput.ReturnRate / 100).Stable(stableSteps),
-                           ..(ValuationInput.ReturnRate / 100, ValuationInput.StableReturnRate / 100).Lerp(lerpSteps)])
-                .ToValuationData(ValuationCharacteristic.CostOfEquity),
-        ]);
-
-
         Valuation = new Valuation()
         {
-            Data = data,
             Date = DateTimeOffset.Now,
             Report = report,
         };
 
+        var lerpSteps = ValuationInput.GraduallyAdjust ? ValuationInput.GrowthYears / 2 : 0;
+        var stableSteps = ValuationInput.GrowthYears - lerpSteps;
+
+        Valuation.InitializeEPSGrowthData(ValuationInput.EpsGrowth, ValuationInput.StableEPSGrowth, stableSteps, lerpSteps);
+        Valuation.InitializePayoutRatioData(ValuationInput.PayoutRatio, ValuationInput.StablePayoutRatio, stableSteps, lerpSteps);
+        Valuation.InitializeReturnRateData(ValuationInput.ReturnRate, ValuationInput.StableReturnRate, stableSteps, lerpSteps);
+
         Valuation.CalculateEarningsPerShare(ValuationInput.BaseEPS)
                  .CalculateDividendsPerShare()
+                 .ApplyWithholdingTax(ValuationInput.DividendWitholdingTax / 100)
                  .CalculateCumulativeCostOfEquity()
-                 .CalculatePresentValue(ValuationCharacteristic.DividendsPerShare);
+                 .CalculatePresentValue(ValuationCharacteristic.NetDividendsPerShare);
 
         context.Valuations.Add(Valuation);
         await context.SaveChangesAsync();
 
         return RedirectToPage("Index", new { id = Valuation.Id });
+    }
+
+    public IActionResult OnPostPerformValuationAsync(string report = "")
+    {
+        Valuation = new Valuation()
+        {
+            Date = DateTimeOffset.Now,
+            Report = report,
+        };
+
+        var lerpSteps = ValuationInput.GraduallyAdjust ? ValuationInput.GrowthYears / 2 : 0;
+        var stableSteps = ValuationInput.GrowthYears - lerpSteps;
+
+        Valuation.InitializeEPSGrowthData(ValuationInput.EpsGrowth / 100, ValuationInput.StableEPSGrowth / 100, stableSteps, lerpSteps);
+        Valuation.InitializePayoutRatioData(ValuationInput.PayoutRatio / 100, ValuationInput.StablePayoutRatio / 100, stableSteps, lerpSteps);
+        Valuation.InitializeReturnRateData(ValuationInput.ReturnRate / 100, ValuationInput.StableReturnRate / 100, stableSteps, lerpSteps);
+
+        Valuation.CalculateEarningsPerShare(ValuationInput.BaseEPS)
+                 .CalculateDividendsPerShare()
+                 .ApplyWithholdingTax(ValuationInput.DividendWitholdingTax / 100)
+                 .CalculateCumulativeCostOfEquity()
+                 .CalculatePresentValue(ValuationCharacteristic.NetDividendsPerShare);
+
+        var latestEPS = Valuation.Data.Where(d => d.Characteristic == ValuationCharacteristic.EarningsPerShare)
+                                      .MaxBy(d => d.Ordinal);
+        var latestCCOE = Valuation.Data.Where(d => d.Characteristic == ValuationCharacteristic.CumulativeCostOfEquity)
+                                       .MaxBy(d => d.Ordinal);
+        var firstPart = latestEPS!.Value * (1 + ValuationInput.StableEPSGrowth / 100) * ValuationInput.StablePayoutRatio * (1 - ValuationInput.DividendWitholdingTax / 100) / 100;
+        var terminalValue = firstPart / (ValuationInput.StableReturnRate / 100 - ValuationInput.StableEPSGrowth / 100);
+        var terminalValuePV = terminalValue / latestCCOE!.Value;
+
+        Valuation.TerminalValuePV = terminalValuePV;
+        Valuation.IntrinsicValue = terminalValuePV + Valuation.Data.Where(d => d.Characteristic == ValuationCharacteristic.PresentValue)
+                                                                   .Sum(d => d.Value);
+
+        return Partial("_ValuationDetails", Valuation);
     }
 }

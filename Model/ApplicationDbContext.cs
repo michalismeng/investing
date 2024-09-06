@@ -19,6 +19,14 @@ public class ApplicationDbContext : DbContext
     {
         base.OnModelCreating(modelbuilder);
         
+        modelbuilder.Entity<Valuation>()
+           .Property(t => t.TerminalValuePV)
+           .HasPrecision(19, 4);
+
+        modelbuilder.Entity<Valuation>()
+           .Property(t => t.IntrinsicValue)
+           .HasPrecision(19, 4);
+
         modelbuilder.Entity<ValuationData>()
            .Property(t => t.Value)
            .HasPrecision(19, 4);

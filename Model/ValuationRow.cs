@@ -1,9 +1,12 @@
+using System.Text.RegularExpressions;
+
 public enum ValuationCharacteristic
 {
     ExpectedGrowthRate,
     EarningsPerShare,
     PayoutRatio,
     DividendsPerShare,
+    NetDividendsPerShare,
     CostOfEquity,
     CumulativeCostOfEquity,
     PresentValue,
@@ -26,6 +29,7 @@ public static class ValuationDescriptors
         new(ValuationCharacteristic.EarningsPerShare, DisplayFormat.Currency),
         new(ValuationCharacteristic.PayoutRatio, DisplayFormat.Percent),
         new(ValuationCharacteristic.DividendsPerShare, DisplayFormat.Currency),
+        new(ValuationCharacteristic.NetDividendsPerShare, DisplayFormat.Currency),
         new(ValuationCharacteristic.CostOfEquity, DisplayFormat.Percent),
         new(ValuationCharacteristic.CumulativeCostOfEquity, DisplayFormat.Percent),
         new(ValuationCharacteristic.PresentValue, DisplayFormat.Currency),
@@ -48,6 +52,8 @@ public class Valuation
     public DateTimeOffset Date { get; set; }
     public string Report { get; set; } = "N/A";
     public List<ValuationData> Data { get; set; } = [];
+    public decimal TerminalValuePV { get; set; }
+    public decimal IntrinsicValue { get; set; }
 }
 
 public class DDMValuationInput
@@ -55,6 +61,7 @@ public class DDMValuationInput
     public int Id { get; set; }
 
     public int? ValuationId { get; set; }
+    public decimal DividendWitholdingTax { get; set; }
 
     public decimal BaseEPS { get; set; }
     public bool GraduallyAdjust { get; set; }
@@ -70,8 +77,44 @@ public class DDMValuationInput
     public decimal StableReturnRate { get; set; }
 }
 
+public static class CharacteristicExtensions
+{
+    public static string ToFriendly(this ValuationCharacteristic characteristic) =>
+        string.Join(" ", Regex.Split(characteristic.ToString(), @"(?<!^)(?=[A-Z])"));
+}
+
 public static class ValuationExtensions
 {
+    public static Valuation InitializePayoutRatioData(this Valuation valuation, decimal payout, decimal payoutStable, int stableSteps, int lerpSteps)
+    {
+        valuation.Data.AddRange([
+            ..((decimal[])[..payout.Stable(stableSteps),
+                           ..(payout, payoutStable).Lerp(lerpSteps)])
+                .ToValuationData(ValuationCharacteristic.PayoutRatio, valuation.Id),
+        ]);
+        return valuation;
+    }
+
+    public static Valuation InitializeReturnRateData(this Valuation valuation, decimal returnRate, decimal stableReturnRate, int stableSteps, int lerpSteps)
+    {
+        valuation.Data.AddRange([
+            ..((decimal[])[..returnRate.Stable(stableSteps),
+                           ..(returnRate, stableReturnRate).Lerp(lerpSteps)])
+                .ToValuationData(ValuationCharacteristic.CostOfEquity, valuation.Id),
+        ]);
+        return valuation;
+    }
+
+    public static Valuation InitializeEPSGrowthData(this Valuation valuation, decimal epsGrowth, decimal stableEpsGrowth, int stableSteps, int lerpSteps)
+    {
+        valuation.Data.AddRange([
+            ..((decimal[])[..epsGrowth.Stable(stableSteps),
+                           ..(epsGrowth, stableEpsGrowth).Lerp(lerpSteps)])
+                .ToValuationData(ValuationCharacteristic.ExpectedGrowthRate, valuation.Id),
+        ]);
+        return valuation;
+    }
+
     public static Valuation CalculateEarningsPerShare(this Valuation valuation, decimal baseEPS)
     {
         var data = valuation.Data;
@@ -79,7 +122,7 @@ public static class ValuationExtensions
 
         var eps = growthRates.Aggregate(new List<decimal>() { baseEPS }, (acc, g) => [..acc, acc.Last() * (1 + g.Value)])
                              .Skip(1)
-                             .ToValuationData(ValuationCharacteristic.EarningsPerShare, growthRates.First().ValuationId)
+                             .ToValuationData(ValuationCharacteristic.EarningsPerShare, valuation.Id)
                              .ToList();
 
         data.AddRange(eps);
@@ -94,9 +137,20 @@ public static class ValuationExtensions
 
         var dps = eps.OrderBy(v => v.Ordinal).Zip(payoutRatios.OrderBy(v => v.Ordinal))
                      .Select(x => x.First.Value * x.Second.Value)
-                     .ToValuationData(ValuationCharacteristic.DividendsPerShare, eps.First().ValuationId).ToList();
+                     .ToValuationData(ValuationCharacteristic.DividendsPerShare, valuation.Id).ToList();
 
         data.AddRange(dps);
+        return valuation;
+    }
+
+    public static Valuation ApplyWithholdingTax(this Valuation valuation, decimal withholdingTax)
+    {
+        var data = valuation.Data;
+        var dividends = data.Where(d => d.Characteristic == ValuationCharacteristic.DividendsPerShare);
+        var netDividends = dividends.Select(d => d.Value * (1 - withholdingTax))
+                                    .ToValuationData(ValuationCharacteristic.NetDividendsPerShare, valuation.Id)
+                                    .ToList();
+        data.AddRange(netDividends);
         return valuation;
     }
 
@@ -107,7 +161,7 @@ public static class ValuationExtensions
 
         var ccoe = costOfEquity.Aggregate(new List<decimal>() { 1 }, (acc, g) => [..acc, acc.Last() * (1 + g.Value)])
                                .Skip(1)
-                               .ToValuationData(ValuationCharacteristic.CumulativeCostOfEquity, costOfEquity.First().ValuationId)
+                               .ToValuationData(ValuationCharacteristic.CumulativeCostOfEquity, valuation.Id)
                                .ToList();
 
         data.AddRange(ccoe);
@@ -122,11 +176,15 @@ public static class ValuationExtensions
 
         var pvs = cashflow.OrderBy(c => c.Ordinal).Zip(ccoe.OrderBy(v => v.Ordinal))
                           .Select(x => x.First.Value / x.Second.Value)
-                          .ToValuationData(ValuationCharacteristic.PresentValue, ccoe.First().ValuationId)
+                          .ToValuationData(ValuationCharacteristic.PresentValue, valuation.Id)
                           .ToList();
         data.AddRange(pvs);
         return valuation;
     }
+
+    // public static Valuation CalculateDDMTerminalValue(this Valuation valuation, decimal dividentWHT)
+    // {
+    // }
 
     public static IEnumerable<ValuationData> ToValuationData(this IEnumerable<decimal> values, ValuationCharacteristic characteristic, int valuationId = 0) =>
         values.Select((v, i) => new ValuationData()

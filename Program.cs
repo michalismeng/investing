@@ -25,7 +25,7 @@ using (var scope = app.Services.CreateScope())
     var configuration = app.Configuration;
 
     var context = services.GetRequiredService<ApplicationDbContext>();
-    Initializer.Initialize(context);
+    // Initializer.Initialize(context);
 }
 
 app.UseHttpsRedirection();

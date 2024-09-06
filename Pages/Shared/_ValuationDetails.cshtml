@@ -1,0 +1,73 @@
+@model Valuation
+
+<div class="d-flex justify-content-center w-100">
+    <table class="table table-sm text-center">
+        <thead>
+            <tr>
+                <th class="col-1"></th>
+                @{
+                    var ordinals = Model.Data.Select(d => d.Ordinal).Distinct().Order();
+                    foreach (var o in ordinals)
+                    {
+                        <th class="col-1">@(Model.Date.AddYears(o).Year)</th>
+                    }
+                }
+            </tr>
+        </thead>
+        <tbody class="text-nowrap">
+            @{
+                var descriptors = Model.Data.Select(d => d.Characteristic)
+                .Distinct()
+                .Order()
+                .Select(d => ValuationDescriptors.DDMValuationDescriptors.SingleOrDefault(dd => dd.Characteristic == d));
+            }
+            @foreach (var desc in descriptors)
+            {
+                <tr>
+                    <th class="text-start">@desc!.Characteristic.ToFriendly()</th>
+                    @foreach (var data in Model.Data.Where(d => d.Characteristic ==
+                   desc.Characteristic).OrderBy(d => d.Ordinal))
+                    {
+                        <td class="cell-hover">
+                            @if (desc.DisplayFormat == DisplayFormat.Currency)
+                            {
+                                @data.Value.ToString("C2")
+                            }
+                            else if (desc.DisplayFormat == DisplayFormat.Percent)
+                            {
+                                @data.Value.ToString("P2")
+                            }
+                            else
+                            {
+                                @data.Value
+                            }
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="d-flex justify-content-center w-100">
+    <div class="card">
+        <div class="card-header">
+            <div class="text-center fw-bold">Valuation Result</div>
+        </div>
+        <div class="card-body mx-4">
+            <table class="table table-sm">
+                <tbody>
+                    <tr>
+                        <th>Terminal Value</th>
+                        <td>@Model.TerminalValuePV.ToString("C2")</td>
+                    </tr>
+                    <tr>
+                        <th>Intrinsic Value</th>
+                        <td>@Model.IntrinsicValue.ToString("C2")</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>

@@ -8,7 +8,7 @@
 
     <h1 class="text-center">Dividend Discount Model</h1>
 
-    <form method="post" asp-page-handler="PerformValuation" class="d-flex flex-column gap-4">
+    <form method="post" class="d-flex flex-column gap-4">
         <div class="d-flex justify-content-between gap-4">
             <div class="card">
                 <div class="card-header">
@@ -22,9 +22,14 @@
                                 asp-for="ValuationInput.GrowthYears">
                         </div>
                         <div class="input-group mb-3">
+                            <span class="input-group-text bg-white">Dividend WHT</span>
+                            <input type="number" class="form-control" placeholder="0"
+                                asp-for="ValuationInput.DividendWitholdingTax">
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <div class="input-group mb-3">
                             <span class="input-group-text bg-white">Report</span>
                             <input type="text" class="form-control" placeholder="FY24Q2" name="Report">
-                            <span class="input-group-text">%</span>
                         </div>
                         <div class="input-group mb-3">
                             <span class="input-group-text bg-white">Base EPS</span>
@@ -50,19 +55,19 @@
                     <div class="d-flex flex-column justify-content-around h-100">
                         <div class="input-group mb-3">
                             <span class="input-group-text bg-white">EPS Growth</span>
-                            <input type="number" step="any" class="form-control" placeholder="8.59"
+                            <input type="text" class="form-control text-end" placeholder="8.59"
                                 asp-for="ValuationInput.EpsGrowth">
                             <span class="input-group-text">%</span>
                         </div>
                         <div class="input-group mb-3">
                             <span class="input-group-text bg-white">Payout</span>
-                            <input type="number" step="any" class="form-control" placeholder="47.16"
+                            <input type="text" class="form-control text-end" placeholder="47.16"
                                 asp-for="ValuationInput.PayoutRatio">
                             <span class="input-group-text">%</span>
                         </div>
                         <div class="input-group mb-3">
                             <span class="input-group-text bg-white">Return Rate</span>
-                            <input type="number" step="any" class="form-control" placeholder="5.1"
+                            <input type="text" class="form-control text-end" placeholder="5.1"
                                 asp-for="ValuationInput.ReturnRate">
                             <span class="input-group-text">%</span>
                         </div>
@@ -99,95 +104,21 @@
             </div>
         </div>
 
-        <button type="submit" class="btn btn-outline-dark">Valuate</button>
+        @Html.AntiForgeryToken()
+
+        @if(Model.ReadOnly == false)
+        {
+            <div class="d-flex gap-4 w-100 justify-content-between">
+                <button class="btn btn-outline-dark" hx-post hx-page-handler="PerformValuation" hx-target="#valuation-details">Valuate</button>
+                <button class="btn btn-outline-dark" type="submit">Save Valuation</button>
+            </div>
+        }
     </form>
 
-
-    @if (Model.Valuation != null)
-    {
-
-        <div class="d-flex justify-content-center w-100">
-
-            <table class="table table-sm text-center">
-                <thead>
-                    <tr>
-                        <th class="col-1"></th>
-                        @{
-                            var ordinals = Model.Valuation.Data.Select(d => d.Ordinal).Distinct().Order();
-                            foreach (var o in ordinals)
-                            {
-                                <th class="col-1">@(Model.Valuation.Date.AddYears(o).Year)</th>
-                            }
-                            <th class="col-1 border-start">Terminal</th>
-                        }
-                    </tr>
-                </thead>
-                <tbody class="text-nowrap">
-                    @{
-                        var descriptors = Model.Valuation.Data.Select(d => d.Characteristic)
-                        .Distinct()
-                        .Order()
-                        .Select(d => ValuationDescriptors.DDMValuationDescriptors.SingleOrDefault(dd => dd.Characteristic ==
-                        d));
-                    }
-                    @foreach (var desc in descriptors)
-                    {
-                        <tr>
-                            <th class="text-start">@desc.Characteristic</th>
-                            @{
-                                var ordinalMax = Model.Valuation.Data.Where(d => d.Characteristic == desc.Characteristic).Max(d =>
-                                d.Ordinal);
-                            }
-                            @foreach (var data in Model.Valuation.Data.Where(d => d.Characteristic ==
-                           desc.Characteristic).OrderBy(d => d.Ordinal))
-                            {
-                                <td class="cell-hover @(data.Ordinal == ordinalMax ? "border-start" : "")">
-                                    @if (desc.DisplayFormat == DisplayFormat.Currency)
-                                    {
-                                        @data.Value.ToString("C2")
-                                    }
-                                    else if (desc.DisplayFormat == DisplayFormat.Percent)
-                                    {
-                                        @data.Value.ToString("P2")
-                                    }
-                                    else
-                                    {
-                                        @data.Value
-                                    }
-                                </td>
-                            }
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    }
-
-    <div class="d-flex justify-content-center w-100">
-        <div class="card">
-            <div class="card-header">
-                <div class="text-center fw-bold">Valuation Result</div>
-            </div>
-            <div class="card-body mx-4">
-                <table class="table table-sm">
-                    <tbody>
-                        <tr>
-                            <th>Fair Value</th>
-                            <td>10</td>
-                        </tr>
-                        <tr>
-                            <th>Value in place</th>
-                            <td>20</td>
-                        </tr>
-                        <tr>
-                            <th>Value of Growth</th>
-                            <td>20</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
+    <div id="valuation-details">
+        @if(Model.Valuation != null)
+        {
+            <partial name="_ValuationDetails" model="@Model.Valuation" />
+        }
     </div>
-
 </div>
