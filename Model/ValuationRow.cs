@@ -54,6 +54,8 @@ public class Valuation
     public List<ValuationData> Data { get; set; } = [];
     public decimal TerminalValuePV { get; set; }
     public decimal IntrinsicValue { get; set; }
+
+    public DDMValuationInput ValuationInput { get; set; }
 }
 
 public class DDMValuationInput
@@ -61,6 +63,8 @@ public class DDMValuationInput
     public int Id { get; set; }
 
     public int? ValuationId { get; set; }
+    public Valuation? Valuation { get; set; }
+
     public decimal DividendWitholdingTax { get; set; }
 
     public decimal BaseEPS { get; set; }

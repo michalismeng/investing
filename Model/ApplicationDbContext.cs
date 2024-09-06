@@ -5,6 +5,7 @@ using System.Collections.Generic;
 public class ApplicationDbContext : DbContext
 {
     public DbSet<ValuationData> ValuationData { get; set; }
+    public DbSet<DDMValuationInput> DDMValuationInputs { get; set; }
     public DbSet<Valuation> Valuations { get; set; }
 
     public ApplicationDbContext()
@@ -27,6 +28,42 @@ public class ApplicationDbContext : DbContext
            .Property(t => t.IntrinsicValue)
            .HasPrecision(19, 4);
 
+        modelbuilder.Entity<Valuation>()
+            .HasOne(v => v.ValuationInput)
+            .WithOne(t => t.Valuation);
+
+        modelbuilder.Entity<DDMValuationInput>()
+           .Property(t => t.BaseEPS)
+           .HasPrecision(19, 4);
+      
+        modelbuilder.Entity<DDMValuationInput>()
+           .Property(t => t.DividendWitholdingTax)
+           .HasPrecision(19, 4);
+      
+        modelbuilder.Entity<DDMValuationInput>()
+           .Property(t => t.EpsGrowth)
+           .HasPrecision(19, 4);
+      
+        modelbuilder.Entity<DDMValuationInput>()
+           .Property(t => t.PayoutRatio)
+           .HasPrecision(19, 4);
+      
+        modelbuilder.Entity<DDMValuationInput>()
+           .Property(t => t.ReturnRate)
+           .HasPrecision(19, 4);
+      
+        modelbuilder.Entity<DDMValuationInput>()
+           .Property(t => t.StableEPSGrowth)
+           .HasPrecision(19, 4);
+      
+        modelbuilder.Entity<DDMValuationInput>()
+           .Property(t => t.StablePayoutRatio)
+           .HasPrecision(19, 4);
+      
+        modelbuilder.Entity<DDMValuationInput>()
+           .Property(t => t.StableReturnRate)
+           .HasPrecision(19, 4);
+      
         modelbuilder.Entity<ValuationData>()
            .Property(t => t.Value)
            .HasPrecision(19, 4);

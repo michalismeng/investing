@@ -27,51 +27,39 @@ public class IndexModel : PageModel
         if (id != null)
         {
             Valuation = await context.Valuations.Include(v => v.Data)
+                                                .Include(v => v.ValuationInput)
                                                 .SingleAsync(v => v.Id == id);
             ReadOnly = true;
+            ValuationInput = Valuation.ValuationInput;
         }
-
-        ValuationInput = new DDMValuationInput()
+        else
         {
-            GrowthYears = 10,
-            BaseEPS = 2.29M,
-            EpsGrowth = 8.59M,
-            PayoutRatio = 47.16M,
-            ReturnRate = 5.1M,
-            StableEPSGrowth = 0.5M,
-            StablePayoutRatio = 66.67M,
-            StableReturnRate = 9M,
-        };
+            ValuationInput = new DDMValuationInput()
+            {
+                GrowthYears = 10,
+                BaseEPS = 2.29M,
+                EpsGrowth = 8.59M,
+                PayoutRatio = 47.16M,
+                ReturnRate = 5.1M,
+                StableEPSGrowth = 0.5M,
+                StablePayoutRatio = 66.67M,
+                StableReturnRate = 9M,
+            };
+        }
     }
 
     public async Task<IActionResult> OnPostAsync(string report="")
     {
-        Valuation = new Valuation()
-        {
-            Date = DateTimeOffset.Now,
-            Report = report,
-        };
+        var _ = OnPostPerformValuation(report);
+        Valuation!.ValuationInput = ValuationInput;
 
-        var lerpSteps = ValuationInput.GraduallyAdjust ? ValuationInput.GrowthYears / 2 : 0;
-        var stableSteps = ValuationInput.GrowthYears - lerpSteps;
-
-        Valuation.InitializeEPSGrowthData(ValuationInput.EpsGrowth, ValuationInput.StableEPSGrowth, stableSteps, lerpSteps);
-        Valuation.InitializePayoutRatioData(ValuationInput.PayoutRatio, ValuationInput.StablePayoutRatio, stableSteps, lerpSteps);
-        Valuation.InitializeReturnRateData(ValuationInput.ReturnRate, ValuationInput.StableReturnRate, stableSteps, lerpSteps);
-
-        Valuation.CalculateEarningsPerShare(ValuationInput.BaseEPS)
-                 .CalculateDividendsPerShare()
-                 .ApplyWithholdingTax(ValuationInput.DividendWitholdingTax / 100)
-                 .CalculateCumulativeCostOfEquity()
-                 .CalculatePresentValue(ValuationCharacteristic.NetDividendsPerShare);
-
-        context.Valuations.Add(Valuation);
+        context.Valuations.Add(Valuation!);
         await context.SaveChangesAsync();
 
-        return RedirectToPage("Index", new { id = Valuation.Id });
+        return RedirectToPage("Index", new { id = Valuation!.Id });
     }
 
-    public IActionResult OnPostPerformValuationAsync(string report = "")
+    public IActionResult OnPostPerformValuation(string report = "")
     {
         Valuation = new Valuation()
         {

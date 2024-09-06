@@ -26,6 +26,7 @@ using (var scope = app.Services.CreateScope())
 
     var context = services.GetRequiredService<ApplicationDbContext>();
     // Initializer.Initialize(context);
+    // context.Database.EnsureDeleted();
 }
 
 app.UseHttpsRedirection();
