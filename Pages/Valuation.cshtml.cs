@@ -20,9 +20,12 @@ public class ValuationModel : PageModel
     public bool ReadOnly { get; set; } = false;
 
     [BindProperty]
+    public int? CompanyId { get; set; }
+
+    [BindProperty]
     public DDMValuationInput ValuationInput { get; set; }
 
-    public async Task OnGet(int? id = null)
+    public async Task OnGet(int? id = null, int? companyId = null)
     {
         if (id != null)
         {
@@ -46,6 +49,8 @@ public class ValuationModel : PageModel
                 StableReturnRate = 9M,
             };
         }
+
+        CompanyId = companyId;
     }
 
     public async Task<IActionResult> OnPostAsync(string report="")
@@ -61,11 +66,14 @@ public class ValuationModel : PageModel
 
     public IActionResult OnPostPerformValuation(string report = "")
     {
+        if(CompanyId == null)
+            return RedirectToPage("Index");
+
         Valuation = new Valuation()
         {
             Date = DateTimeOffset.Now,
             Report = report,
-            CompanyId = context.Companies.First().Id,
+            CompanyId = CompanyId.Value,
         };
 
         var lerpSteps = ValuationInput.GraduallyAdjust ? ValuationInput.GrowthYears / 2 : 0;

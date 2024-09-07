@@ -12,17 +12,44 @@
 
     <h1 class="text-center">Your Valuations</h1>
 
-    <div class="d-flex flex-column">
-        @foreach (var c in Model.Companies)
-        {
-            var latestValuation = c.Valuations.OrderByDescending(v => v.Date).FirstOrDefault();
-            <div class="d-flex flex-row">
-                <div>@c.Name</div>
-                <div>@(latestValuation?.Report ?? "None")</div>
-                <div>@(latestValuation?.IntrinsicValue.ToString("C2") ?? "None")</div>
-            </div>
-        }
-    </div>
+    <div class="container">
+    <table class="table w-75 mx-auto">
+        <thead>
+            <tr>
+                <td class="text-start">Company</td>
+                <td class="text-center">Valuation</td>
+                <td class="text-end">Actions</td>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var c in Model.Companies)
+            {
+                var latestValuation = c.Valuations.OrderByDescending(v => v.Date).FirstOrDefault();
+                <tr>
+                    <td class="text-start">@c.Name</td>
+                    <td class="text-center">
+                        @if(latestValuation != null)
+                        {
+                            <div class="d-flex flex-row gap-4 justify-content-center">
+                                <div class="d-flex flex-row gap-2">
+                                    <i class="bi bi-calendar"></i> @latestValuation.Date.ToString("MMM d, yyyy")
+                                </div>
+                                <div class="vr"></div>
+                                <div class="d-flex flex-row gap-2"><i class="bi bi-newspaper"></i> @latestValuation.Report</div>
+                                <div class="vr"></div>
+                                <div class="d-flex flex-row gap-2">@latestValuation.IntrinsicValue.ToString("C2")</div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div>No valuations for this company yet</div>
+                        }
+                    </td>
+                    <td class="text-end"><a class="btn btn-primary btn-sm" asp-page="Valuation" asp-route-companyId="@c.Id"><i class="bi bi-plus-circle-fill me-1"></i> Valuation</a></td>
+                </tr>
+            }
+        </tbody>
+    </table></div>
 </div>
 
 
