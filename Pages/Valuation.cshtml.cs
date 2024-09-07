@@ -21,11 +21,12 @@ public class ValuationModel : PageModel
 
     [BindProperty]
     public int? CompanyId { get; set; }
+    public Company Company { get; set; }
 
     [BindProperty]
     public DDMValuationInput ValuationInput { get; set; }
 
-    public async Task OnGet(int? id = null, int? companyId = null)
+    public async Task<IActionResult> OnGet(int? id = null, int? companyId = null)
     {
         if (id != null)
         {
@@ -50,7 +51,12 @@ public class ValuationModel : PageModel
             };
         }
 
+        if(companyId == null)
+            return RedirectToPage("Error");
+
         CompanyId = companyId;
+        Company = await context.Companies.FindAsync(companyId);
+        return Page();
     }
 
     public async Task<IActionResult> OnPostAsync(string report="")
@@ -67,7 +73,7 @@ public class ValuationModel : PageModel
     public IActionResult OnPostPerformValuation(string report = "")
     {
         if(CompanyId == null)
-            return RedirectToPage("Index");
+            return RedirectToPage("Error");
 
         Valuation = new Valuation()
         {
@@ -89,13 +95,15 @@ public class ValuationModel : PageModel
                  .CalculateCumulativeCostOfEquity()
                  .CalculatePresentValue(ValuationCharacteristic.NetDividendsPerShare);
 
+        // LatestEPS will be none in case of 0 high growth years. In that case we want the base EPS.
+        // Similarly, the latest CCOE is 1, because we don't have any extra years.
         var latestEPS = Valuation.Data.Where(d => d.Characteristic == ValuationCharacteristic.EarningsPerShare)
-                                      .MaxBy(d => d.Ordinal);
+                                      .MaxBy(d => d.Ordinal)?.Value ?? ValuationInput.BaseEPS;
         var latestCCOE = Valuation.Data.Where(d => d.Characteristic == ValuationCharacteristic.CumulativeCostOfEquity)
-                                       .MaxBy(d => d.Ordinal);
-        var firstPart = latestEPS!.Value * (1 + ValuationInput.StableEPSGrowth / 100) * ValuationInput.StablePayoutRatio * (1 - ValuationInput.DividendWitholdingTax / 100) / 100;
+                                       .MaxBy(d => d.Ordinal)?.Value ?? 1;
+        var firstPart = latestEPS * (1 + ValuationInput.StableEPSGrowth / 100) * ValuationInput.StablePayoutRatio * (1 - ValuationInput.DividendWitholdingTax / 100) / 100;
         var terminalValue = firstPart / (ValuationInput.StableReturnRate / 100 - ValuationInput.StableEPSGrowth / 100);
-        var terminalValuePV = terminalValue / latestCCOE!.Value;
+        var terminalValuePV = terminalValue / latestCCOE;
 
         Valuation.TerminalValuePV = terminalValuePV;
         Valuation.IntrinsicValue = terminalValuePV + Valuation.Data.Where(d => d.Characteristic == ValuationCharacteristic.PresentValue)
