@@ -1,0 +1,149 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+</div>
+
+<div id="chart"></div>
+
+<button onclick="toggleMa10()">Toggle 10 MA</button>
+<button onclick="toggleMa30()">Toggle 30 MA</button>
+<button onclick="toggleMa40()">Toggle 40 MA</button>
+<button onclick="toggle52High()">Toggle 52 Week High</button>
+<button onclick="toggle52Low()">Toggle 52 Week Low</button>
+
+@section Scripts
+{
+    <script>
+        const chart = window.LightweightCharts.createChart(document.getElementById("chart"), { width: 800, height: 500, rightPriceScale: { mode: 1 } });
+        const stockPrices = chart.addCandlestickSeries();
+        const data = [
+        @foreach(var record in Model.Records)
+        {
+            @: { open: @record.Open, high: @record.High, low: @record.Low, close: @record.AdjClose, time: "@record.Date.ToString("yyyy-MM-dd")" },
+        }
+        ];
+        stockPrices.setData(data);
+
+        const ma_10 = [
+        @foreach(var record in Model.MA_10)
+        {
+            @: { value: @record.AdjClose, time: "@record.Date.ToString("yyyy-MM-dd")" },
+        }
+        ];
+        const ma_30 = [
+        @foreach(var record in Model.MA_30)
+        {
+            @: { value: @record.AdjClose, time: "@record.Date.ToString("yyyy-MM-dd")" },
+        }
+        ];
+        const ma_40 = [
+        @foreach(var record in Model.MA_40)
+        {
+            @: { value: @record.AdjClose, time: "@record.Date.ToString("yyyy-MM-dd")" },
+        }
+        ];
+        const high_52 = [
+        @foreach(var record in Model.Week_High_52)
+        {
+            @: { value: @record.AdjClose, time: "@record.Date.ToString("yyyy-MM-dd")" },
+        }
+        ];
+        const low_52 = [
+        @foreach(var record in Model.Week_Low_52)
+        {
+            @: { value: @record.AdjClose, time: "@record.Date.ToString("yyyy-MM-dd")" },
+        }
+        ];
+
+        let show10MA = false;
+        let show30MA = false;
+        let show40MA = false;
+        let showHigh52 = false;
+        let showLow52 = false;
+
+        let lineSeries_10;
+        let lineSeries_30;
+        let lineSeries_40;
+        let week_high_52;
+        let week_low_52;
+
+        function toggleMa10() {
+            if (show10MA) {
+                chart.removeSeries(lineSeries_10)
+                show10MA = false
+            }
+            else {
+                lineSeries_10 = chart.addLineSeries({ color: "blue", lineWidth: 2 });
+                lineSeries_10.setData(ma_10)
+                show10MA = true
+            }
+        }
+
+        function toggleMa30() {
+            if (show30MA) {
+                chart.removeSeries(lineSeries_30)
+                show30MA = false
+            }
+            else {
+                lineSeries_30 = chart.addLineSeries({ color: "green", lineWidth: 2 });
+                lineSeries_30.setData(ma_30)
+                show30MA = true
+            }
+        }
+
+        function toggleMa40() {
+            if (show40MA) {
+                chart.removeSeries(lineSeries_40)
+                show40MA = false
+            }
+            else {
+                lineSeries_40 = chart.addLineSeries({ color: "red", lineWidth: 2 });
+                lineSeries_40.setData(ma_40)
+                show40MA = true
+            }
+        }
+
+        function toggle52High() {
+            if (showHigh52) {
+                chart.removeSeries(week_high_52)
+                showHigh52 = false
+            }
+            else {
+                week_high_52 = chart.addLineSeries({ color: "lightgreen", lineWidth: 3 });
+                week_high_52.setData(high_52)
+                showHigh52 = true
+            }
+        }
+
+        function toggle52Low() {
+            if (showLow52) {
+                chart.removeSeries(week_low_52)
+                showLow52 = false
+            }
+            else {
+                week_low_52 = chart.addLineSeries({ color: "#FFCCCB", lineWidth: 3 });
+                week_low_52.setData(low_52)
+                showLow52 = true
+            }
+        }
+
+        toggleMa10();
+        toggleMa30();
+        toggleMa40();
+
+        const markers = [
+        @foreach(var record in Model.Stage2_Marks)
+        {
+            @: { time: { year: @record.Year, month: @record.Month, day: @record.Day }, position: 'aboveBar', color: '#e91e63', shape: 'circle', text: 'S2' },
+        }
+        ];
+        stockPrices.setMarkers(markers)
+
+    </script>
+}
