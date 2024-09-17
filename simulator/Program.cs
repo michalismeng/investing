@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.EntityFrameworkCore;
@@ -137,6 +139,44 @@ else if(Environment.GetEnvironmentVariable("PRICE_DATA_FOLDER") != null)
         obj.Clear();
 
     });
+}
+else if(Environment.GetEnvironmentVariable("MODE") == "strength")
+{
+    // TODO: Use Arrays and span to speed up execution!
+    // TODO: Why are the tickers not showing in order.
+
+    using var context = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    
+    var tickers = context.Tickers.OrderBy(t => t.Ticker).Select(t => t.Ticker).ToList();
+
+    Parallel.ForEach(tickers, new ParallelOptions { MaxDegreeOfParallelism = 8 }, ticker =>
+    {
+        using var _context = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        _context.ChangeTracker.AutoDetectChangesEnabled = false;
+        var data = _context.PriceData.Where(d => d.Ticker == ticker).OrderBy(d => d.Datetime).ToList();
+        System.Console.WriteLine("Calculating strength of ticker {0}", ticker);
+        foreach(var i in Enumerable.Range(0, data.Count))
+        {
+            var dataFiltered = data.SkipLast(i).ToList();
+
+            try
+            {
+                var strength = dataFiltered.GetStrength();
+
+                var latest = dataFiltered.Last();
+                latest.Strength = strength;
+                _context.Update(latest);
+            }
+            catch(Exception ex)
+            {
+                if (ex.Message.Contains("GetQuarterPerformance"))
+                    break;
+                throw;
+            }
+        }
+        _context.SaveChanges();
+    });
+
 }
 else
 {

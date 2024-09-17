@@ -16,6 +16,7 @@
 <button onclick="toggleMa40()">Toggle 40 MA</button>
 <button onclick="toggle52High()">Toggle 52 Week High</button>
 <button onclick="toggle52Low()">Toggle 52 Week Low</button>
+<button onclick="toggleStrength()">Toggle Strength</button>
 
 @section Scripts
 {
@@ -60,18 +61,28 @@
             @: { value: @record.AdjClose, time: "@record.Date.ToString("yyyy-MM-dd")" },
         }
         ];
+        const strength = [
+        @foreach(var record in Model.Records)
+        {
+            @if(record.Strength != null) {
+                @: { value: @record.Strength, time: "@record.Date.ToString("yyyy-MM-dd")" },
+            }
+        }
+        ];
 
         let show10MA = false;
         let show30MA = false;
         let show40MA = false;
         let showHigh52 = false;
         let showLow52 = false;
+        let showStrength = false;
 
         let lineSeries_10;
         let lineSeries_30;
         let lineSeries_40;
         let week_high_52;
         let week_low_52;
+        let strength_line;
 
         function toggleMa10() {
             if (show10MA) {
@@ -130,6 +141,18 @@
                 week_low_52 = chart.addLineSeries({ color: "#FFCCCB", lineWidth: 3 });
                 week_low_52.setData(low_52)
                 showLow52 = true
+            }
+        }
+
+        function toggleStrength() {
+            if (showStrength) {
+                chart.removeSeries(strength_line)
+                showStrength = false
+            }
+            else {
+                strength_line = chart.addLineSeries({ color: "#FFCCCB", lineWidth: 3 });
+                strength_line.setData(strength)
+                showStrength = true
             }
         }
 

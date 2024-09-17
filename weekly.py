@@ -23,8 +23,8 @@ def is_trending_up(data, N):
     last_n_days = data.iloc[-N:]
     return all(last_n_days['Close'].diff().dropna() > 0)
 
-data = pd.read_csv("hist/AMZN.csv", index_col="Date", parse_dates=True)
-ref = pd.read_csv("hist/SPY.csv", index_col="Date", parse_dates=True)
+data = pd.read_csv("AMZN.csv", index_col="Date", parse_dates=True)
+ref = pd.read_csv("SPY.csv", index_col="Date", parse_dates=True)
 
 logic = {'Open'  : 'first',
          'High'  : 'max',
@@ -57,7 +57,7 @@ stage_2 = data[
 stage_2['is_trending_up'] = (data['Close'].rolling(window=4).apply(lambda x: all(np.diff(x) > 0), raw=True))
 stage_2 = stage_2[(stage_2['is_trending_up'] == 1) & stage_2['Open'].notna()]
 
-# consec = get_consecutive_weeks(stage_2)
+consec = get_consecutive_weeks(stage_2)
 data.loc[stage_2.index, 'is_stage2'] = 1
 
 if not stage_2.empty:
@@ -67,15 +67,27 @@ ap_3 = mpf.make_addplot(data['52WH'], type='line')
 ap_4 = mpf.make_addplot(data['ma_10'], type='line', color='red')
 ap_5 = mpf.make_addplot(data['ma_30'], type='line', color='green')
 ap_6 = mpf.make_addplot(data['ma_40'], type='line', color='blue')
-# mpf.plot(data, type='candle', volume=True, style='yahoo', mav=(10, 30, 40), vlines=stage_2.index.tolist(), addplot=[ap, ap_2, ap_3])
+mpf.plot(data, type='candle', volume=True, style='yahoo', mav=(10, 30, 40), vlines=stage_2.index.tolist(), addplot=[ap, ap_2, ap_3])
 
+# def quarters_perf(closes: pd.Series, n):
+#     # import pdb; pdb.set_trace()
+#     length = min(len(closes), n * int(252 / 4))
+#     prices = closes.tail(length)
+#     print("Quarter", n, "start price", prices[0], "end price", prices[-1])
+#     pct_chg = prices.pct_change().dropna()
+#     perf_cum = (pct_chg + 1).cumprod() - 1
+#     return perf_cum.tail(1).item()
+
+# Same as above, but faster 
 def quarters_perf(closes: pd.Series, n):
-    # import pdb; pdb.set_trace()
-    length = min(len(closes), n*13)
-    prices = closes.tail(length)
-    pct_chg = prices.pct_change().dropna()
-    perf_cum = (pct_chg + 1).cumprod() - 1
-    return perf_cum.tail(1).item()
+    if len(closes) < (n * int(252 / 4)):
+        return 0
+
+    start_price = closes.iloc[-n * int(252 / 4)]  # Price 'n' quarters ago
+    end_price = closes.iloc[-1]  # Price at the end of the period
+    print("Quarter", n, "Start price", start_price, "end price", end_price)
+    return (end_price / start_price) - 1  # Percentage change in price over the period
+
 
 def strength(closes: pd.Series):
     """Calculates the performance of the last year (most recent quarter is weighted double)"""

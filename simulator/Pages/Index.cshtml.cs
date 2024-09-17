@@ -16,6 +16,7 @@ public class StockPrice : IQuote
     [Name("Adj Close")]
     public decimal AdjClose { get; set ;}
     public decimal Volume { get; set ;}
+    public decimal? Strength { get; set ;}
 }
 
 public static class StockPriceExtensions
@@ -67,6 +68,7 @@ public static class StockPriceExtensions
           High = g.Select(x => x.High).Max(),
           Open = g.MinBy(x => x.Date)!.Open,
           AdjClose = g.Last().AdjClose,
+          Strength = g.Last().Strength,
           Volume = g.Sum(x => x.Volume),
           Date = g.First().Date.AddDays(-(int)g.First().Date.DayOfWeek + 1), // Add one to get on Monday
         }).ToList();
@@ -224,7 +226,7 @@ public class IndexModel : PageModel
 
     public void OnGet(string? dateStart = null, string? dateEnd = null)
     {
-        var records = _context.PriceData.Where(d => d.Ticker == "XEL").ToList().Select(d => new StockPrice
+        var records = _context.PriceData.Where(d => d.Ticker == "AMZN").ToList().Select(d => new StockPrice
         {
             AdjClose = d.Close,
             Date = d.Datetime,
@@ -232,6 +234,7 @@ public class IndexModel : PageModel
             Low = d.Low,
             Open = d.Open,
             Volume = d.Volume,
+            Strength = d.Strength,
         }).ToList().ToWeekly();
         Records = records;
 
@@ -243,6 +246,7 @@ public class IndexModel : PageModel
             Low = d.Low,
             Open = d.Open,
             Volume = d.Volume,
+            Strength = d.Strength,
         }).ToList().ToWeekly();
         SPY = records;
 
