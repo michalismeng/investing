@@ -134,3 +134,7 @@ build/
 dist/
 data/
 config_private.yaml
+
+data_persist/
+watchlists/
+output/

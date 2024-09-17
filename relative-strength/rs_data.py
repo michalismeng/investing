@@ -17,6 +17,9 @@ import rs_nasdaq_securities
 from ftplib import FTP
 from io import StringIO
 from time import sleep
+import rs_ticker_info
+from multiprocessing import Pool, cpu_count
+from functools import partial
 
 from datetime import date
 from datetime import datetime
@@ -139,6 +142,8 @@ def get_yf_data(security, start_date, end_date):
 
     ticker_data["candles"] = candles
     enrich_ticker_data(ticker_data, security)
+
+    write_to_file(ticker_data, os.path.join(DIR, "data", f"{ticker}.json"))
     return ticker_data
 
 
@@ -152,7 +157,7 @@ def load_prices_from_yahoo():
 
     securities = rs_nasdaq_securities.get_resolved_securities().values()
     for idx, security in enumerate(securities):
-        load_price_history(security, tickers_dict, start_date, today)
+        load_price_history(security, tickers_dict, None, None)
         track_progress(load_times, start, time.time(), idx, security, securities)
 
     write_price_history_file(tickers_dict)
@@ -181,7 +186,16 @@ def track_progress(load_times, start, r_start, idx, security, securities):
 
 
 def main():
-    load_prices_from_yahoo()
+    print("Fetching all symbols from Nasdaq securities...")
+    securities = rs_nasdaq_securities.get_resolved_securities().values()
+    print(f"Fetched {len(securities)} securities.")
+    securities = list(securities)
+    pool = Pool(cpu_count())
+    download_func = partial(get_yf_data, start_date=None, end_date=None)
+    print(f"Downloading max data for {len(securities)} symbols using {cpu_count()} threads...")
+    results = pool.map(download_func, securities)
+    pool.close()
+    pool.join()
 
 
 if __name__ == "__main__":

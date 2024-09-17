@@ -58,8 +58,11 @@ def exchange_from_symbol(symbol):
 
 
 def read_json(json_file):
-    with open(json_file, "r", encoding="utf-8") as fp:
-        return json.load(fp)
+    try:
+        with open(json_file, "r", encoding="utf-8") as fp:
+            return json.load(fp)
+    except FileNotFoundError:
+        return {}
 
 
 REFERENCE_TICKER = cfg("REFERENCE_TICKER")
@@ -134,6 +137,7 @@ def load_ticker_info(info_dict, ticker):
     try:
         ticker_info = {
             "info": {
+                "name": get_info_from_dict(info.info, "longName"),
                 "industry": get_info_from_dict(info.info, "industry"),
                 "sector": get_info_from_dict(info.info, "sector"),
                 "marketCap": get_info_from_dict(info.info, "marketCap"),
@@ -161,10 +165,13 @@ def load_tickers_from_yahoo(ticker_info_dict, securities):
 
 
 def main():
+    out_file = os.environ.get("TICKER_INFO_FILE", TICKER_INFO_FILE)
+
     securities = get_resolved_securities().values()
-    info_dict = read_json(TICKER_INFO_FILE)
+    # Load any cached symbols, to avoid fetching from Yahoo Finance in the next step
+    info_dict = read_json(out_file)
     info_dict = load_tickers_from_yahoo(info_dict, securities)
-    write_to_file(info_dict, TICKER_INFO_FILE)
+    write_to_file(info_dict, out_file)
 
 
 if __name__ == "__main__":
