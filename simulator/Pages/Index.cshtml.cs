@@ -1,18 +1,18 @@
 using System.Globalization;
-using CsvHelper;
 using CsvHelper.Configuration.Attributes;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Skender.Stock.Indicators;
 
 namespace simulator.Pages;
 
-public class StockPrice
+public class StockPrice : IQuote
 {
-    public DateOnly Date { get; set; }
+    public DateTime Date { get; set; }
     public decimal Open { get; set ;}
     public decimal High { get; set ;}
     public decimal Low { get; set ;}
-    public decimal Close { get; set ;}
+    public decimal Close => AdjClose;
+
     [Name("Adj Close")]
     public decimal AdjClose { get; set ;}
     public decimal Volume { get; set ;}
@@ -20,6 +20,45 @@ public class StockPrice
 
 public static class StockPriceExtensions
 {
+    // Helper function to get the ISO year for a given date
+    public static int GetIsoYear(DateTime date)
+    {
+        CultureInfo cultureInfo = CultureInfo.CurrentCulture;
+        Calendar calendar = cultureInfo.Calendar;
+        return calendar.GetYear(date);
+    }
+
+    // Helper function to get the ISO week number of the year for a given date
+    public static int GetIsoWeekOfYear(DateTime date)
+    {
+        CultureInfo cultureInfo = CultureInfo.InvariantCulture;
+        Calendar calendar = cultureInfo.Calendar;
+
+        CalendarWeekRule weekRule = cultureInfo.DateTimeFormat.CalendarWeekRule;
+        DayOfWeek firstDayOfWeek = cultureInfo.DateTimeFormat.FirstDayOfWeek;
+
+        return calendar.GetWeekOfYear(date, weekRule, firstDayOfWeek);
+    }
+
+    public static List<StockPrice> ToWeekly2(this List<StockPrice> dailyPrices)
+    {
+        // Group daily prices by year and week number
+        var weeklyPrices = dailyPrices
+            .GroupBy(p => new { Year = GetIsoYear(p.Date), Week = GetIsoWeekOfYear(p.Date) })
+            .Select(group => new StockPrice
+            {
+                Date = group.First().Date,  // Use the first date in the group for reference
+                Open = group.First().Open,  // The open price of the first day in the week
+                High = group.Max(p => p.High),  // The highest price in the week
+                Low = group.Min(p => p.Low),  // The lowest price in the week
+                AdjClose = group.Last().Close,  // The close price of the last day in the week
+                Volume = group.Sum(p => p.Volume)  // The total volume for the week
+            })
+            .ToList();
+
+        return weeklyPrices;
+    }
+
     public static List<StockPrice> ToWeekly(this List<StockPrice> dailyPrices) => 
         (from rec in dailyPrices
          group rec by rec.Date.AddDays(-(int)rec.Date.DayOfWeek) into g
@@ -27,52 +66,11 @@ public static class StockPriceExtensions
           Low = g.Select(x => x.Low).Min(),
           High = g.Select(x => x.High).Max(),
           Open = g.MinBy(x => x.Date)!.Open,
-          AdjClose = g.MaxBy(x => x.Date)!.AdjClose,
-          Close = g.Last().Close,
+          AdjClose = g.Last().AdjClose,
           Volume = g.Sum(x => x.Volume),
-          Date = g.First().Date.AddDays(-(int)g.First().Date.DayOfWeek),
+          Date = g.First().Date.AddDays(-(int)g.First().Date.DayOfWeek + 1), // Add one to get on Monday
         }).ToList();
     
-    public static List<StockPrice> CalculateMovingAverage(this List<StockPrice> prices, int N)
-    {
-        List<StockPrice> movingAverages = [];
-
-        // Handle edge cases
-        if (prices == null || prices.Count < N || N <= 0)
-            return movingAverages;
-
-        // Initialize the sum of the first window
-        decimal windowSum = 0;
-
-        // Sum the first N elements
-        for (int i = 0; i < N; i++)
-            windowSum += prices[i].AdjClose;
-
-        // Add the average of the first window
-        movingAverages.Add(new StockPrice()
-        {
-            Date = prices[N - 1].Date,
-            AdjClose = windowSum / N,
-        });
-
-        // Sliding window: iterate through the list starting from the (N+1)th element
-        for (int i = N; i < prices.Count; i++)
-        {
-            // Update the window sum by subtracting the element that is sliding out of the window
-            // and adding the new element
-            windowSum = windowSum - prices[i - N].AdjClose + prices[i].AdjClose;
-
-            // Add the average of the current window
-            movingAverages.Add(new StockPrice()
-            {
-                Date = prices[i].Date,
-                AdjClose = windowSum / N,
-            });
-        }
-
-        return movingAverages;
-    }
-
     public static List<StockPrice> Calculate52WeekHigh(this List<StockPrice> prices)
     {
         List<StockPrice> week_highs = [];
@@ -80,7 +78,7 @@ public static class StockPriceExtensions
         for(int i = 52; i < prices.Count; i++)
         {
             // Find the date 52 weeks (1 year) back from the reference date
-            DateOnly startDate = prices[i - 52].Date;
+            var startDate = prices[i - 52].Date;
 
             // Filter the stock prices to include only those within the last 52 weeks
             var pricesInLast52Weeks = prices
@@ -103,7 +101,7 @@ public static class StockPriceExtensions
         for(int i = 52; i < prices.Count; i++)
         {
             // Find the date 52 weeks (1 year) back from the reference date
-            DateOnly startDate = prices[i - 52].Date;
+            var startDate = prices[i - 52].Date;
 
             // Filter the stock prices to include only those within the last 52 weeks
             var pricesInLast52Weeks = prices
@@ -119,22 +117,71 @@ public static class StockPriceExtensions
         return week_highs;
     }
 
-    public static List<DateOnly> GetStage2(this List<StockPrice> prices)
+    // quarter_perf(data, n) =>
+//     i = n
+//     refCandle = i*oneYear/4
+//     baseCandle = (i-1)*oneYear/4
+//     while (not data[refCandle] and i > 1) 
+//         i := i - 1
+//         refCandle := i*oneYear/4
+//         baseCandle := (i-1)*oneYear/4
+    
+//     ta.roc(data[baseCandle], refCandle)
+
+// // first quarter is weighted more
+// stock_performance = 0.4*quarter_perf(stock,1) + 0.2*quarter_perf(stock,2) + 0.2*quarter_perf(stock,3) + 0.2*quarter_perf(stock,4)
+// ref_performance = 0.4*quarter_perf(ref,1) + 0.2*quarter_perf(ref,2) + 0.2*quarter_perf(ref,3) + 0.2*quarter_perf(ref,4)
+
+    // Calculate quarterly performance for the nth previous quarter. Assume weekly data.
+    // Calculation based on percentage change each week, which is compounded for the quarter to date.
+    public static decimal GetQuarterPerformance(this List<StockPrice> prices, int quarters)
     {
-        var ma_10 = prices.CalculateMovingAverage(10);
-        var ma_30 = prices.CalculateMovingAverage(30);
-        var ma_40 = prices.CalculateMovingAverage(40);
+        var length = Math.Min(prices.Count, quarters * 13);
+        var latestPrices = prices.TakeLast(length).ToList();
+        List<StockPrice> latestOneBefore = [new StockPrice() { AdjClose = 1 }, ..prices.SkipLast(1).TakeLast(length - 1).ToList()];
+        var pct_changes = latestPrices.Zip(latestOneBefore).Select(x => (x.First.Close - x.Second.Close) / x.Second.Close).Skip(1).ToList(); 
+        var perf_cum = pct_changes.Aggregate(1M, (acc, val) => acc * (val + 1)) - 1;
+        return perf_cum;
+    }
+
+    public static decimal GetStrength(this List<StockPrice> prices)
+    {
+        var q1 = prices.GetQuarterPerformance(1);
+        var q2 = prices.GetQuarterPerformance(2);
+        var q3 = prices.GetQuarterPerformance(3);
+        var q4 = prices.GetQuarterPerformance(4);
+
+        return 0.4M * q1 + 0.2M * q2 + 0.2M * q3 + 0.2M * q4;
+    }
+
+    public static decimal GetRelativeStrength(this List<StockPrice> prices, List<StockPrice> reference)
+    {
+        // if(prices.TakeLast(52).Zip(reference.TakeLast(52)).Any(x => x.First.Date != x.Second.Date))
+        //     throw new Exception("GetRelativeStrength: prices and reference must have matching dates");
+
+        var rs_stock = prices.GetStrength();
+        var rs_ref = reference.GetStrength();
+        var rs = (1 + rs_stock) / (1 + rs_ref) * 100;
+        var rs_final = (int)(rs * 100) / 100;
+        return rs_final;
+    }
+
+    public static List<DateTime> GetStage2Weekly(this List<StockPrice> prices, List<StockPrice> reference)
+    {
+        var ma_10 = prices.GetSma(10).ToList();
+        var ma_30 = prices.GetSma(30).ToList();
+        var ma_40 = prices.GetSma(40).ToList();
         var high_52 = prices.Calculate52WeekHigh();
         var low_52 = prices.Calculate52WeekLow();
 
-        List<DateOnly> dates = [];
+        List<DateTime> dates = [];
 
         for(int i = 52; i < prices.Count; i++)
         {
             var p = prices[i];
-            var ma10 = ma_10.SingleOrDefault(x => x.Date == p.Date)?.AdjClose ?? -1;
-            var ma30 = ma_30.SingleOrDefault(x => x.Date == p.Date)?.AdjClose ?? -1;
-            var ma40 = ma_40.SingleOrDefault(x => x.Date == p.Date)?.AdjClose ?? -1;
+            var ma10 = (decimal)(ma_10.SingleOrDefault(x => x.Date == p.Date)?.Sma ?? -1);
+            var ma30 = (decimal)(ma_30.SingleOrDefault(x => x.Date == p.Date)?.Sma ?? -1);
+            var ma40 = (decimal)(ma_40.SingleOrDefault(x => x.Date == p.Date)?.Sma ?? -1);
             var high52 = high_52.SingleOrDefault(x => x.Date == p.Date)?.AdjClose ?? -1;
             var low52 = low_52.SingleOrDefault(x => x.Date == p.Date)?.AdjClose ?? -1;
 
@@ -143,19 +190,14 @@ public static class StockPriceExtensions
                             p.AdjClose > ma10 && p.AdjClose > 1.3M * low52 &&
                             p.AdjClose > 0.75M * high52;
             
-            var three_month_rs  = 0.4M * p.AdjClose / prices[i - 13].AdjClose;
-            var six_month_rs    = 0.2M * p.AdjClose / (prices[i - 26].AdjClose * 2);
-            var nine_month_rs   = 0.2M * p.AdjClose / (prices[i - 39].AdjClose * 3);
-            var twelve_month_rs = 0.2M * p.AdjClose / (prices[i - 52].AdjClose * 4);
-            var rs_rating = (three_month_rs + six_month_rs + nine_month_rs + twelve_month_rs) * 100;
+            var rs_rating = prices.Take(i).ToList().GetRelativeStrength(reference.Take(reference.FindIndex(x => x.Date == prices[i].Date)).ToList());
 
             var prev = ma_40.FindIndex(x => x.Date == p.Date) - 1;
-            if(is_stage2 && prev >= 1 && ma40 > ma_40[prev].AdjClose && rs_rating > 80)
+            if(is_stage2 && prev >= 1 && ma40 > (decimal)ma_40[prev].Sma! && rs_rating > 70)
                 dates.Add(p.Date);
             
         }
 
-        System.Console.WriteLine("dates {0}", dates.Count);
         return dates;
     }
 }
@@ -163,44 +205,64 @@ public static class StockPriceExtensions
 public class IndexModel : PageModel
 {
     private readonly ILogger<IndexModel> _logger;
+    private readonly ApplicationDbContext _context;
 
-    public IndexModel(ILogger<IndexModel> logger)
+    public IndexModel(ILogger<IndexModel> logger, ApplicationDbContext context)
     {
         _logger = logger;
+        _context = context;
     }
 
     public List<StockPrice> Records { get; set; } = [];
-    public List<StockPrice> MA_10 { get; set; } = [];
-    public List<StockPrice> MA_30 { get; set; } = [];
-    public List<StockPrice> MA_40 { get; set; } = [];
+    public List<StockPrice> SPY { get; set; } = [];
+    public List<SmaResult> MA_10 { get; set; } = [];
+    public List<SmaResult> MA_30 { get; set; } = [];
+    public List<SmaResult> MA_40 { get; set; } = [];
     public List<StockPrice> Week_High_52 { get; set; } = [];
     public List<StockPrice> Week_Low_52 { get; set; } = [];
-    public List<DateOnly> Stage2_Marks { get; set; } = [];
+    public List<DateTime> Stage2_Marks { get; set; } = [];
 
     public void OnGet(string? dateStart = null, string? dateEnd = null)
     {
-        using var reader = new StreamReader("./AMZN.csv");
-        using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
-        Records = csv.GetRecords<StockPrice>().ToList().ToWeekly();
+        var records = _context.PriceData.Where(d => d.Ticker == "XEL").ToList().Select(d => new StockPrice
+        {
+            AdjClose = d.Close,
+            Date = d.Datetime,
+            High = d.High,
+            Low = d.Low,
+            Open = d.Open,
+            Volume = d.Volume,
+        }).ToList().ToWeekly();
+        Records = records;
+
+        records = _context.PriceData.Where(d => d.Ticker == "SPY").ToList().Select(d => new StockPrice
+        {
+            AdjClose = d.Close,
+            Date = d.Datetime,
+            High = d.High,
+            Low = d.Low,
+            Open = d.Open,
+            Volume = d.Volume,
+        }).ToList().ToWeekly();
+        SPY = records;
 
         if (dateStart != null)
         {
-            DateOnly startDate = DateOnly.Parse(dateStart);
+            var startDate = DateTime.Parse(dateStart);
             Records = Records.Where(p => p.Date >= startDate).ToList();
         }
 
         if (dateEnd != null)
         {
-            DateOnly endDate = DateOnly.Parse(dateEnd);
+            var endDate = DateTime.Parse(dateEnd);
             Records = Records.Where(p => p.Date <= endDate).ToList();
         }
 
-
-        MA_10 = Records.CalculateMovingAverage(10);
-        MA_30 = Records.CalculateMovingAverage(30);
-        MA_40 = Records.CalculateMovingAverage(40);
+        MA_10 = Records.GetSma(10).Condense().ToList();
+        MA_30 = Records.GetSma(30).Condense().ToList();
+        MA_40 = Records.GetSma(40).Condense().ToList();
         Week_High_52 = Records.Calculate52WeekHigh();
         Week_Low_52 = Records.Calculate52WeekLow();
-        Stage2_Marks = Records.GetStage2();
+        Stage2_Marks = Records.GetStage2Weekly(SPY);
     }
 }

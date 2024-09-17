@@ -33,19 +33,19 @@
         const ma_10 = [
         @foreach(var record in Model.MA_10)
         {
-            @: { value: @record.AdjClose, time: "@record.Date.ToString("yyyy-MM-dd")" },
+            @: { value: @record.Sma, time: "@record.Date.ToString("yyyy-MM-dd")" },
         }
         ];
         const ma_30 = [
         @foreach(var record in Model.MA_30)
         {
-            @: { value: @record.AdjClose, time: "@record.Date.ToString("yyyy-MM-dd")" },
+            @: { value: @record.Sma, time: "@record.Date.ToString("yyyy-MM-dd")" },
         }
         ];
         const ma_40 = [
         @foreach(var record in Model.MA_40)
         {
-            @: { value: @record.AdjClose, time: "@record.Date.ToString("yyyy-MM-dd")" },
+            @: { value: @record.Sma, time: "@record.Date.ToString("yyyy-MM-dd")" },
         }
         ];
         const high_52 = [
@@ -132,10 +132,6 @@
                 showLow52 = true
             }
         }
-
-        toggleMa10();
-        toggleMa30();
-        toggleMa40();
 
         const markers = [
         @foreach(var record in Model.Stage2_Marks)
