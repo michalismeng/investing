@@ -8,6 +8,7 @@ import os, contextlib
 
 data = pd.read_csv("http://www.nasdaqtrader.com/dynamic/SymDir/nasdaqtraded.txt", sep='|')
 data_clean = data[data['Test Issue'] == 'N']
+data_clean = data[data['ETF'] == 'N']
 symbols = data_clean['NASDAQ Symbol'].tolist()
 print('total number of symbols traded = {}'.format(len(symbols)))
 

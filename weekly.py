@@ -24,6 +24,7 @@ def is_trending_up(data, N):
     return all(last_n_days['Close'].diff().dropna() > 0)
 
 data = pd.read_csv("hist/AMZN.csv", index_col="Date", parse_dates=True)
+ref = pd.read_csv("hist/SPY.csv", index_col="Date", parse_dates=True)
 
 logic = {'Open'  : 'first',
          'High'  : 'max',
@@ -34,6 +35,8 @@ logic = {'Open'  : 'first',
 
 data = data.resample('W').apply(logic)
 data.index -= to_offset("6D")
+ref = ref.resample('W').apply(logic)
+ref.index -= to_offset("6D")
 
 
 data['ma_10'] = data['Close'].rolling(window=10).mean().tolist()
@@ -66,7 +69,37 @@ ap_5 = mpf.make_addplot(data['ma_30'], type='line', color='green')
 ap_6 = mpf.make_addplot(data['ma_40'], type='line', color='blue')
 # mpf.plot(data, type='candle', volume=True, style='yahoo', mav=(10, 30, 40), vlines=stage_2.index.tolist(), addplot=[ap, ap_2, ap_3])
 
-if not stage_2.empty:
-    mpf.plot(data, type='candle', volume=True, style='yahoo', addplot=[ap, ap_2, ap_3, ap_4, ap_5, ap_6])
-else:
-    mpf.plot(data, type='candle', volume=True, style='yahoo', addplot=[ap_2, ap_3, ap_4, ap_5, ap_6])
+def quarters_perf(closes: pd.Series, n):
+    # import pdb; pdb.set_trace()
+    length = min(len(closes), n*13)
+    prices = closes.tail(length)
+    pct_chg = prices.pct_change().dropna()
+    perf_cum = (pct_chg + 1).cumprod() - 1
+    return perf_cum.tail(1).item()
+
+def strength(closes: pd.Series):
+    """Calculates the performance of the last year (most recent quarter is weighted double)"""
+    try:
+        quarters1 = quarters_perf(closes, 1)
+        quarters2 = quarters_perf(closes, 2)
+        quarters3 = quarters_perf(closes, 3)
+        quarters4 = quarters_perf(closes, 4)
+        return 0.4*quarters1 + 0.2*quarters2 + 0.2*quarters3 + 0.2*quarters4
+    except:
+        return 0
+
+def relative_strength(closes: pd.Series, closes_ref: pd.Series):
+    rs_stock = strength(closes)
+    rs_ref = strength(closes_ref)
+    print("rs stock", rs_stock, "rs ref", rs_ref)
+    rs = (1 + rs_stock) / (1 + rs_ref) * 100
+    print("rs", rs)
+    rs = int(rs*100) / 100 # round to 2 decimals
+    return rs
+
+print(relative_strength(data["Close"], ref["Close"]))
+
+# if not stage_2.empty:
+#     mpf.plot(data, type='candle', volume=True, style='yahoo', addplot=[ap, ap_2, ap_3, ap_4, ap_5, ap_6])
+# else:
+#     mpf.plot(data, type='candle', volume=True, style='yahoo', addplot=[ap_2, ap_3, ap_4, ap_5, ap_6])
