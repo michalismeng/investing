@@ -12,8 +12,6 @@ public class TickerInfo
     public DateTime DateCreated { get; set; }
     public DateTime DateUpdated { get; set; }
 
-    public IList<TickerData> PriceData { get; set; } = [];
-
     public override string ToString()
     {
         return $"{Name} ({Ticker}) - {Sector}/{Industry}";

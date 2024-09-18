@@ -12,8 +12,8 @@ public class TickerData
     public decimal Low { get; set; }
     public decimal Volume { get; set; }
     public decimal? Strength { get; set; }
-
-    public TickerInfo? TickerInfo { get; set; }
+    public decimal? RelativeStrength { get; set; }
+    public string? ReferenceTicker { get; set; }
 
     public override string ToString()
     {

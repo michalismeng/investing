@@ -1,8 +1,10 @@
 using System.Collections.Immutable;
+using System.Data.Common;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.EntityFrameworkCore;
+using Skender.Stock.Indicators;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -181,6 +183,48 @@ else if(Environment.GetEnvironmentVariable("MODE") == "strength")
         _context.SaveChanges();
     });
 
+}
+else if(Environment.GetEnvironmentVariable("MODE") == "relative-strength")
+{
+    // Caclulate relative strength for all tickers in database. The reference index for all tickers is SPY for now.
+
+    // Took 25 minutes to run
+    using var context = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var tickers = context.Tickers.Select(t => t.Ticker).ToList().Order();
+    var reference = context.PriceData.Where(d => d.Ticker == "SPY").ToList().OrderByDescending(d => d.Datetime).ToArray();
+
+    Parallel.ForEach(tickers, new ParallelOptions { MaxDegreeOfParallelism = 8 }, ticker =>
+    {
+        using var _context = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        _context.ChangeTracker.AutoDetectChangesEnabled = false;
+        var data = _context.PriceData.Where(d => d.Ticker == ticker).OrderByDescending(d => d.Datetime).ToArray();
+
+        System.Console.WriteLine("Calculating strength of ticker {0}", ticker);
+        // i: index in data, j: index in reference
+        // We've seen that datetime sometimes is not aligned, so we need to advance i/j until the dates are aligned
+        for(int i = 0, j = 0; i < Math.Min(data.Length, reference.Length) && j < Math.Min(data.Length, reference.Length); )
+        {
+            if(data[i].Datetime > reference[j].Datetime)
+            {
+                i++;
+                continue;
+            }
+            else if(data[i].Datetime < reference[j].Datetime)
+            {
+                j++;
+                continue;
+            }
+            var relativeStrength = data[i].GetRelativeStrength(reference[j]);
+            data[i].RelativeStrength = relativeStrength;
+            data[i].ReferenceTicker = "SPY";
+            _context.Update(data[i]);
+            i++;
+            j++;
+            if(i > 10) break;
+        }
+
+        _context.SaveChanges();
+    });
 }
 else
 {
