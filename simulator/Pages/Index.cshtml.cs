@@ -60,6 +60,23 @@ public static class StockPriceExtensions
         return weeklyPrices;
     }
 
+    public static List<TickerData> ToWeekly(this List<TickerData> dailyPrices) => 
+        (from rec in dailyPrices
+         group rec by rec.Datetime.AddDays(-(int)rec.Datetime.DayOfWeek) into g
+         select new TickerData {
+          Ticker = g.First().Ticker,
+          Close = g.Last().Close,
+          Percentile = g.Last().Percentile,
+          ReferenceTicker = g.Last().ReferenceTicker,
+          RelativeStrength = g.Last().RelativeStrength,
+          Low = g.Select(x => x.Low).Min(),
+          High = g.Select(x => x.High).Max(),
+          Open = g.MinBy(x => x.Datetime)!.Open,
+          Strength = g.Last().Strength,
+          Volume = g.Sum(x => x.Volume),
+          Datetime = g.First().Datetime.AddDays(-(int)g.First().Datetime.DayOfWeek + 1), // Add one to get on Monday
+        }).ToList();
+    
     public static List<StockPrice> ToWeekly(this List<StockPrice> dailyPrices) => 
         (from rec in dailyPrices
          group rec by rec.Date.AddDays(-(int)rec.Date.DayOfWeek) into g
@@ -73,9 +90,9 @@ public static class StockPriceExtensions
           Date = g.First().Date.AddDays(-(int)g.First().Date.DayOfWeek + 1), // Add one to get on Monday
         }).ToList();
     
-    public static List<StockPrice> Calculate52WeekHigh(this List<StockPrice> prices)
+    public static List<TickerData> Calculate52WeekHigh(this List<TickerData> prices)
     {
-        List<StockPrice> week_highs = [];
+        List<TickerData> week_highs = [];
 
         for(int i = 52; i < prices.Count; i++)
         {
@@ -86,19 +103,20 @@ public static class StockPriceExtensions
             var pricesInLast52Weeks = prices
                 .Where(p => p.Date >= startDate && p.Date <= prices[i].Date);
 
-            week_highs.Add(new StockPrice
+            week_highs.Add(new TickerData
             {
-                Date = prices[i].Date,
-                AdjClose = pricesInLast52Weeks.MaxBy(x => x.High)!.High
+                Ticker = prices.First().Ticker,
+                Datetime = prices[i].Date,
+                Close = pricesInLast52Weeks.MaxBy(x => x.High)!.High
             });
         }
 
         return week_highs;
     }
 
-    public static List<StockPrice> Calculate52WeekLow(this List<StockPrice> prices)
+    public static List<TickerData> Calculate52WeekLow(this List<TickerData> prices)
     {
-        List<StockPrice> week_highs = [];
+        List<TickerData> week_highs = [];
 
         for(int i = 52; i < prices.Count; i++)
         {
@@ -109,66 +127,52 @@ public static class StockPriceExtensions
             var pricesInLast52Weeks = prices
                 .Where(p => p.Date >= startDate && p.Date <= prices[i].Date);
 
-            week_highs.Add(new StockPrice
+            week_highs.Add(new TickerData
             {
-                Date = prices[i].Date,
-                AdjClose = pricesInLast52Weeks.MinBy(x => x.Low)!.Low
+                Ticker = prices.First().Ticker,
+                Datetime = prices[i].Date,
+                Close = pricesInLast52Weeks.MinBy(x => x.Low)!.Low
             });
         }
 
         return week_highs;
     }
-
-    // quarter_perf(data, n) =>
-//     i = n
-//     refCandle = i*oneYear/4
-//     baseCandle = (i-1)*oneYear/4
-//     while (not data[refCandle] and i > 1) 
-//         i := i - 1
-//         refCandle := i*oneYear/4
-//         baseCandle := (i-1)*oneYear/4
-    
-//     ta.roc(data[baseCandle], refCandle)
-
-// // first quarter is weighted more
-// stock_performance = 0.4*quarter_perf(stock,1) + 0.2*quarter_perf(stock,2) + 0.2*quarter_perf(stock,3) + 0.2*quarter_perf(stock,4)
-// ref_performance = 0.4*quarter_perf(ref,1) + 0.2*quarter_perf(ref,2) + 0.2*quarter_perf(ref,3) + 0.2*quarter_perf(ref,4)
 
     // Calculate quarterly performance for the nth previous quarter. Assume weekly data.
     // Calculation based on percentage change each week, which is compounded for the quarter to date.
-    public static decimal GetQuarterPerformance(this List<StockPrice> prices, int quarters)
-    {
-        var length = Math.Min(prices.Count, quarters * 13);
-        var latestPrices = prices.TakeLast(length).ToList();
-        List<StockPrice> latestOneBefore = [new StockPrice() { AdjClose = 1 }, ..prices.SkipLast(1).TakeLast(length - 1).ToList()];
-        var pct_changes = latestPrices.Zip(latestOneBefore).Select(x => (x.First.Close - x.Second.Close) / x.Second.Close).Skip(1).ToList(); 
-        var perf_cum = pct_changes.Aggregate(1M, (acc, val) => acc * (val + 1)) - 1;
-        return perf_cum;
-    }
+    // public static decimal GetQuarterPerformance(this List<TickerData> prices, int quarters)
+    // {
+    //     var length = Math.Min(prices.Count, quarters * 13);
+    //     var latestPrices = prices.TakeLast(length).ToList();
+    //     List<TickerData> latestOneBefore = [new TickerData() { Close = 1 }, ..prices.SkipLast(1).TakeLast(length - 1).ToList()];
+    //     var pct_changes = latestPrices.Zip(latestOneBefore).Select(x => (x.First.Close - x.Second.Close) / x.Second.Close).Skip(1).ToList(); 
+    //     var perf_cum = pct_changes.Aggregate(1M, (acc, val) => acc * (val + 1)) - 1;
+    //     return perf_cum;
+    // }
 
-    public static decimal GetStrength(this List<StockPrice> prices)
-    {
-        var q1 = prices.GetQuarterPerformance(1);
-        var q2 = prices.GetQuarterPerformance(2);
-        var q3 = prices.GetQuarterPerformance(3);
-        var q4 = prices.GetQuarterPerformance(4);
+    // public static decimal GetStrength(this List<TickerData> prices)
+    // {
+    //     var q1 = prices.GetQuarterPerformance(1);
+    //     var q2 = prices.GetQuarterPerformance(2);
+    //     var q3 = prices.GetQuarterPerformance(3);
+    //     var q4 = prices.GetQuarterPerformance(4);
 
-        return 0.4M * q1 + 0.2M * q2 + 0.2M * q3 + 0.2M * q4;
-    }
+    //     return 0.4M * q1 + 0.2M * q2 + 0.2M * q3 + 0.2M * q4;
+    // }
 
-    public static decimal GetRelativeStrength(this List<StockPrice> prices, List<StockPrice> reference)
-    {
-        // if(prices.TakeLast(52).Zip(reference.TakeLast(52)).Any(x => x.First.Date != x.Second.Date))
-        //     throw new Exception("GetRelativeStrength: prices and reference must have matching dates");
+    // public static decimal GetRelativeStrength(this List<TickerData> prices, List<TickerData> reference)
+    // {
+    //     if(prices.TakeLast(52).Zip(reference.TakeLast(52)).Any(x => x.First.Date != x.Second.Date))
+    //         throw new Exception("GetRelativeStrength: prices and reference must have matching dates");
 
-        var rs_stock = prices.GetStrength();
-        var rs_ref = reference.GetStrength();
-        var rs = (1 + rs_stock) / (1 + rs_ref) * 100;
-        var rs_final = (int)(rs * 100) / 100;
-        return rs_final;
-    }
+    //     var rs_stock = prices.GetStrength();
+    //     var rs_ref = reference.GetStrength();
+    //     var rs = (1 + rs_stock) / (1 + rs_ref) * 100;
+    //     var rs_final = (int)(rs * 100) / 100;
+    //     return rs_final;
+    // }
 
-    public static List<DateTime> GetStage2Weekly(this List<StockPrice> prices, List<StockPrice> reference)
+    public static List<DateTime> GetStage2Weekly(this List<TickerData> prices)
     {
         var ma_10 = prices.GetSma(10).ToList();
         var ma_30 = prices.GetSma(30).ToList();
@@ -184,18 +188,16 @@ public static class StockPriceExtensions
             var ma10 = (decimal)(ma_10.SingleOrDefault(x => x.Date == p.Date)?.Sma ?? -1);
             var ma30 = (decimal)(ma_30.SingleOrDefault(x => x.Date == p.Date)?.Sma ?? -1);
             var ma40 = (decimal)(ma_40.SingleOrDefault(x => x.Date == p.Date)?.Sma ?? -1);
-            var high52 = high_52.SingleOrDefault(x => x.Date == p.Date)?.AdjClose ?? -1;
-            var low52 = low_52.SingleOrDefault(x => x.Date == p.Date)?.AdjClose ?? -1;
+            var high52 = high_52.SingleOrDefault(x => x.Date == p.Date)?.Close ?? -1;
+            var low52 = low_52.SingleOrDefault(x => x.Date == p.Date)?.Close ?? -1;
 
-            var is_stage2 = p.AdjClose > ma30 && p.AdjClose > ma40 &&
+            var is_stage2 = p.Close > ma30 && p.Close > ma40 &&
                             ma30 > ma40 && ma10 > ma30 && ma10 > ma40 &&
-                            p.AdjClose > ma10 && p.AdjClose > 1.3M * low52 &&
-                            p.AdjClose > 0.75M * high52;
+                            p.Close > ma10 && p.Close > 1.3M * low52 &&
+                            p.Close > 0.75M * high52;
             
-            var rs_rating = prices.Take(i).ToList().GetRelativeStrength(reference.Take(reference.FindIndex(x => x.Date == prices[i].Date)).ToList());
-
             var prev = ma_40.FindIndex(x => x.Date == p.Date) - 1;
-            if(is_stage2 && prev >= 1 && ma40 > (decimal)ma_40[prev].Sma! && rs_rating > 70)
+            if(is_stage2 && prev >= 0 && ma40 > (decimal)ma_40[prev].Sma! && prices[i].Percentile > 70)
                 dates.Add(p.Date);
             
         }
@@ -215,51 +217,33 @@ public class IndexModel : PageModel
         _context = context;
     }
 
-    public List<StockPrice> Records { get; set; } = [];
-    public List<StockPrice> SPY { get; set; } = [];
+    public List<TickerData> Records { get; set; } = [];
+    public List<TickerData> SPY { get; set; } = [];
     public List<SmaResult> MA_10 { get; set; } = [];
     public List<SmaResult> MA_30 { get; set; } = [];
     public List<SmaResult> MA_40 { get; set; } = [];
-    public List<StockPrice> Week_High_52 { get; set; } = [];
-    public List<StockPrice> Week_Low_52 { get; set; } = [];
+    public List<TickerData> Week_High_52 { get; set; } = [];
+    public List<TickerData> Week_Low_52 { get; set; } = [];
     public List<DateTime> Stage2_Marks { get; set; } = [];
 
     public void OnGet(string? dateStart = null, string? dateEnd = null)
     {
-        var records = _context.PriceData.Where(d => d.Ticker == "AMZN").ToList().Select(d => new StockPrice
-        {
-            AdjClose = d.Close,
-            Date = d.Datetime,
-            High = d.High,
-            Low = d.Low,
-            Open = d.Open,
-            Volume = d.Volume,
-            Strength = d.Strength,
-        }).ToList().ToWeekly();
+        var records = _context.PriceData.Where(d => d.Ticker == "NFLX").ToList().ToWeekly();
         Records = records;
 
-        records = _context.PriceData.Where(d => d.Ticker == "SPY").ToList().Select(d => new StockPrice
-        {
-            AdjClose = d.Close,
-            Date = d.Datetime,
-            High = d.High,
-            Low = d.Low,
-            Open = d.Open,
-            Volume = d.Volume,
-            Strength = d.Strength,
-        }).ToList().ToWeekly();
+        records = _context.PriceData.Where(d => d.Ticker == "SPY").ToList().ToWeekly();
         SPY = records;
 
         if (dateStart != null)
         {
             var startDate = DateTime.Parse(dateStart);
-            Records = Records.Where(p => p.Date >= startDate).ToList();
+            Records = Records.Where(p => p.Datetime >= startDate).ToList();
         }
 
         if (dateEnd != null)
         {
             var endDate = DateTime.Parse(dateEnd);
-            Records = Records.Where(p => p.Date <= endDate).ToList();
+            Records = Records.Where(p => p.Datetime <= endDate).ToList();
         }
 
         MA_10 = Records.GetSma(10).Condense().ToList();
@@ -267,6 +251,6 @@ public class IndexModel : PageModel
         MA_40 = Records.GetSma(40).Condense().ToList();
         Week_High_52 = Records.Calculate52WeekHigh();
         Week_Low_52 = Records.Calculate52WeekLow();
-        Stage2_Marks = Records.GetStage2Weekly(SPY);
+        Stage2_Marks = Records.GetStage2Weekly();
     }
 }

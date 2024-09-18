@@ -9,7 +9,7 @@ using Skender.Stock.Indicators;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseMySql(ApplicationDbContext.connectionString, ServerVersion.AutoDetect(ApplicationDbContext.connectionString))
+    options.UseMySql(ApplicationDbContext.connectionString, ServerVersion.AutoDetect(ApplicationDbContext.connectionString), mySqlOptions => mySqlOptions.CommandTimeout(500))
 );
 
 // Add services to the container.
@@ -223,6 +223,36 @@ else if(Environment.GetEnvironmentVariable("MODE") == "relative-strength")
             if(i > 10) break;
         }
 
+        _context.SaveChanges();
+    });
+}
+else if(Environment.GetEnvironmentVariable("MODE") == "percentile")
+{
+    // Calculate the percentile for the relative strength for each day.
+
+    // Took xx to run.
+    // The CPU utilization is very low with the code below. Maybe we can increase parallelism.
+    using var context = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+    System.Console.WriteLine("Getting min and max dates in database...");
+    var minDate = context.PriceData.Select(p => p.Datetime).Min();
+    var maxDate = context.PriceData.Select(p => p.Datetime).Max();
+
+    var dates = Enumerable.Range(0, 1 + maxDate.Subtract(minDate).Days)
+                          .Select(offset => minDate.AddDays(offset))
+                          .OrderDescending()
+                          .ToList();
+
+    Parallel.ForEach(dates, new ParallelOptions { MaxDegreeOfParallelism = 8 }, date =>
+    {
+        using var _context = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        _context.ChangeTracker.AutoDetectChangesEnabled = false;
+
+        System.Console.WriteLine("Calculating ticker percentiles for {0}", date.Date);
+        var data = _context.PriceData.Where(d => d.Datetime == date).ToList();
+        var percentiles = data.QCut(100).ToList();
+
+        _context.PriceData.UpdateRange(percentiles);
         _context.SaveChanges();
     });
 }

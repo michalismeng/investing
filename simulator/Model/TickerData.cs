@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using Skender.Stock.Indicators;
 
-public class TickerData
+public class TickerData : IQuote
 {
     [Required]
     public required string Ticker { get; set; }
@@ -14,6 +15,9 @@ public class TickerData
     public decimal? Strength { get; set; }
     public decimal? RelativeStrength { get; set; }
     public string? ReferenceTicker { get; set; }
+    public int? Percentile { get; set; }
+
+    public DateTime Date => Datetime;
 
     public override string ToString()
     {

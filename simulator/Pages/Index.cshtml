@@ -22,14 +22,50 @@
 {
     <script>
         const chart = window.LightweightCharts.createChart(document.getElementById("chart"), { width: 800, height: 500, rightPriceScale: { mode: 1 } });
-        const stockPrices = chart.addCandlestickSeries();
+        chart.applyOptions({
+            rightPriceScale: {
+                visible: true,
+            },
+            leftPriceScale: {
+                visible: true,
+            },
+        });
+
+        const volumeSeries = chart.addHistogramSeries({
+            priceFormat: {
+                type: 'volume',
+            },
+            priceScaleId: '', // set as an overlay by setting a blank priceScaleId
+        });
+        volumeSeries.priceScale().applyOptions({
+            // set the positioning of the volume series
+            scaleMargins: {
+                top: 0.7, // highest point of the series will be 70% away from the top
+                bottom: 0,
+            },
+        });
+        volumeSeries.setData([
+        @foreach(var record in Model.Records)
+        {
+            @: { value: @record.Volume, time: "@record.Date.ToString("yyyy-MM-dd")" },
+        }
+        ]);
+
+        const stockPrices = chart.addBarSeries();
         const data = [
         @foreach(var record in Model.Records)
         {
-            @: { open: @record.Open, high: @record.High, low: @record.Low, close: @record.AdjClose, time: "@record.Date.ToString("yyyy-MM-dd")" },
+            @: { open: @record.Open, high: @record.High, low: @record.Low, close: @record.Close, time: "@record.Date.ToString("yyyy-MM-dd")" },
         }
         ];
         stockPrices.setData(data);
+
+        stockPrices.priceScale().applyOptions({
+            scaleMargins: {
+                top: 0.1, // highest point of the series will be 10% away from the top
+                bottom: 0.35, // lowest point will be 40% away from the bottom
+            },
+        });
 
         const ma_10 = [
         @foreach(var record in Model.MA_10)
@@ -52,13 +88,13 @@
         const high_52 = [
         @foreach(var record in Model.Week_High_52)
         {
-            @: { value: @record.AdjClose, time: "@record.Date.ToString("yyyy-MM-dd")" },
+            @: { value: @record.Close, time: "@record.Date.ToString("yyyy-MM-dd")" },
         }
         ];
         const low_52 = [
         @foreach(var record in Model.Week_Low_52)
         {
-            @: { value: @record.AdjClose, time: "@record.Date.ToString("yyyy-MM-dd")" },
+            @: { value: @record.Close, time: "@record.Date.ToString("yyyy-MM-dd")" },
         }
         ];
         const strength = [
@@ -150,7 +186,7 @@
                 showStrength = false
             }
             else {
-                strength_line = chart.addLineSeries({ color: "#FFCCCB", lineWidth: 3 });
+                strength_line = chart.addLineSeries({ color: "#FFCCCB", lineWidth: 3, priceScaleId: 'left' });
                 strength_line.setData(strength)
                 showStrength = true
             }

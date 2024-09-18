@@ -38,4 +38,31 @@ public static class Extensions
         var rs = (1 + ticker.Strength) / (1 + reference.Strength) * 100;
         return Math.Round(rs.Value, 2);
     }
+
+    public static List<TickerData> QCut(this List<TickerData> tickers, int quantiles, bool silent = true)
+    {
+        if (tickers.Count < 1000)
+        {
+            if (!silent)
+                throw new Exception($"QCut: The given array should have more than 1000 tickers, instead it has {tickers.Count}");
+            else
+                return [];
+        }
+        // Sort the values
+        var sortedValues = tickers.Where(t => t.RelativeStrength != null).OrderBy(t => t.RelativeStrength).ToList();
+        int n = sortedValues.Count;
+
+        int bin = 0;
+        // Assign each value to a bin
+        foreach(var ticker in sortedValues)
+        {
+            int nextQuantilePosition = (bin + 1) * n / quantiles;
+            if(nextQuantilePosition < sortedValues.Count && ticker.RelativeStrength >= sortedValues[nextQuantilePosition].RelativeStrength)
+                bin++;
+
+            ticker.Percentile = bin;
+        }
+
+        return sortedValues;
+    }
 }
