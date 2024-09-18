@@ -86,6 +86,8 @@ if(Environment.GetEnvironmentVariable("TICKER_INFO_FILE") != null)
 }
 else if(Environment.GetEnvironmentVariable("PRICE_DATA_FOLDER") != null)
 {
+    // Took 20 minutes to run e2e
+
     // {{"candles": [{"open": 377.71688028842055, "close": 381.0350646972656, "low": 375.58302989505836, "high": 381.24060854211376, "volume": 172996900, "datetime": 1678838400}, ... }]}
 
     var files = Directory.GetFiles(Environment.GetEnvironmentVariable("PRICE_DATA_FOLDER")!).Where(f => f.EndsWith(".json")).Order();
@@ -142,33 +144,35 @@ else if(Environment.GetEnvironmentVariable("PRICE_DATA_FOLDER") != null)
 }
 else if(Environment.GetEnvironmentVariable("MODE") == "strength")
 {
-    // TODO: Use Arrays and span to speed up execution!
-    // TODO: Why are the tickers not showing in order.
+    // Caclulate strength for all tickers in database.
 
+    // Took 15 minutes to run e2e
     using var context = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
     
-    var tickers = context.Tickers.OrderBy(t => t.Ticker).Select(t => t.Ticker).ToList();
+    var tickers = context.Tickers.Select(t => t.Ticker).ToList().Order();
 
     Parallel.ForEach(tickers, new ParallelOptions { MaxDegreeOfParallelism = 8 }, ticker =>
     {
         using var _context = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
         _context.ChangeTracker.AutoDetectChangesEnabled = false;
-        var data = _context.PriceData.Where(d => d.Ticker == ticker).OrderBy(d => d.Datetime).ToList();
+        var data = _context.PriceData.Where(d => d.Ticker == ticker).OrderBy(d => d.Datetime).ToArray();
         System.Console.WriteLine("Calculating strength of ticker {0}", ticker);
-        foreach(var i in Enumerable.Range(0, data.Count))
+        foreach(var i in Enumerable.Range(0, data.Length))
         {
-            var dataFiltered = data.SkipLast(i).ToList();
+            // Get strength of i-th last date
+            var dataFiltered = data.AsSpan(0, data.Length - i);
 
             try
             {
                 var strength = dataFiltered.GetStrength();
 
-                var latest = dataFiltered.Last();
+                var latest = dataFiltered[^1];
                 latest.Strength = strength;
                 _context.Update(latest);
             }
             catch(Exception ex)
             {
+                // This exception means there aren't enough past data from the i-th entry to calculate the strength (we need 4 quarters)
                 if (ex.Message.Contains("GetQuarterPerformance"))
                     break;
                 throw;
