@@ -230,7 +230,7 @@ else if(Environment.GetEnvironmentVariable("MODE") == "percentile")
 {
     // Calculate the percentile for the relative strength for each day.
 
-    // Took xx to run.
+    // Took 40 minutes to run.
     // The CPU utilization is very low with the code below. Maybe we can increase parallelism.
     using var context = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
@@ -249,10 +249,15 @@ else if(Environment.GetEnvironmentVariable("MODE") == "percentile")
         _context.ChangeTracker.AutoDetectChangesEnabled = false;
 
         System.Console.WriteLine("Calculating ticker percentiles for {0}", date.Date);
-        var data = _context.PriceData.Where(d => d.Datetime == date).ToList();
+        var data = _context.PriceData.AsNoTracking().Where(d => d.Datetime == date).ToList();
         var percentiles = data.QCut(100).ToList();
 
-        _context.PriceData.UpdateRange(percentiles);
+        foreach(var entity in percentiles)
+        {
+            _context.Attach(entity);
+            _context.Entry(entity).Property(e => e.Percentile).IsModified = true;
+        }
+        System.Console.WriteLine("Updating entities");
         _context.SaveChanges();
     });
 }
