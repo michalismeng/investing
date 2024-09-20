@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 
+namespace simulator.Model;
+
 public class ApplicationDbContext : DbContext
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)

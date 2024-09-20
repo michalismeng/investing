@@ -5,6 +5,8 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.EntityFrameworkCore;
 using Skender.Stock.Indicators;
+using simulator.Model;
+using simulator.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 

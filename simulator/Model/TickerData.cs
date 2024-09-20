@@ -1,5 +1,14 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Skender.Stock.Indicators;
+
+namespace simulator.Model;
+
+public enum TickerDataGranulariry
+{
+    Daily,
+    Weekly,
+}
 
 public class TickerData : IQuote
 {
@@ -17,7 +26,11 @@ public class TickerData : IQuote
     public string? ReferenceTicker { get; set; }
     public int? Percentile { get; set; }
 
+    [NotMapped]
     public DateTime Date => Datetime;
+
+    [NotMapped]
+    public TickerDataGranulariry Granularity { get; set; } = TickerDataGranulariry.Daily;
 
     public override string ToString()
     {
