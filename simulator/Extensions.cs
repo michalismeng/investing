@@ -1,3 +1,4 @@
+using NoAlloq;
 using simulator.Model;
 using Skender.Stock.Indicators;
 
@@ -7,6 +8,9 @@ public static class StockPriceExtensions
 {
     public static decimal GetQuarterPerformance(this Span<TickerData> prices, int quarter)
     {
+        if(prices.Any(p => p.Granularity != TickerDataGranulariry.Daily))
+            throw new Exception("GetQuarterPerformance: All prices must be daily.");
+
         if(prices.Length < quarter * 252 / 4)
             throw new Exception(string.Format("GetQuarterPerformance: Not enough price data. Expected at least {0}, found {1}", quarter * 252 / 4, prices.Length));
 
@@ -17,6 +21,9 @@ public static class StockPriceExtensions
 
     public static decimal GetStrength(this Span<TickerData> prices)
     {
+        if(prices.Any(p => p.Granularity != TickerDataGranulariry.Daily))
+            throw new Exception("GetQuarterPerformance: All prices must be daily.");
+
         var q1 = prices.GetQuarterPerformance(1);
         var q2 = prices.GetQuarterPerformance(2);
         var q3 = prices.GetQuarterPerformance(3);
@@ -128,15 +135,18 @@ public static class StockPriceExtensions
 
     public static List<TickerData> Calculate52WeekHigh(this List<TickerData> prices)
     {
-        if(prices.Any(p => p.Granularity != TickerDataGranulariry.Weekly))
-            throw new Exception("Calculate52WeekHigh: All prices must be weekly.");
+        bool isDaily = prices.All(p => p.Granularity == TickerDataGranulariry.Daily);
+        bool isWeekly = prices.All(p => p.Granularity == TickerDataGranulariry.Weekly);
+        if(!isDaily && !isWeekly)
+            throw new Exception("Calculate52WeekHigh: Prices must have the same granularity, either daily or weekly.");
+
+        int startIndex = isDaily ? 252 : 52;    // 252 trading days in a year or 52 weeks
 
         List<TickerData> week_highs = [];
 
-        for(int i = 52; i < prices.Count; i++)
+        for(int i = startIndex; i < prices.Count; i++)
         {
-            // Find the date 52 weeks (1 year) back from the reference date
-            var startDate = prices[i - 52].Date;
+            var startDate = prices[i - startIndex].Date;
 
             // Filter the stock prices to include only those within the last 52 weeks
             var pricesInLast52Weeks = prices
@@ -155,15 +165,18 @@ public static class StockPriceExtensions
 
     public static List<TickerData> Calculate52WeekLow(this List<TickerData> prices)
     {
-        if(prices.Any(p => p.Granularity != TickerDataGranulariry.Weekly))
-            throw new Exception("Calculate52WeekLow: All prices must be weekly.");
+        bool isDaily = prices.All(p => p.Granularity == TickerDataGranulariry.Daily);
+        bool isWeekly = prices.All(p => p.Granularity == TickerDataGranulariry.Weekly);
+        if(!isDaily && !isWeekly)
+            throw new Exception("Calculate52WeekLow: Prices must have the same granularity, either daily or weekly.");
+
+        int startIndex = isDaily ? 252 : 52;    // 252 trading days in a year or 52 weeks
 
         List<TickerData> week_highs = [];
 
-        for(int i = 52; i < prices.Count; i++)
+        for(int i = startIndex; i < prices.Count; i++)
         {
-            // Find the date 52 weeks (1 year) back from the reference date
-            var startDate = prices[i - 52].Date;
+            var startDate = prices[i - startIndex].Date;
 
             // Filter the stock prices to include only those within the last 52 weeks
             var pricesInLast52Weeks = prices
@@ -180,39 +193,55 @@ public static class StockPriceExtensions
         return week_highs;
     }
 
-    public static List<DateTime> GetStage2Weekly(this List<TickerData> prices)
+    public static List<DateTime> GetStage2(this List<TickerData> prices)
     {
-        if(prices.Any(p => p.Granularity != TickerDataGranulariry.Weekly))
-            throw new Exception("GetStage2Weekly: All prices must be weekly.");
+        bool isDaily = prices.All(p => p.Granularity == TickerDataGranulariry.Daily);
+        bool isWeekly = prices.All(p => p.Granularity == TickerDataGranulariry.Weekly);
+        if(!isDaily && !isWeekly)
+            throw new Exception("GetStage2: Prices must have the same granularity, either daily or weekly.");
 
-        var ma_10 = prices.GetSma(10).ToList();
-        var ma_30 = prices.GetSma(30).ToList();
-        var ma_40 = prices.GetSma(40).ToList();
-        var high_52 = prices.Calculate52WeekHigh();
-        var low_52 = prices.Calculate52WeekLow();
+        var maShort = prices.GetSma(isWeekly ? 10 : 50).ToList();
+        var maMedium = prices.GetSma(isWeekly ? 30 : 150).ToList();
+        var maLong = prices.GetSma(isWeekly ? 40 : 200).ToList();
+        var high52 = prices.Calculate52WeekHigh();
+        var low52 = prices.Calculate52WeekLow();
+
+        int startIndex = isWeekly ? 52 : 252;
 
         List<DateTime> dates = [];
 
-        for(int i = 52; i < prices.Count; i++)
+        for(int i = startIndex; i < prices.Count; i++)
         {
-            var p = prices[i];
-            var ma10 = (decimal)(ma_10.SingleOrDefault(x => x.Date == p.Date)?.Sma ?? -1);
-            var ma30 = (decimal)(ma_30.SingleOrDefault(x => x.Date == p.Date)?.Sma ?? -1);
-            var ma40 = (decimal)(ma_40.SingleOrDefault(x => x.Date == p.Date)?.Sma ?? -1);
-            var high52 = high_52.SingleOrDefault(x => x.Date == p.Date)?.Close ?? -1;
-            var low52 = low_52.SingleOrDefault(x => x.Date == p.Date)?.Close ?? -1;
+            var datePrice = prices[i];
+            var dateMAShort = (decimal)(maShort.SingleOrDefault(x => x.Date == datePrice.Date)?.Sma ?? -1);
+            var dateMAMedium = (decimal)(maMedium.SingleOrDefault(x => x.Date == datePrice.Date)?.Sma ?? -1);
+            var dateMaLong = (decimal)(maLong.SingleOrDefault(x => x.Date == datePrice.Date)?.Sma ?? -1);
+            var dateHigh52 = high52[i - startIndex].Close;
+            var dateLow52 = low52[i - startIndex].Close;
 
-            var is_stage2 = p.Close > ma30 && p.Close > ma40 &&
-                            ma30 > ma40 && ma10 > ma30 && ma10 > ma40 &&
-                            p.Close > ma10 && p.Close > 1.3M * low52 &&
-                            p.Close > 0.75M * high52;
+            // Check high, low and price dates are aligned
+            if(low52[i - startIndex].Date != high52[i - startIndex].Date || high52[i - startIndex].Date != datePrice.Date)
+                throw new Exception(string.Format("GetStage2: Bad dates for i = {0}. High {1} while price {2}", i, high52[i - startIndex].Date, datePrice.Date));
+
+            var technicals = datePrice.Close > dateMAMedium && datePrice.Close > dateMaLong &&
+                             dateMAMedium > dateMaLong && dateMAShort > dateMAMedium && dateMAShort > dateMaLong &&
+                             datePrice.Close > dateMAShort && datePrice.Close > 1.3M * dateLow52 &&
+                             datePrice.Close > 0.75M * dateHigh52;
             
-            var prev = ma_40.FindIndex(x => x.Date == p.Date) - 1;
-            if(is_stage2 && prev >= 0 && ma40 > (decimal)ma_40[prev].Sma! && prices[i].Percentile > 70)
-                dates.Add(p.Date);
-            
+            // We need at least one month of the long moving average, so get 1 and 1/2. We can roll out stronger version as well, with more months
+            var maLongPrevMonth = maLong.Where(x => x.Date.Date >= datePrice.Date.AddMonths(-1).AddDays(-15).Date && x.Date.Date <= datePrice.Date.Date).ToList();
+            if(technicals && IsNonDecreasing(maLongPrevMonth) && prices[i].Percentile > 70)
+                dates.Add(datePrice.Date);
         }
 
         return dates;
+    }
+
+    public static bool IsNonDecreasing(List<SmaResult> values)
+    {
+        for (int i = 1; i < values.Count; i++)
+            if (values[i].Sma < values[i - 1].Sma)
+                return false;
+        return true;
     }
 }
