@@ -50,13 +50,6 @@
 {
     <script>
         @* Variables *@
-        let show10MA = false;
-        let show30MA = false;
-        let show40MA = false;
-        let showHigh52 = false;
-        let showLow52 = false;
-        let showStrength = false;
-
         let lineSeries_10;
         let lineSeries_30;
         let lineSeries_40;
@@ -68,7 +61,7 @@
 
         let currentDate = moment("@Model.CutoffDate.ToString("yyyy-MM-dd")");
         $("#btnAdvance small").html(`(${currentDate.clone().add(1, 'days').format("ddd MMM DD, YYYY")})`)
-        $("#headerDate").html(`(${currentDate.format("MMM DD, YYYY")})`)
+        $("#headerDate").html(`(${currentDate.format("ddd MMM DD, YYYY")})`)
 
         let scaleToChartInt = function(s) {
             if(s == "linear") return 0;
@@ -79,14 +72,10 @@
 
         @* Logic *@
 
-        const chart = window.LightweightCharts.createChart(document.getElementById("chart"), { autoSize: true, rightPriceScale: { mode: scaleToChartInt(priceScaleMode), entireTextOnly: true } });
-        chart.applyOptions({
-            rightPriceScale: {
-                visible: true,
-            },
-            leftPriceScale: {
-                visible: true,
-            },
+        const chart = window.LightweightCharts.createChart(document.getElementById("chart"), {
+            autoSize: true,
+            rightPriceScale: { mode: scaleToChartInt(priceScaleMode), entireTextOnly: true, visible: true, },
+            leftPriceScale: { visible: true },
         });
 
         const volumeSeries = chart.addHistogramSeries({
@@ -125,7 +114,7 @@
             },
         });
 
-        const ma_10 = [
+        let ma_10 = [
         @foreach(var record in Model.MA_10)
         {
             @: { value: @record.Sma, time: "@record.Date.ToString("yyyy-MM-dd")" },
@@ -158,16 +147,19 @@
         const strength = [
         @foreach(var record in Model.Records)
         {
-            @if(record.Strength != null) {
-                @: { value: @record.Strength, time: "@record.Date.ToString("yyyy-MM-dd")" },
+            @if(record.RelativeStrength != null) {
+                @: { value: @record.RelativeStrength, time: "@record.Date.ToString("yyyy-MM-dd")" },
             }
         }
         ];
 
-        function advanceData() {
+        let buyPrice = null;
+
+        function advanceData(retries=4) {
+            if (retries == 0) return;
             currentDate = currentDate.add(1, 'days')
             $("#btnAdvance small").html(`(${currentDate.clone().add(1, 'days').format("ddd MMM DD, YYYY")})`)
-            $("#headerDate").html(`(${currentDate.format("MMM DD, YYYY")})`)
+            $("#headerDate").html(`(${currentDate.format("ddd MMM DD, YYYY")})`)
             $.ajax({
               url: '?handler=Price',
               method: 'GET',
@@ -177,93 +169,97 @@
                 date: currentDate.format("YYYY-MM-DD")
               }
             }).done(function (data) {
-                if(!data) return;
+                if(!data) {
+                    advanceData(retries - 1);
+                    return;
+                }
+
+                let { price, ma10, ma30, ma40, week52High, week52Low } = data
 
                 stockPrices.update({
-                    open: data.open,
-                    high: data.high,
-                    low: data.low,
-                    close: data.close,
-                    time: moment(data.date).format("YYYY-MM-DD"),
+                    open: price.open,
+                    high: price.high,
+                    low: price.low,
+                    close: price.close,
+                    time: moment(price.date).format("YYYY-MM-DD"),
                 })
 
                 volumeSeries.update({
-                    value: data.volume,
-                    time: moment(data.date).format("YYYY-MM-DD"),
+                    value: price.volume,
+                    time: moment(price.date).format("YYYY-MM-DD"),
                 })
+
+                lineSeries_10.update({
+                    value: ma10.sma,
+                    time: moment(ma10.date).format("YYYY-MM-DD"),
+                })
+
+                lineSeries_30.update({
+                    value: ma30.sma,
+                    time: moment(ma30.date).format("YYYY-MM-DD"),
+                })
+
+                lineSeries_40.update({
+                    value: ma40.sma,
+                    time: moment(ma40.date).format("YYYY-MM-DD"),
+                })
+
+                week_high_52.update({
+                    value: week52High.close,
+                    time: moment(week52High.date).format("YYYY-MM-DD"),
+                })
+
+                week_low_52.update({
+                    value: week52Low.close,
+                    time: moment(week52High.date).format("YYYY-MM-DD"),
+                })
+
+                if(price.relativeStrength) {
+                    strength_line.update({
+                        value: price.relativeStrength,
+                        time: moment(price.date).format("YYYY-MM-DD"),
+                    })
+                }
+
+                if(buyPrice) console.log((price.close / buyPrice - 1) * 100, "%")
             })
         }
 
+        lineSeries_10 = chart.addLineSeries({ color: "blue", lineWidth: 2, visible: false });
+        lineSeries_10.setData(ma_10)
+        lineSeries_30 = chart.addLineSeries({ color: "green", lineWidth: 2, visible: false });
+        lineSeries_30.setData(ma_30)
+        lineSeries_40 = chart.addLineSeries({ color: "red", lineWidth: 2, visible: false });
+        lineSeries_40.setData(ma_40)
+        week_high_52 = chart.addLineSeries({ color: "lightgreen", lineWidth: 3, visible: false });
+        week_high_52.setData(high_52)
+        week_low_52 = chart.addLineSeries({ color: "#FFCCCB", lineWidth: 3, visible: false });
+        week_low_52.setData(low_52)
+        strength_line = chart.addLineSeries({ color: "#FFCCCB", lineWidth: 3, priceScaleId: 'left', visible: false });
+        strength_line.setData(strength)
+
         function toggleMa10() {
-            if (show10MA) {
-                chart.removeSeries(lineSeries_10)
-                show10MA = false
-            }
-            else {
-                lineSeries_10 = chart.addLineSeries({ color: "blue", lineWidth: 2 });
-                lineSeries_10.setData(ma_10)
-                show10MA = true
-            }
+            lineSeries_10.applyOptions({ visible: !lineSeries_10.options().visible })
         }
 
         function toggleMa30() {
-            if (show30MA) {
-                chart.removeSeries(lineSeries_30)
-                show30MA = false
-            }
-            else {
-                lineSeries_30 = chart.addLineSeries({ color: "green", lineWidth: 2 });
-                lineSeries_30.setData(ma_30)
-                show30MA = true
-            }
+            lineSeries_30.applyOptions({ visible: !lineSeries_30.options().visible })
         }
 
         function toggleMa40() {
-            if (show40MA) {
-                chart.removeSeries(lineSeries_40)
-                show40MA = false
-            }
-            else {
-                lineSeries_40 = chart.addLineSeries({ color: "red", lineWidth: 2 });
-                lineSeries_40.setData(ma_40)
-                show40MA = true
-            }
+            lineSeries_40.applyOptions({ visible: !lineSeries_40.options().visible })
         }
 
         function toggle52High() {
-            if (showHigh52) {
-                chart.removeSeries(week_high_52)
-                showHigh52 = false
-            }
-            else {
-                week_high_52 = chart.addLineSeries({ color: "lightgreen", lineWidth: 3 });
-                week_high_52.setData(high_52)
-                showHigh52 = true
-            }
+            week_high_52.applyOptions({ visible: !week_high_52.options().visible })
         }
 
         function toggle52Low() {
-            if (showLow52) {
-                chart.removeSeries(week_low_52)
-                showLow52 = false
-            }
-            else {
-                week_low_52 = chart.addLineSeries({ color: "#FFCCCB", lineWidth: 3 });
-                week_low_52.setData(low_52)
-                showLow52 = true
-            }
+            week_low_52.applyOptions({ visible: !week_low_52.options().visible })
         }
 
         function toggleStrength() {
-            if (showStrength) {
-                chart.removeSeries(strength_line)
-                showStrength = false
-            }
-            else {
-                strength_line = chart.addLineSeries({ color: "#FFCCCB", lineWidth: 3, priceScaleId: 'left' });
-                strength_line.setData(strength)
-                showStrength = true
-            }
+            strength_line.applyOptions({ visible: !strength_line.options().visible })
         }
 
         function setPriceMode(mode) {
@@ -282,6 +278,31 @@
         }
         ];
         stockPrices.setMarkers(markers)
+
+        function scrollToTime(time, timeScale){
+            const currentPosition = timeScale.scrollPosition();
+            const currentVisibleLogicalRange = timeScale.getVisibleLogicalRange();
+
+            const coordinate = timeScale.timeToCoordinate(time);
+            const logicalIndex = timeScale.coordinateToLogical(coordinate);
+
+            const targetPosition = currentPosition - currentVisibleLogicalRange.to + logicalIndex;
+            timeScale.scrollToPosition(targetPosition, false);
+        }
+
+
+        function myClickHandler(param) {
+            if (!param.point) {
+                return;
+            }
+
+            const data = param.seriesData.get(stockPrices);
+            const price = data.value !== undefined ? data.value : data.close;
+            console.log("Bought at", price, "on", data.time)
+            buyPrice = price
+        }
+
+        chart.subscribeClick(myClickHandler);
 
     </script>
 }

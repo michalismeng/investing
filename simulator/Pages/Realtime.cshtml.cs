@@ -46,7 +46,19 @@ public class RealtimeModel : PageModel
 
     public IActionResult OnGetPrice(string ticker, DateTime date)
     {
-        var price = _context.PriceData.Where(p => p.Datetime == date && p.Ticker == ticker).SingleOrDefault();
-        return new OkObjectResult(price);
+        var startDate = date.AddYears(-1).AddMonths(-1);
+        var price = _context.PriceData.Where(p => startDate <= p.Datetime && p.Datetime <= date && p.Ticker == ticker).OrderBy(p => p.Datetime).ToList();
+
+        if (price.Any(p => p.Datetime == date) == false)
+            return new OkObjectResult(null);
+
+        return new OkObjectResult(new {
+            Price = price.Last(),
+            Ma10 = price.GetSma(50).Condense().ToList().Last(),
+            Ma30 = price.GetSma(150).Condense().ToList().Last(),
+            Ma40 = price.GetSma(200).Condense().ToList().Last(),
+            Week52High = price.Calculate52WeekHigh().Last(),
+            Week52Low = price.Calculate52WeekLow().Last(),
+        });
     }
 }
