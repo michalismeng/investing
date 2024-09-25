@@ -193,7 +193,9 @@ public static class StockPriceExtensions
         return week_highs;
     }
 
-    public static List<DateTime> GetStage2(this List<TickerData> prices)
+    public static List<DateTime> GetStage2ForLastDay(this List<TickerData> prices) => prices.GetStage2(startFrom: prices.Count - 1);
+
+    public static List<DateTime> GetStage2(this List<TickerData> prices, int startFrom = 0)
     {
         bool isDaily = prices.All(p => p.Granularity == TickerDataGranulariry.Daily);
         bool isWeekly = prices.All(p => p.Granularity == TickerDataGranulariry.Weekly);
@@ -207,10 +209,11 @@ public static class StockPriceExtensions
         var low52 = prices.Calculate52WeekLow();
 
         int startIndex = isWeekly ? 52 : 252;
+        int loopStartIndex = Math.Max(startIndex, startFrom);
 
         List<DateTime> dates = [];
 
-        for(int i = startIndex; i < prices.Count; i++)
+        for(int i = loopStartIndex; i < prices.Count; i++)
         {
             var datePrice = prices[i];
             var dateMAShort = (decimal)(maShort.SingleOrDefault(x => x.Date == datePrice.Date)?.Sma ?? -1);

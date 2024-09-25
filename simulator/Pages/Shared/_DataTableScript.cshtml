@@ -1,0 +1,32 @@
+<script>
+    $(document).ready(function () {
+        $.fn.dataTable.moment('DD-MM-YYYY');
+        $('#datatable').DataTable({
+            "responsive": true,
+            deferRender: true,
+            dom: '<"d-flex flex-row my-2"<"d-none d-md-block me-auto"f>i>rt<"d-flex flex-column gap-4""<"ms-auto d-none d-md-block"p>>',
+            order: [[0, 'asc']],
+            "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "Όλες"]],
+            "language": {
+                "decimal": ",",
+                "emptyTable": "Δεν υπάρχουν δεδομένα στον πίνακα",
+                "info": "Εμφανίζονται _START_ έως _END_ από _TOTAL_ εγγραφές",
+                "infoEmpty": "Εμφανίζονται 0 έως 0 από 0 εγγραφές",
+                "infoFiltered": "(φιλτραρισμένες από _MAX_ συνολικά εγγραφές)",
+                "infoThousands": ".",
+                "lengthMenu": "Δείτε _MENU_ εγγραφές",
+                "loadingRecords": "Φόρτωση...",
+                "processing": "Επεξεργασία...",
+                "search": "Αναζήτηση:",
+                "thousands": ".",
+                "zeroRecords": "Δεν βρέθηκαν εγγραφές που να ταιριάζουν",
+                "paginate": {
+                    "first": "Πρώτη",
+                    "previous": "Προηγούμενη",
+                    "next": "Επόμενη",
+                    "last": "Τελευταία"
+                }
+            }
+        });
+    });
+</script>

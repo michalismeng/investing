@@ -8,7 +8,8 @@
     <div class="row h-100">
         <div class="col-9 h-100">
             <div class="text-center">
-                <h1 id="header" class="display-4">@Model.TickerInfo.Name <small style="font-size: large;"></small></h1>
+                <h1 class="display-4 my-0">@Model.TickerInfo.Name </h1>
+                <small id="headerDate" class="text-muted" style="font-size: large;"></small>
             </div>
 
             <div id="chart" class="w-100 h-75 p-2"></div>
@@ -67,7 +68,7 @@
 
         let currentDate = moment("@Model.CutoffDate.ToString("yyyy-MM-dd")");
         $("#btnAdvance small").html(`(${currentDate.clone().add(1, 'days').format("ddd MMM DD, YYYY")})`)
-        $("#header small").html(`(${currentDate.format("MMM DD, YYYY")})`)
+        $("#headerDate").html(`(${currentDate.format("MMM DD, YYYY")})`)
 
         let scaleToChartInt = function(s) {
             if(s == "linear") return 0;
@@ -166,7 +167,7 @@
         function advanceData() {
             currentDate = currentDate.add(1, 'days')
             $("#btnAdvance small").html(`(${currentDate.clone().add(1, 'days').format("ddd MMM DD, YYYY")})`)
-            $("#header small").html(`(${currentDate.format("MMM DD, YYYY")})`)
+            $("#headerDate").html(`(${currentDate.format("MMM DD, YYYY")})`)
             $.ajax({
               url: '?handler=Price',
               method: 'GET',
