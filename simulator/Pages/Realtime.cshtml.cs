@@ -2,16 +2,16 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Skender.Stock.Indicators;
 using simulator.Model;
 using simulator.Extensions;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
 
 namespace simulator.Pages;
 
-public class IndexModel : PageModel
+public class RealtimeModel : PageModel
 {
-    private readonly ILogger<IndexModel> _logger;
+    private readonly ILogger<RealtimeModel> _logger;
     private readonly ApplicationDbContext _context;
 
-    public IndexModel(ILogger<IndexModel> logger, ApplicationDbContext context)
+    public RealtimeModel(ILogger<RealtimeModel> logger, ApplicationDbContext context)
     {
         _logger = logger;
         _context = context;
@@ -19,34 +19,22 @@ public class IndexModel : PageModel
 
     public TickerInfo TickerInfo { get; set; }
     public List<TickerData> Records { get; set; } = [];
-    public List<TickerData> SPY { get; set; } = [];
     public List<SmaResult> MA_10 { get; set; } = [];
     public List<SmaResult> MA_30 { get; set; } = [];
     public List<SmaResult> MA_40 { get; set; } = [];
     public List<TickerData> Week_High_52 { get; set; } = [];
     public List<TickerData> Week_Low_52 { get; set; } = [];
     public List<DateTime> Stage2_Marks { get; set; } = [];
+    public DateTime CutoffDate { get; set; } = DateTime.Now;
+    public DateTime StartDate { get; set; } = DateTime.Now;
 
-    public void OnGet(string? dateStart = null, string? dateEnd = null)
+    public void OnGet(string ticker = "AMZN", string? cutoff = null, int years=5)
     {
-        TickerInfo = _context.Tickers.Single(d => d.Ticker == "AMZN");
-        var records = _context.PriceData.Where(d => d.Ticker == TickerInfo.Ticker).ToList().ToWeekly();
-        Records = records;
+        CutoffDate = cutoff != null ? DateTime.Parse(cutoff) : DateTime.Now;
+        StartDate = CutoffDate.AddYears(-years);
 
-        records = _context.PriceData.Where(d => d.Ticker == "SPY").ToList().ToWeekly();
-        SPY = records;
-
-        if (dateStart != null)
-        {
-            var startDate = DateTime.Parse(dateStart);
-            Records = Records.Where(p => p.Datetime >= startDate).ToList();
-        }
-
-        if (dateEnd != null)
-        {
-            var endDate = DateTime.Parse(dateEnd);
-            Records = Records.Where(p => p.Datetime <= endDate).ToList();
-        }
+        TickerInfo = _context.Tickers.Single(d => d.Ticker == ticker);
+        Records = _context.PriceData.Where(p => p.Ticker == TickerInfo.Ticker && StartDate <= p.Datetime && p.Datetime <= CutoffDate).ToList();
 
         MA_10 = Records.GetSma(50).Condense().ToList();
         MA_30 = Records.GetSma(150).Condense().ToList();
@@ -54,5 +42,11 @@ public class IndexModel : PageModel
         Week_High_52 = Records.Calculate52WeekHigh();
         Week_Low_52 = Records.Calculate52WeekLow();
         Stage2_Marks = Records.GetStage2();
+    }
+
+    public IActionResult OnGetPrice(string ticker, DateTime date)
+    {
+        var price = _context.PriceData.Where(p => p.Datetime == date && p.Ticker == ticker).SingleOrDefault();
+        return new OkObjectResult(price);
     }
 }

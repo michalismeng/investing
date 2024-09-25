@@ -1,5 +1,5 @@
 ﻿@page
-@model IndexModel
+@model RealtimeModel
 @{
     ViewData["Title"] = "Home page";
 }
@@ -8,7 +8,7 @@
     <div class="row h-100">
         <div class="col-9 h-100">
             <div class="text-center">
-                <h1 class="display-4">@Model.TickerInfo.Name</h1>
+                <h1 id="header" class="display-4">@Model.TickerInfo.Name <small style="font-size: large;"></small></h1>
             </div>
 
             <div id="chart" class="w-100 h-75 p-2"></div>
@@ -39,6 +39,7 @@
                   <li><a class="dropdown-item" href="#">Weekly</a></li>
                 </ul>
             </div>
+            <button id="btnAdvance" class="btn btn-outline-primary" onclick="advanceData()">Next<br/><small></small></button>
         </div>
     </div>
 </div>
@@ -63,6 +64,10 @@
         let strength_line;
 
         let priceScaleMode = "logarithmic"
+
+        let currentDate = moment("@Model.CutoffDate.ToString("yyyy-MM-dd")");
+        $("#btnAdvance small").html(`(${currentDate.clone().add(1, 'days').format("ddd MMM DD, YYYY")})`)
+        $("#header small").html(`(${currentDate.format("MMM DD, YYYY")})`)
 
         let scaleToChartInt = function(s) {
             if(s == "linear") return 0;
@@ -157,6 +162,36 @@
             }
         }
         ];
+
+        function advanceData() {
+            currentDate = currentDate.add(1, 'days')
+            $("#btnAdvance small").html(`(${currentDate.clone().add(1, 'days').format("ddd MMM DD, YYYY")})`)
+            $("#header small").html(`(${currentDate.format("MMM DD, YYYY")})`)
+            $.ajax({
+              url: '?handler=Price',
+              method: 'GET',
+              contentType: 'application/json; charset=utf-8',
+              data: {
+                ticker: "@Model.TickerInfo.Ticker",
+                date: currentDate.format("YYYY-MM-DD")
+              }
+            }).done(function (data) {
+                if(!data) return;
+
+                stockPrices.update({
+                    open: data.open,
+                    high: data.high,
+                    low: data.low,
+                    close: data.close,
+                    time: moment(data.date).format("YYYY-MM-DD"),
+                })
+
+                volumeSeries.update({
+                    value: data.volume,
+                    time: moment(data.date).format("YYYY-MM-DD"),
+                })
+            })
+        }
 
         function toggleMa10() {
             if (show10MA) {
