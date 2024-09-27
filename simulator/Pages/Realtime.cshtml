@@ -58,6 +58,7 @@
                     <li><button class="dropdown-item btn btn-outline-primary" onclick="toggle52High()">Toggle 52 Week High</button></li>
                     <li><button class="dropdown-item btn btn-outline-primary" onclick="toggle52Low()">Toggle 52 Week Low</button></li>
                     <li><button class="dropdown-item btn btn-outline-primary" onclick="toggleStrength()">Toggle Strength</button></li>
+                    <li><button class="dropdown-item btn btn-outline-primary" onclick="toggleStage2()">Toggle Stage 2</button></li>
                 </ul>
             </div>
             <div class="btn-group">
@@ -238,6 +239,14 @@
         }
         ];
 
+        const markers = [
+        @foreach(var record in Model.Stage2_Marks)
+        {
+            @: { time: { year: @record.Year, month: @record.Month, day: @record.Day }, position: 'aboveBar', color: '#e91e63', shape: 'circle', text: 'S2' },
+        }
+        ];
+        toggleStage2()
+
         function advanceData(retries=4) {
             if (retries == 0) return;
             currentDate = currentDate.add(1, 'days')
@@ -345,6 +354,14 @@
             strength_line.applyOptions({ visible: !strength_line.options().visible })
         }
 
+        function toggleStage2() {
+            if (stockPrices.markers().length > 0) {
+                stockPrices.setMarkers([])
+            } else {
+                stockPrices.setMarkers(markers)
+            }
+        }
+
         function setPriceMode(mode) {
             intMode = scaleToChartInt(mode)
             chart.applyOptions({
@@ -354,13 +371,6 @@
             })
         }
 
-        const markers = [
-        @foreach(var record in Model.Stage2_Marks)
-        {
-            @: { time: { year: @record.Year, month: @record.Month, day: @record.Day }, position: 'aboveBar', color: '#e91e63', shape: 'circle', text: 'S2' },
-        }
-        ];
-        stockPrices.setMarkers(markers)
 
         function scrollToTime(time, timeScale){
             const currentPosition = timeScale.scrollPosition();
