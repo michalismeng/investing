@@ -9,7 +9,6 @@
         <div class="col-9 h-100">
             <div class="text-center">
                 <h1 class="display-4 my-0">@Model.TickerInfo.Name </h1>
-                <small id="headerDate" class="text-muted" style="font-size: large;"></small>
             </div>
 
             <div id="chart" class="w-100 h-75 p-2"></div>
@@ -40,7 +39,40 @@
                   <li><a class="dropdown-item" href="#">Weekly</a></li>
                 </ul>
             </div>
-            <button id="btnAdvance" class="btn btn-outline-primary" onclick="advanceData()">Next<br/><small></small></button>
+            <div id="info-panel" style="display: none">
+                <p class="text-center">Latest date information</p>
+                <div class="d-flex flex-row justify-content-between gap-4">
+                    <table class="table table-sm">
+                        <tr>
+                            <th>Date</th>
+                            <td id="info-date">xxxx</td>
+                        </tr>
+                        <tr>
+                            <th>Price</th>
+                            <td id="info-price">xxxx</td>
+                        </tr>
+                    </table>
+                    
+                    <div class="d-flex flex-column gap-4">
+                        <button id="btnAdvance" data-bs-toggle="tooltip" data-bs-placement="top" title="Tooltip on top" class="btn btn-outline-dark d-flex flex-row gap-2 align-items-center" onclick="advanceData()">Next</button>
+                        <button class="btn btn-outline-dark" onclick="buySelectedDate()">Buy</button>
+                    </div>
+                </div>
+            </div>
+            <div id="bought-panel">
+                <p class="text-center">Your entry points</p>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Price</th>
+                            <th>% Chg. to date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bought-table"> 
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
@@ -56,12 +88,13 @@
         let week_high_52;
         let week_low_52;
         let strength_line;
+        let selectedDate;
+        let boughtDates = []
 
         let priceScaleMode = "logarithmic"
 
         let currentDate = moment("@Model.CutoffDate.ToString("yyyy-MM-dd")");
-        $("#btnAdvance small").html(`(${currentDate.clone().add(1, 'days').format("ddd MMM DD, YYYY")})`)
-        $("#headerDate").html(`(${currentDate.format("ddd MMM DD, YYYY")})`)
+        $("#btnAdvance").attr("title", `Advance to ${currentDate.clone().add(1, 'days').format("dddd MMM DD, YYYY")}`)
 
         let scaleToChartInt = function(s) {
             if(s == "linear") return 0;
@@ -153,13 +186,10 @@
         }
         ];
 
-        let buyPrice = null;
-
         function advanceData(retries=4) {
             if (retries == 0) return;
             currentDate = currentDate.add(1, 'days')
-            $("#btnAdvance small").html(`(${currentDate.clone().add(1, 'days').format("ddd MMM DD, YYYY")})`)
-            $("#headerDate").html(`(${currentDate.format("ddd MMM DD, YYYY")})`)
+            $("#btnAdvance").attr("title", `Advance to ${currentDate.clone().add(1, 'days').format("dddd MMM DD, YYYY")}`)
             $.ajax({
               url: '?handler=Price',
               method: 'GET',
@@ -221,7 +251,8 @@
                     })
                 }
 
-                if(buyPrice) console.log((price.close / buyPrice - 1) * 100, "%")
+                drawInfoPanel()
+                drawBoughtTable()
             })
         }
 
@@ -291,18 +322,44 @@
         }
 
 
-        function myClickHandler(param) {
+        @* function myClickHandler(param) {
             if (!param.point) {
                 return;
             }
 
             const data = param.seriesData.get(stockPrices);
             const price = data.value !== undefined ? data.value : data.close;
-            console.log("Bought at", price, "on", data.time)
-            buyPrice = price
         }
 
-        chart.subscribeClick(myClickHandler);
+        chart.subscribeClick(myClickHandler); *@
+
+        function drawInfoPanel() {
+            let price = stockPrices.data().at(-1).close
+            let date = moment(stockPrices.data().at(-1).time)
+            selectedDate = { date: date, price: price }
+            $("#info-date").text(date.format("ddd MMM DD, YYYY"))
+            $("#info-price").text(Math.round(price * 100) / 100)
+            $("#info-panel").show()
+        }
+
+        function drawBoughtTable() {
+            $("#bought-table").empty()
+            for(let d of boughtDates) {
+                let pctChange = (stockPrices.data().at(-1).close / d.price - 1) * 100
+                $("#bought-table").append(`<tr><td>${d.date.format("YYYY-MM-DD")}</td><td>${Math.round(d.price * 100) / 100}</td><td>${Math.round(pctChange * 100) / 100}%</td></tr>`)
+            }
+        }
+
+        drawInfoPanel();
+
+        function buySelectedDate() {
+            @* Already exists *@
+            if(boughtDates.find(b => b.date == selectedDate.date))
+                return;
+
+            boughtDates = [...boughtDates, selectedDate]
+            drawBoughtTable()
+        }
 
     </script>
 }
