@@ -7,13 +7,12 @@
 <div class="container-fluid p-4 h-100">
     <div class="row h-100">
         <div class="col-9 h-100">
-            <div class="text-center">
-                <h1 class="display-4 my-0">@Model.TickerInfo.Name </h1>
-            </div>
-
-            <div id="chart" class="w-100 h-75 p-2"></div>
+            <div id="chart-spy" class="w-100 h-25"></div>
+            <div id="chart" class="w-100 h-75"></div>
         </div>
         <div class="col-3 ps-4 d-flex flex-column gap-4">
+            <h1 class="text-center display-4 my-0">@Model.TickerInfo.Name </h1>
+
             <div id="info-panel" style="display: none">
                 <p class="text-center">Latest date information</p>
                 <div class="d-flex flex-row justify-content-between gap-4">
@@ -111,11 +110,73 @@
         }
 
         @* Logic *@
+        const chartSPY = window.LightweightCharts.createChart(document.getElementById("chart-spy"), {
+            autoSize: true,
+            rightPriceScale: { mode: scaleToChartInt("logarithmic"), entireTextOnly: true, visible: true, minimumWidth: 80 },
+            leftPriceScale: { visible: true, minimumWidth: 80 },
+            timeScale: { visible: false }
+        });
+        const spyPrices = chartSPY.addCandlestickSeries();
+        spyPrices.setData([
+            @foreach(var record in Model.SPY)
+            {
+                @: { open: @record.Open, high: @record.High, low: @record.Low, close: @record.Close, time: "@record.Date.ToString("yyyy-MM-dd")" },
+            }
+        ]);
 
         const chart = window.LightweightCharts.createChart(document.getElementById("chart"), {
             autoSize: true,
-            rightPriceScale: { mode: scaleToChartInt(priceScaleMode), entireTextOnly: true, visible: true, },
-            leftPriceScale: { visible: true },
+            rightPriceScale: { mode: scaleToChartInt(priceScaleMode), entireTextOnly: true, visible: true, minimumWidth: 80 },
+            leftPriceScale: { visible: true, minimumWidth: 80 },
+        });
+
+        const stockPrices = chart.addBarSeries();
+        stockPrices.setData([
+        @foreach(var record in Model.Records)
+        {
+            @: { open: @record.Open, high: @record.High, low: @record.Low, close: @record.Close, time: "@record.Date.ToString("yyyy-MM-dd")" },
+        }
+        ]);
+
+        stockPrices.priceScale().applyOptions({
+            scaleMargins: {
+                top: 0.1, // highest point of the series will be 10% away from the top
+                bottom: 0.35, // lowest point will be 40% away from the bottom
+            },
+        });
+
+        function getCrosshairDataPoint(series, param) {
+            if (!param.time) {
+                return null;
+            }
+            const dataPoint = param.seriesData.get(series);
+            return dataPoint || null;
+        }
+
+        function syncCrosshair(chart, series, dataPoint) {
+            if (dataPoint) {
+                chart.setCrosshairPosition(dataPoint.value, dataPoint.time, series);
+                return;
+            }
+            chart.clearCrosshairPosition();
+        }
+
+        chart.subscribeCrosshairMove(param => {
+            const dataPoint = getCrosshairDataPoint(stockPrices, param);
+            syncCrosshair(chartSPY, spyPrices, dataPoint);
+        });
+
+        chart.timeScale().subscribeVisibleLogicalRangeChange(timeRange => {
+            chartSPY.timeScale().setVisibleLogicalRange(timeRange);
+        });
+
+        chartSPY.subscribeCrosshairMove(param => {
+            const dataPoint = getCrosshairDataPoint(spyPrices, param);
+            syncCrosshair(chart, stockPrices, dataPoint);
+        });
+
+        chartSPY.timeScale().subscribeVisibleLogicalRangeChange(timeRange => {
+            chart.timeScale().setVisibleLogicalRange(timeRange);
         });
 
         const volumeSeries = chart.addHistogramSeries({
@@ -137,22 +198,6 @@
             @: { value: @record.Volume, time: "@record.Date.ToString("yyyy-MM-dd")" },
         }
         ]);
-
-        const stockPrices = chart.addBarSeries();
-        const data = [
-        @foreach(var record in Model.Records)
-        {
-            @: { open: @record.Open, high: @record.High, low: @record.Low, close: @record.Close, time: "@record.Date.ToString("yyyy-MM-dd")" },
-        }
-        ];
-        stockPrices.setData(data);
-
-        stockPrices.priceScale().applyOptions({
-            scaleMargins: {
-                top: 0.1, // highest point of the series will be 10% away from the top
-                bottom: 0.35, // lowest point will be 40% away from the bottom
-            },
-        });
 
         let ma_10 = [
         @foreach(var record in Model.MA_10)
