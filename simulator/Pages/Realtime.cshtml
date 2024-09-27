@@ -14,31 +14,6 @@
             <div id="chart" class="w-100 h-75 p-2"></div>
         </div>
         <div class="col-3 ps-4 d-flex flex-column gap-4">
-            <button class="btn btn-outline-primary" onclick="toggleMa10()">Toggle 10 MA</button>
-            <button class="btn btn-outline-primary" onclick="toggleMa30()">Toggle 30 MA</button>
-            <button class="btn btn-outline-primary" onclick="toggleMa40()">Toggle 40 MA</button>
-            <button class="btn btn-outline-primary" onclick="toggle52High()">Toggle 52 Week High</button>
-            <button class="btn btn-outline-primary" onclick="toggle52Low()">Toggle 52 Week Low</button>
-            <button class="btn btn-outline-primary" onclick="toggleStrength()">Toggle Strength</button>
-            <div class="btn-group">
-                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                  Change price scale
-                </button>
-                <ul class="dropdown-menu w-100 text-center">
-                  <li><a class="dropdown-item" onclick="setPriceMode('linear')" href="#">Linear</a></li>
-                  <li><a class="dropdown-item" onclick="setPriceMode('logarithmic')" href="#">Logarithmic</a></li>
-                  <li><a class="dropdown-item" onclick="setPriceMode('percentage')" href="#">Percentage</a></li>
-                </ul>
-            </div>
-            <div class="btn-group">
-                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                  Change time granularity
-                </button>
-                <ul class="dropdown-menu w-100 text-center">
-                  <li><a class="dropdown-item" href="#">Daily</a></li>
-                  <li><a class="dropdown-item" href="#">Weekly</a></li>
-                </ul>
-            </div>
             <div id="info-panel" style="display: none">
                 <p class="text-center">Latest date information</p>
                 <div class="d-flex flex-row justify-content-between gap-4">
@@ -61,7 +36,7 @@
             </div>
             <div id="bought-panel">
                 <p class="text-center">Your entry points</p>
-                <table class="table table-sm">
+                <table class="table table-sm" style="display: none;">
                     <thead>
                         <tr>
                             <th>Date</th>
@@ -72,6 +47,38 @@
                     <tbody id="bought-table"> 
                     </tbody>
                 </table>
+            </div>
+            <div class="btn-group">
+                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                  Toggle indicators
+                </button>
+                <ul class="dropdown-menu w-100 text-center">
+                    <li><button class="dropdown-item btn btn-outline-primary" onclick="toggleMa10()">Toggle 10 MA</button></li>
+                    <li><button class="dropdown-item btn btn-outline-primary" onclick="toggleMa30()">Toggle 30 MA</button></li>
+                    <li><button class="dropdown-item btn btn-outline-primary" onclick="toggleMa40()">Toggle 40 MA</button></li>
+                    <li><button class="dropdown-item btn btn-outline-primary" onclick="toggle52High()">Toggle 52 Week High</button></li>
+                    <li><button class="dropdown-item btn btn-outline-primary" onclick="toggle52Low()">Toggle 52 Week Low</button></li>
+                    <li><button class="dropdown-item btn btn-outline-primary" onclick="toggleStrength()">Toggle Strength</button></li>
+                </ul>
+            </div>
+            <div class="btn-group">
+                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                  Change price scale
+                </button>
+                <ul class="dropdown-menu w-100 text-center">
+                  <li><a class="dropdown-item" onclick="setPriceMode('linear')" href="#">Linear</a></li>
+                  <li><a class="dropdown-item" onclick="setPriceMode('logarithmic')" href="#">Logarithmic</a></li>
+                  <li><a class="dropdown-item" onclick="setPriceMode('percentage')" href="#">Percentage</a></li>
+                </ul>
+            </div>
+            <div class="btn-group">
+                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                  Change time granularity
+                </button>
+                <ul class="dropdown-menu w-100 text-center">
+                  <li><a class="dropdown-item" href="#">Daily</a></li>
+                  <li><a class="dropdown-item" href="#">Weekly</a></li>
+                </ul>
             </div>
         </div>
     </div>
@@ -343,6 +350,7 @@
         }
 
         function drawBoughtTable() {
+            $("#bought-panel table").show()
             $("#bought-table").empty()
             for(let d of boughtDates) {
                 let pctChange = (stockPrices.data().at(-1).close / d.price - 1) * 100
