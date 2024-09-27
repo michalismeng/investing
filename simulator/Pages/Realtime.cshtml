@@ -354,7 +354,8 @@
             $("#bought-table").empty()
             for(let d of boughtDates) {
                 let pctChange = (stockPrices.data().at(-1).close / d.price - 1) * 100
-                $("#bought-table").append(`<tr><td>${d.date.format("YYYY-MM-DD")}</td><td>${Math.round(d.price * 100) / 100}</td><td>${Math.round(pctChange * 100) / 100}%</td></tr>`)
+                let holdingDays = moment(stockPrices.data().at(-1).time).diff(d.date, 'days')
+                $("#bought-table").append(`<tr><td>${d.date.format("YYYY-MM-DD")} (${holdingDays}d)</td><td>${Math.round(d.price * 100) / 100}</td><td>${Math.round(pctChange * 100) / 100}%</td></tr>`)
             }
         }
 
