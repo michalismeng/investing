@@ -50,6 +50,7 @@ public class RealtimeModel : PageModel
     {
         var startDate = date.AddYears(-1).AddMonths(-1);
         var price = _context.PriceData.Where(p => startDate <= p.Datetime && p.Datetime <= date && p.Ticker == ticker).OrderBy(p => p.Datetime).ToList();
+        var spy = _context.PriceData.SingleOrDefault(p => p.Datetime == date && p.Ticker == "SPY");
 
         if (price.Any(p => p.Datetime == date) == false)
             return new OkObjectResult(null);
@@ -61,6 +62,7 @@ public class RealtimeModel : PageModel
             Ma40 = price.GetSma(200).Condense().ToList().Last(),
             Week52High = price.Calculate52WeekHigh().Last(),
             Week52Low = price.Calculate52WeekLow().Last(),
+            Spy = spy,
         });
     }
 }

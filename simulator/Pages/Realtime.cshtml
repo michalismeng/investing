@@ -16,7 +16,7 @@
             <div id="info-panel" style="display: none">
                 <p class="text-center">Latest date information</p>
                 <div class="d-flex flex-row justify-content-between gap-4">
-                    <table class="table table-sm">
+                    <table class="table table-sm align-bottom">
                         <tr>
                             <th>Date</th>
                             <td id="info-date">xxxx</td>
@@ -35,7 +35,7 @@
             </div>
             <div id="bought-panel">
                 <p class="text-center">Your entry points</p>
-                <table class="table table-sm" style="display: none;">
+                <table class="table table-sm">
                     <thead>
                         <tr>
                             <th>Date</th>
@@ -101,7 +101,8 @@
         let priceScaleMode = "logarithmic"
 
         let currentDate = moment("@Model.CutoffDate.ToString("yyyy-MM-dd")");
-        $("#btnAdvance").attr("title", `Advance to ${currentDate.clone().add(1, 'days').format("dddd MMM DD, YYYY")}`)
+        let nextDate = currentDate.clone().add(1, 'days')
+        $("#btnAdvance").attr("title", `Advance to ${nextDate.format("dddd MMM DD, YYYY")}`)
 
         let scaleToChartInt = function(s) {
             if(s == "linear") return 0;
@@ -250,7 +251,8 @@
         function advanceData(retries=4) {
             if (retries == 0) return;
             currentDate = currentDate.add(1, 'days')
-            $("#btnAdvance").attr("title", `Advance to ${currentDate.clone().add(1, 'days').format("dddd MMM DD, YYYY")}`)
+            nextDate = currentDate.clone().add(1, 'days')
+            $("#btnAdvance").attr("title", `Advance to ${nextDate.format("dddd MMM DD, YYYY")}`)
             $.ajax({
               url: '?handler=Price',
               method: 'GET',
@@ -265,7 +267,7 @@
                     return;
                 }
 
-                let { price, ma10, ma30, ma40, week52High, week52Low } = data
+                let { price, ma10, ma30, ma40, week52High, week52Low, spy } = data
 
                 stockPrices.update({
                     open: price.open,
@@ -311,6 +313,14 @@
                         time: moment(price.date).format("YYYY-MM-DD"),
                     })
                 }
+
+                spyPrices.update({
+                    open: spy.open,
+                    high: spy.high,
+                    low: spy.low,
+                    close: spy.close,
+                    time: moment(spy.date).format("YYYY-MM-DD"),
+                })
 
                 drawInfoPanel()
                 drawBoughtTable()
