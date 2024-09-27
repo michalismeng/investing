@@ -267,7 +267,7 @@
                     return;
                 }
 
-                let { price, ma10, ma30, ma40, week52High, week52Low, spy } = data
+                let { price, ma10, ma30, ma40, week52High, week52Low, isStage2, spy } = data
 
                 stockPrices.update({
                     open: price.open,
@@ -321,6 +321,16 @@
                     close: spy.close,
                     time: moment(spy.date).format("YYYY-MM-DD"),
                 })
+
+                console.log(isStage2, price.date)
+
+                if(isStage2) {
+                    let date = moment(price.date)
+                    let object = { ...markers.at(-1), time: { year: date.year(), month: date.month() + 1, day: date.date() } }
+                    markers.push(object)
+                    console.log(object)
+                    stockPrices.setMarkers(markers)
+                }
 
                 drawInfoPanel()
                 drawBoughtTable()

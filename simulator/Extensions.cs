@@ -194,6 +194,7 @@ public static class StockPriceExtensions
     }
 
     public static List<DateTime> GetStage2ForLastDay(this List<TickerData> prices) => prices.GetStage2(startFrom: prices.Count - 1);
+    public static bool IsLastDayStage2(this List<TickerData> prices) => prices.GetStage2(startFrom: prices.Count - 1).Contains(prices.Last().Date);
 
     public static List<DateTime> GetStage2(this List<TickerData> prices, int startFrom = 0)
     {

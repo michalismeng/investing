@@ -62,6 +62,7 @@ public class RealtimeModel : PageModel
             Ma40 = price.GetSma(200).Condense().ToList().Last(),
             Week52High = price.Calculate52WeekHigh().Last(),
             Week52Low = price.Calculate52WeekLow().Last(),
+            IsStage2 = price.IsLastDayStage2(),
             Spy = spy,
         });
     }
