@@ -13,27 +13,27 @@
         <div class="col-3 ps-4 d-flex flex-column gap-4">
             <h1 class="text-center display-4 my-0">@Model.TickerInfo.Name </h1>
 
-            <div id="info-panel" style="display: none">
+            <div x-data>
                 <p class="text-center">Latest date information</p>
                 <div class="d-flex flex-row justify-content-between gap-4">
                     <table class="table table-sm align-bottom">
                         <tr>
                             <th>Date</th>
-                            <td id="info-date">xxxx</td>
+                            <td x-text="$store.infoPanel.date.format('ddd MMM DD, YYYY')"></td>
                         </tr>
                         <tr>
                             <th>Price</th>
-                            <td id="info-price">xxxx</td>
+                            <td x-text="Math.round($store.infoPanel.price * 100) / 100"></td>
                         </tr>
                     </table>
                     
                     <div class="d-flex flex-column gap-4">
-                        <button id="btnAdvance" data-bs-toggle="tooltip" data-bs-placement="top" title="Tooltip on top" class="btn btn-outline-dark d-flex flex-row gap-2 align-items-center" onclick="advanceData()">Next</button>
-                        <button class="btn btn-outline-dark" onclick="buySelectedDate()">Buy</button>
+                        <button :title="$store.infoPanel.nextDate.format('dddd MMM DD, YYYY')" data-bs-toggle="tooltip" data-bs-placement="top" class="btn btn-outline-dark d-flex flex-row gap-2 align-items-center" onclick="advanceData()">Next</button>
+                        <button class="btn btn-outline-dark" onclick="buyLatestDay()">Buy</button>
                     </div>
                 </div>
             </div>
-            <div id="bought-panel">
+            <div x-data>
                 <p class="text-center">Your entry points</p>
                 <table class="table table-sm">
                     <thead>
@@ -43,7 +43,14 @@
                             <th>% Chg. to date</th>
                         </tr>
                     </thead>
-                    <tbody id="bought-table"> 
+                    <tbody> 
+                        <template x-for="entry in $store.entryPoints.entries">
+                            <tr>
+                                <td><span x-text="entry.date.format('YYYY-MM-DD')"></span> (<span x-text="entry.holdingDays"></span>d)</td>
+                                <td x-text="Math.round(entry.price * 100) / 100"></td>
+                                <td><span x-text="Math.round(entry.pctChange * 100) / 100"></span>%</td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
             </div>
@@ -88,6 +95,41 @@
 @section Scripts
 {
     <script>
+
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('infoPanel', {
+                date: moment(),
+                nextDate: moment().clone().add(1, 'days'),
+                price: 10,
+
+                update(date, price) {
+                    this.date = date
+                    this.nextDate = date.clone().add(1, 'days')
+                    this.price = price
+                },
+            })
+            let date = moment(stockPrices.data().at(-1).time)
+            let price = stockPrices.data().at(-1).close
+            Alpine.store("infoPanel").update(date, price)
+
+            Alpine.store('entryPoints', {
+                entries: [],
+
+                addIfNew(date, price) {
+                    if(this.entries.find(e => e.date.format("YYYY-MM-DD") == date.format("YYYY-MM-DD")))
+                        return;
+                    this.entries.push({ date: date, price: price, holdingDays: 0, pctChange: 0 })
+                },
+
+                update(latestDate, latestPrice) {
+                    for(let e of this.entries) {
+                        e.pctChange = (latestPrice / e.price - 1) * 100
+                        e.holdingDays = latestDate.diff(e.date, 'days')
+                    }
+                }
+            })
+        })
+
         @* Variables *@
         let lineSeries_10;
         let lineSeries_30;
@@ -95,14 +137,10 @@
         let week_high_52;
         let week_low_52;
         let strength_line;
-        let selectedDate;
-        let boughtDates = []
 
         let priceScaleMode = "logarithmic"
 
         let currentDate = moment("@Model.CutoffDate.ToString("yyyy-MM-dd")");
-        let nextDate = currentDate.clone().add(1, 'days')
-        $("#btnAdvance").attr("title", `Advance to ${nextDate.format("dddd MMM DD, YYYY")}`)
 
         let scaleToChartInt = function(s) {
             if(s == "linear") return 0;
@@ -251,8 +289,6 @@
         function advanceData(retries=4) {
             if (retries == 0) return;
             currentDate = currentDate.add(1, 'days')
-            nextDate = currentDate.clone().add(1, 'days')
-            $("#btnAdvance").attr("title", `Advance to ${nextDate.format("dddd MMM DD, YYYY")}`)
             $.ajax({
               url: '?handler=Price',
               method: 'GET',
@@ -322,18 +358,17 @@
                     time: moment(spy.date).format("YYYY-MM-DD"),
                 })
 
-                console.log(isStage2, price.date)
-
                 if(isStage2) {
                     let date = moment(price.date)
                     let object = { ...markers.at(-1), time: { year: date.year(), month: date.month() + 1, day: date.date() } }
                     markers.push(object)
-                    console.log(object)
                     stockPrices.setMarkers(markers)
                 }
 
-                drawInfoPanel()
-                drawBoughtTable()
+                let latestDate = moment(stockPrices.data().at(-1).time)
+                let latestPrice = stockPrices.data().at(-1).close
+                Alpine.store("infoPanel").update(latestDate, latestPrice)
+                Alpine.store("entryPoints").update(currentDate, stockPrices.data().at(-1).close)
             })
         }
 
@@ -415,34 +450,10 @@
 
         chart.subscribeClick(myClickHandler); *@
 
-        function drawInfoPanel() {
-            let price = stockPrices.data().at(-1).close
-            let date = moment(stockPrices.data().at(-1).time)
-            selectedDate = { date: date, price: price }
-            $("#info-date").text(date.format("ddd MMM DD, YYYY"))
-            $("#info-price").text(Math.round(price * 100) / 100)
-            $("#info-panel").show()
-        }
-
-        function drawBoughtTable() {
-            $("#bought-panel table").show()
-            $("#bought-table").empty()
-            for(let d of boughtDates) {
-                let pctChange = (stockPrices.data().at(-1).close / d.price - 1) * 100
-                let holdingDays = moment(stockPrices.data().at(-1).time).diff(d.date, 'days')
-                $("#bought-table").append(`<tr><td>${d.date.format("YYYY-MM-DD")} (${holdingDays}d)</td><td>${Math.round(d.price * 100) / 100}</td><td>${Math.round(pctChange * 100) / 100}%</td></tr>`)
-            }
-        }
-
-        drawInfoPanel();
-
-        function buySelectedDate() {
-            @* Already exists *@
-            if(boughtDates.find(b => b.date == selectedDate.date))
-                return;
-
-            boughtDates = [...boughtDates, selectedDate]
-            drawBoughtTable()
+        function buyLatestDay() {
+            let latestDate = Alpine.store("infoPanel").date
+            let latestPrice = Alpine.store("infoPanel").price
+            Alpine.store("entryPoints").addIfNew(latestDate, latestPrice)
         }
 
     </script>
