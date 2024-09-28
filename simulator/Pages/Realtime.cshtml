@@ -6,11 +6,11 @@
 
 <div class="container-fluid p-4 h-100">
     <div class="row h-100">
-        <div class="col-9 h-100">
+        <div class="col-lg-9 col-sm-12 h-100">
             <div id="chart-spy" class="w-100 h-25"></div>
             <div id="chart" class="w-100 h-75"></div>
         </div>
-        <div class="col-3 ps-4 d-flex flex-column gap-4">
+        <div class="col-lg-3 col-sm-12 ps-4 d-flex flex-column gap-4 h-75">
             <h1 class="text-center display-4 my-0">@Model.TickerInfo.Name </h1>
 
             <div x-data>
@@ -54,38 +54,40 @@
                     </tbody>
                 </table>
             </div>
-            <div class="btn-group">
-                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                  Toggle indicators
-                </button>
-                <ul class="dropdown-menu w-100 text-center">
-                    <li><button class="dropdown-item btn btn-outline-primary" onclick="toggleMa10()">Toggle 10 MA</button></li>
-                    <li><button class="dropdown-item btn btn-outline-primary" onclick="toggleMa30()">Toggle 30 MA</button></li>
-                    <li><button class="dropdown-item btn btn-outline-primary" onclick="toggleMa40()">Toggle 40 MA</button></li>
-                    <li><button class="dropdown-item btn btn-outline-primary" onclick="toggle52High()">Toggle 52 Week High</button></li>
-                    <li><button class="dropdown-item btn btn-outline-primary" onclick="toggle52Low()">Toggle 52 Week Low</button></li>
-                    <li><button class="dropdown-item btn btn-outline-primary" onclick="toggleStrength()">Toggle Strength</button></li>
-                    <li><button class="dropdown-item btn btn-outline-primary" onclick="toggleStage2()">Toggle Stage 2</button></li>
-                </ul>
-            </div>
-            <div class="btn-group">
-                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                  Change price scale
-                </button>
-                <ul class="dropdown-menu w-100 text-center">
-                  <li><a class="dropdown-item" onclick="setPriceMode('linear')" href="#">Linear</a></li>
-                  <li><a class="dropdown-item" onclick="setPriceMode('logarithmic')" href="#">Logarithmic</a></li>
-                  <li><a class="dropdown-item" onclick="setPriceMode('percentage')" href="#">Percentage</a></li>
-                </ul>
-            </div>
-            <div class="btn-group">
-                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                  Change time granularity
-                </button>
-                <ul class="dropdown-menu w-100 text-center">
-                  <li><a class="dropdown-item" href="#">Daily</a></li>
-                  <li><a class="dropdown-item" href="#">Weekly</a></li>
-                </ul>
+            <div class="mt-auto d-flex flex-column gap-4">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                      Toggle indicators
+                    </button>
+                    <ul class="dropdown-menu w-100 text-center">
+                        <li><button class="dropdown-item btn btn-outline-primary" onclick="toggleMa10()">Toggle 10 MA</button></li>
+                        <li><button class="dropdown-item btn btn-outline-primary" onclick="toggleMa30()">Toggle 30 MA</button></li>
+                        <li><button class="dropdown-item btn btn-outline-primary" onclick="toggleMa40()">Toggle 40 MA</button></li>
+                        <li><button class="dropdown-item btn btn-outline-primary" onclick="toggle52High()">Toggle 52 Week High</button></li>
+                        <li><button class="dropdown-item btn btn-outline-primary" onclick="toggle52Low()">Toggle 52 Week Low</button></li>
+                        <li><button class="dropdown-item btn btn-outline-primary" onclick="toggleStrength()">Toggle Strength</button></li>
+                        <li><button class="dropdown-item btn btn-outline-primary" onclick="toggleStage2()">Toggle Stage 2</button></li>
+                    </ul>
+                </div>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                      Change price scale
+                    </button>
+                    <ul class="dropdown-menu w-100 text-center">
+                      <li><a class="dropdown-item" onclick="setPriceMode('linear')" href="#">Linear</a></li>
+                      <li><a class="dropdown-item" onclick="setPriceMode('logarithmic')" href="#">Logarithmic</a></li>
+                      <li><a class="dropdown-item" onclick="setPriceMode('percentage')" href="#">Percentage</a></li>
+                    </ul>
+                </div>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                      Change time granularity
+                    </button>
+                    <ul class="dropdown-menu w-100 text-center">
+                      <li><a class="dropdown-item" href="#">Daily</a></li>
+                      <li><a class="dropdown-item" href="#">Weekly</a></li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>

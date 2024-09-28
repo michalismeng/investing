@@ -12,7 +12,7 @@
 
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 </head>
-<body style="height: 100vh;">
+<body class="d-flex flex-column h-100">
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container">
@@ -34,9 +34,9 @@
             </div>
         </nav>
     </header>
-        <main role="main" class="pb-3 h-100">
-            @RenderBody()
-        </main>
+    <main role="main" class="pb-3 h-100 flex-grow">
+        @RenderBody()
+    </main>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
