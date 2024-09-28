@@ -138,8 +138,6 @@
         let week_low_52;
         let strength_line;
 
-        let priceScaleMode = "logarithmic"
-
         let currentDate = moment("@Model.CutoffDate.ToString("yyyy-MM-dd")");
 
         let scaleToChartInt = function(s) {
@@ -166,7 +164,7 @@
 
         const chart = window.LightweightCharts.createChart(document.getElementById("chart"), {
             autoSize: true,
-            rightPriceScale: { mode: scaleToChartInt(priceScaleMode), entireTextOnly: true, visible: true, minimumWidth: 80 },
+            rightPriceScale: { mode: scaleToChartInt("logarithmic"), entireTextOnly: true, visible: true, minimumWidth: 80 },
             leftPriceScale: { visible: true, minimumWidth: 80 },
         });
 
@@ -424,8 +422,12 @@
                     mode: intMode,
                 },
             })
+            chartSPY.applyOptions({
+                rightPriceScale: {
+                    mode: intMode,
+                }
+            })
         }
-
 
         function scrollToTime(time, timeScale){
             const currentPosition = timeScale.scrollPosition();
