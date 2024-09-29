@@ -7,8 +7,8 @@
 <div class="container-fluid p-4 h-100">
     <div class="row h-100">
         <div class="col-lg-9 col-sm-12 h-100">
-            <div id="chart-spy" class="w-100 h-25"></div>
-            <div id="chart" class="w-100 h-75"></div>
+            <div id="chart-spy" class="w-100 h-25" style="position: relative;"></div>
+            <div id="chart" class="w-100 h-75" style="position: relative;"></div>
         </div>
         <div class="col-lg-3 col-sm-12 ps-4 d-flex flex-column gap-4 h-75">
             <h1 class="text-center display-4 my-0">@Model.TickerInfo.Name </h1>
@@ -214,6 +214,21 @@
             const dataPoint = getCrosshairDataPoint(stockPrices, param);
             syncCrosshair(chartSPY, spyPrices, dataPoint);
         });
+
+        function createLegend(chartId, text) {
+            const container = document.getElementById(chartId);
+
+            legendHtml = `
+                <div class="card p-2" style="position: absolute; left: 90px; top: 26px; z-index: 1; font-size: 18px; font-family: sans-serif; line-height: 18px; font-weight: 300;">
+                    <strong>${text}</strong>
+                </div>
+            `;
+
+            container.insertAdjacentHTML('beforeend', legendHtml);
+        }
+
+        createLegend('chart', "@Model.TickerInfo")
+        createLegend('chart-spy', "@Model.TickerInfoSPY")
 
         chart.timeScale().subscribeVisibleLogicalRangeChange(timeRange => {
             chartSPY.timeScale().setVisibleLogicalRange(timeRange);

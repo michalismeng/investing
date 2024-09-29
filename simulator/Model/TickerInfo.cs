@@ -14,6 +14,9 @@ public class TickerInfo
 
     public override string ToString()
     {
-        return $"{Name} ({Ticker}) - {Sector}/{Industry}";
+        if (Sector != "n/a")
+            return $"{Name} ({Ticker}) - {Sector}/{Industry}";
+        else
+            return $"{Name} ({Ticker})";
     }
 }

@@ -18,6 +18,7 @@ public class RealtimeModel : PageModel
     }
 
     public TickerInfo TickerInfo { get; set; }
+    public TickerInfo TickerInfoSPY { get; set; }
     public List<TickerData> Records { get; set; } = [];
     public List<TickerData> SPY { get; set; } = [];
     public List<SmaResult> MA_10 { get; set; } = [];
@@ -35,6 +36,7 @@ public class RealtimeModel : PageModel
         StartDate = CutoffDate.AddYears(-years);
 
         TickerInfo = _context.Tickers.Single(d => d.Ticker == ticker);
+        TickerInfoSPY = _context.Tickers.Single(d => d.Ticker == "SPY");
         Records = _context.PriceData.Where(p => p.Ticker == TickerInfo.Ticker && StartDate <= p.Datetime && p.Datetime <= CutoffDate).ToList();
         SPY = _context.PriceData.Where(p => p.Ticker == "SPY" && StartDate <= p.Datetime && p.Datetime <= CutoffDate).ToList();
 
