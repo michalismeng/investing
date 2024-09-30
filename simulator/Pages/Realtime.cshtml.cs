@@ -38,7 +38,8 @@ public class RealtimeModel : PageModel
         TickerInfo = _context.Tickers.Single(d => d.Ticker == ticker);
         TickerInfoSPY = _context.Tickers.Single(d => d.Ticker == "SPY");
         Records = _context.PriceData.Where(p => p.Ticker == TickerInfo.Ticker && StartDate <= p.Datetime && p.Datetime <= CutoffDate).ToList();
-        SPY = _context.PriceData.Where(p => p.Ticker == "SPY" && StartDate <= p.Datetime && p.Datetime <= CutoffDate).ToList();
+        var minimumRecordsDate = Records.Select(p => p.Datetime).Min();
+        SPY = _context.PriceData.Where(p => p.Ticker == "SPY" && minimumRecordsDate <= p.Datetime && p.Datetime <= CutoffDate).ToList();
 
         MA_10 = Records.GetSma(50).Condense().ToList();
         MA_30 = Records.GetSma(150).Condense().ToList();
@@ -59,11 +60,11 @@ public class RealtimeModel : PageModel
 
         return new OkObjectResult(new {
             Price = price.Last(),
-            Ma10 = price.GetSma(50).Condense().ToList().Last(),
-            Ma30 = price.GetSma(150).Condense().ToList().Last(),
-            Ma40 = price.GetSma(200).Condense().ToList().Last(),
-            Week52High = price.Calculate52WeekHigh().Last(),
-            Week52Low = price.Calculate52WeekLow().Last(),
+            Ma10 = price.Count >= 50 ? price.GetSma(50).Condense().ToList().Last() : new SmaResult(price.Last().Date),
+            Ma30 = price.Count >= 150 ? price.GetSma(150).Condense().ToList().Last() : new SmaResult(price.Last().Date),
+            Ma40 = price.Count >= 200 ? price.GetSma(200).Condense().ToList().Last() : new SmaResult(price.Last().Date),
+            Week52High = price.Count >= 252 ? price.Calculate52WeekHigh().Last() : new TickerData() { Datetime = price.Last().Date, Ticker = price.Last().Ticker },
+            Week52Low = price.Count >= 252 ? price.Calculate52WeekLow().Last() : new TickerData() { Datetime = price.Last().Date, Ticker = price.Last().Ticker },
             IsStage2 = price.IsLastDayStage2(),
             Spy = spy,
         });
