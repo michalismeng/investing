@@ -62,6 +62,7 @@
                       Toggle indicators
                     </button>
                     <ul class="dropdown-menu w-100 text-center">
+                        <li><button class="dropdown-item btn btn-outline-primary" onclick="toggleMa20Day()">Toggle 20 Day MA</button></li>
                         <li><button class="dropdown-item btn btn-outline-primary" onclick="toggleMa10()">Toggle 10 MA</button></li>
                         <li><button class="dropdown-item btn btn-outline-primary" onclick="toggleMa30()">Toggle 30 MA</button></li>
                         <li><button class="dropdown-item btn btn-outline-primary" onclick="toggleMa40()">Toggle 40 MA</button></li>
@@ -142,9 +143,11 @@
         })
 
         @* Variables *@
+        let lineSeries_20_day;
         let lineSeries_10;
         let lineSeries_30;
         let lineSeries_40;
+        let lineSeries_volume_50_day;
         let week_high_52;
         let week_low_52;
         let strength_line;
@@ -247,7 +250,7 @@
             priceFormat: {
                 type: 'volume',
             },
-            priceScaleId: '', // set as an overlay by setting a blank priceScaleId
+            priceScaleId: 'left', // set as an overlay by setting a blank priceScaleId
         });
         volumeSeries.priceScale().applyOptions({
             // set the positioning of the volume series
@@ -263,6 +266,18 @@
         }
         ]);
 
+        let volume_ma_50_day = [
+        @foreach(var record in Model.Volume_MA_50_day)
+        {
+            @: { value: @record.Sma, time: "@record.Date.ToString("yyyy-MM-dd")" },
+        }
+        ];
+        let ma_20_day = [
+        @foreach(var record in Model.MA_20_day)
+        {
+            @: { value: @record.Sma, time: "@record.Date.ToString("yyyy-MM-dd")" },
+        }
+        ];
         let ma_10 = [
         @foreach(var record in Model.MA_10)
         {
@@ -327,7 +342,7 @@
                     return;
                 }
 
-                let { price, ma10, ma30, ma40, week52High, week52Low, isStage2, spy } = data
+                let { price, ma20day, volumeMA50day, ma10, ma30, ma40, week52High, week52Low, isStage2, spy } = data
 
                 stockPrices.update({
                     open: price.open,
@@ -340,6 +355,16 @@
                 volumeSeries.update({
                     value: price.volume,
                     time: moment(price.date).format("YYYY-MM-DD"),
+                })
+
+                lineSeries_volume_50_day.update({
+                    value: volumeMA50day.sma,
+                    time: moment(volumeMA50day.date).format("YYYY-MM-DD"),
+                })
+
+                lineSeries_20_day.update({
+                    value: ma20day.sma,
+                    time: moment(ma20day.date).format("YYYY-MM-DD"),
                 })
 
                 lineSeries_10.update({
@@ -396,6 +421,10 @@
             })
         }
 
+        lineSeries_volume_50_day = chart.addLineSeries({ color: "purple", lineWidth: 2, priceScaleId: 'left', visible: true });
+        lineSeries_volume_50_day.setData(volume_ma_50_day)
+        lineSeries_20_day = chart.addLineSeries({ color: "gold", lineWidth: 3, visible: false });
+        lineSeries_20_day.setData(ma_20_day)
         lineSeries_10 = chart.addLineSeries({ color: "blue", lineWidth: 2, visible: false });
         lineSeries_10.setData(ma_10)
         lineSeries_30 = chart.addLineSeries({ color: "green", lineWidth: 2, visible: false });
@@ -406,8 +435,12 @@
         week_high_52.setData(high_52)
         week_low_52 = chart.addLineSeries({ color: "#FFCCCB", lineWidth: 3, visible: false });
         week_low_52.setData(low_52)
-        strength_line = chart.addLineSeries({ color: "#FFCCCB", lineWidth: 3, priceScaleId: 'left', visible: false });
+        strength_line = chart.addLineSeries({ color: "#FFCCCB", lineWidth: 3, priceScaleId: '', visible: false });
         strength_line.setData(strength)
+
+        function toggleMa20Day() {
+            lineSeries_20_day.applyOptions({ visible: !lineSeries_20_day.options().visible })
+        }
 
         function toggleMa10() {
             lineSeries_10.applyOptions({ visible: !lineSeries_10.options().visible })
