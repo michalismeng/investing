@@ -39,18 +39,25 @@
                     <thead>
                         <tr>
                             <th style="width: 9rem">Date</th>
-                            <th>Price</th>
-                            <th>% Chg. to date</th>
+                            <th class="text-center">Price</th>
+                            <th class="text-center">% Chg.</th>
+                            <th class="text-center" style="width: 8rem">Stop-loss</th>
                             <th style="width: 2rem"></th>
                         </tr>
                     </thead>
                     <tbody> 
                         <template x-for="entry in $store.entryPoints.entries">
-                            <tr>
+                            <tr :class="{ 'text-muted': entry.stopLossTriggered }">
                                 <td><span x-text="entry.date.format('YYYY-MM-DD')"></span> (<span x-text="entry.holdingDays"></span>d)</td>
-                                <td x-text="Math.round(entry.price * 100) / 100"></td>
-                                <td><span x-text="Math.round(entry.pctChange * 100) / 100"></span>%</td>
-                                <td><a style="color: black" href="javascript:void(0);" x-on:click="$store.entryPoints.remove(entry.date)"><i class="fa-solid fa-xmark"></i></button></td>
+                                <td class="text-center" x-text="Math.round(entry.price * 100) / 100"></td>
+                                <td class="text-center"><span x-text="Math.round(entry.pctChange * 100) / 100"></span>%</td>
+                                <td class="text-center" style="width: 8rem">
+                                    <span x-show="! entry.stopLossEditing" x-text="Math.round(entry.stopLoss * 100) / 100"></span>
+                                    <i x-show="entry.stopLossTriggered" data-bs-toggle="tooltip" data-bs-placement="top" :title="'Stop loss triggered @@ ' + Math.round(entry.triggerPrice * 100) / 100" class="fa-solid fa-bolt"></i>
+                                    <a x-show="! entry.stopLossEditing && ! entry.stopLossTriggered" href="javascript:void(0);" style="color: black" x-on:click="entry.stopLossEditing = true"><i class="fa-solid fa-pen"></i></a>
+                                    <input x-show="entry.stopLossEditing" x-model="entry.stopLoss" x-on:blur="entry.stopLossEditing = false" type="number" step="0.05" class="form-control form-control-sm w-75 text-center mx-auto">
+                                </td>
+                                <td><a x-show="! entry.stopLossTriggered" style="color: black" href="javascript:void(0);" x-on:click="$store.entryPoints.remove(entry.date)"><i class="fa-solid fa-xmark"></i></button></td>
                             </tr>
                         </template>
                     </tbody>
@@ -123,13 +130,29 @@
                 addIfNew(date, price) {
                     if(this.entries.find(e => e.date.format("YYYY-MM-DD") == date.format("YYYY-MM-DD")))
                         return;
-                    this.entries.push({ date: date, price: price, holdingDays: 0, pctChange: 0 })
+                    this.entries.push({ date: date, price: price, holdingDays: 0, pctChange: 0, stopLoss: Math.round(price * 100) / 100, stopLossEditing: false, stopLossTriggered: false, triggerPrice: null })
                 },
 
-                update(latestDate, latestPrice) {
+                update(latestDate, latestPrice, latestLow, latestHigh, latestOpen) {
+                    // Update stop-loss - check whether it triggers
                     for(let e of this.entries) {
-                        e.pctChange = (latestPrice / e.price - 1) * 100
-                        e.holdingDays = latestDate.diff(e.date, 'days')
+                        if(e.stopLossTriggered == false && e.stopLoss >= latestLow) {
+                            // The stop-loss triggers, hence the position is closed by selling at the stop-loss
+                            e.stopLossTriggered = true
+                            let sellPrice;
+                            if (latestOpen < e.stopLoss) sellPrice = latestOpen;
+                            else if (latestHigh < e.stopLoss) sellPrice = latestHigh;
+                            else sellPrice = e.stopLoss;
+                            e.triggerPrice = sellPrice;
+                            e.pctChange = (sellPrice / e.price - 1) * 100
+                            e.holdingDays = latestDate.diff(e.date, 'days')
+                        }
+                    }
+                    for(let e of this.entries) {
+                        if(e.stopLossTriggered == false) {
+                            e.pctChange = (latestPrice / e.price - 1) * 100
+                            e.holdingDays = latestDate.diff(e.date, 'days')
+                        }
                     }
                 },
 
@@ -427,7 +450,7 @@
                 let latestDate = moment(stockPrices.data().at(-1).time)
                 let latestPrice = stockPrices.data().at(-1).close
                 Alpine.store("infoPanel").update(latestDate, latestPrice)
-                Alpine.store("entryPoints").update(currentDate, stockPrices.data().at(-1).close)
+                Alpine.store("entryPoints").update(currentDate, stockPrices.data().at(-1).close, stockPrices.data().at(-1).low, stockPrices.data().at(-1).high, stockPrices.data().at(-1).open)
             })
         }
 
