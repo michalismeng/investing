@@ -51,11 +51,10 @@
                                 <td><span x-text="entry.date.format('YYYY-MM-DD')"></span> (<span x-text="entry.holdingDays"></span>d)</td>
                                 <td class="text-center" x-text="Math.round(entry.price * 100) / 100"></td>
                                 <td class="text-center"><span x-text="Math.round(entry.pctChange * 100) / 100"></span>%</td>
-                                <td class="text-center" style="width: 8rem">
-                                    <span x-show="! entry.stopLossEditing" x-text="Math.round(entry.stopLoss * 100) / 100"></span>
+                                <td class="text-center" style="width: 8rem" x-data="{ stopLoss: entry.stopLoss }">
+                                    <span class="clickable" x-show="! entry.stopLossEditing" x-on:click="entry.stopLossEditing = true" x-text="Math.round(entry.stopLoss * 100) / 100 + ' (' + Math.round((entry.stopLoss / entry.price - 1) * 100) + '%)'" data-bs-toggle="tooltip" :title="'Stop loss set @@ ' + stopLoss"></span>
                                     <i x-show="entry.stopLossTriggered" data-bs-toggle="tooltip" data-bs-placement="top" :title="'Stop loss triggered @@ ' + Math.round(entry.triggerPrice * 100) / 100" class="fa-solid fa-bolt"></i>
-                                    <a x-show="! entry.stopLossEditing && ! entry.stopLossTriggered" href="javascript:void(0);" style="color: black" x-on:click="entry.stopLossEditing = true"><i class="fa-solid fa-pen"></i></a>
-                                    <input x-show="entry.stopLossEditing" x-model="entry.stopLoss" x-on:blur="entry.stopLossEditing = false" type="number" step="0.05" class="form-control form-control-sm w-75 text-center mx-auto">
+                                    <input x-show="entry.stopLossEditing" x-model="stopLoss" @@keyup.enter="entry.stopLoss = parseStopLoss(stopLoss, entry.price) ; entry.stopLossEditing = false" x-on:blur="entry.stopLoss = parseStopLoss(stopLoss, entry.price) ; entry.stopLossEditing = false" class="form-control form-control-sm w-75 text-center mx-auto">
                                 </td>
                                 <td><a x-show="! entry.stopLossTriggered" style="color: black" href="javascript:void(0);" x-on:click="$store.entryPoints.remove(entry.date)"><i class="fa-solid fa-xmark"></i></button></td>
                             </tr>
@@ -107,6 +106,15 @@
 @section Scripts
 {
     <script>
+        let round = (x) => Math.round(x * 100) / 100
+
+        function parseStopLoss(stopLoss, price, dailyHigh = 0) {
+            if (stopLoss.toString().endsWith("%")) {
+                return round((1 + parseFloat(stopLoss.substring(0, stopLoss.indexOf("%"))) / 100) * price);
+            } else {
+                return round(parseFloat(stopLoss))
+            }
+        }
 
         document.addEventListener('alpine:init', () => {
             Alpine.store('infoPanel', {
@@ -130,7 +138,7 @@
                 addIfNew(date, price) {
                     if(this.entries.find(e => e.date.format("YYYY-MM-DD") == date.format("YYYY-MM-DD")))
                         return;
-                    this.entries.push({ date: date, price: price, holdingDays: 0, pctChange: 0, stopLoss: Math.round(price * 100) / 100, stopLossEditing: false, stopLossTriggered: false, triggerPrice: null })
+                    this.entries.push({ date: date, price: price, holdingDays: 0, pctChange: 0, stopLoss: round(0.95 * price), stopLossEditing: false, stopLossTriggered: false, triggerPrice: null })
                 },
 
                 update(latestDate, latestPrice, latestLow, latestHigh, latestOpen) {
