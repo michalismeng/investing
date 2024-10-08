@@ -7,6 +7,48 @@ using Microsoft.EntityFrameworkCore;
 using Skender.Stock.Indicators;
 using simulator.Model;
 using simulator.Extensions;
+using System.Diagnostics;
+using CsvHelper;
+using System.Globalization;
+
+string AdjustDaysDifference(int days)
+{
+    if(days == 0) return "";
+    if(days == 1) return "1d";
+    if(days <= 3) return "5d";
+    if(days <= 30) return "1mo";
+    if(days <= 90) return "3mo";
+    return "max";
+}
+
+List<TickerDataCSV> GetTickerData(string ticker, string period)
+{
+    if(string.IsNullOrEmpty(period))
+        return new List<TickerDataCSV>();
+
+    var startInfo = new ProcessStartInfo
+    {
+        UseShellExecute = false,
+        FileName = "python3",
+        Arguments = "fetch_prices.py",
+        RedirectStandardOutput = true
+    };
+    startInfo.EnvironmentVariables["TICKER"] = ticker;
+    startInfo.EnvironmentVariables["PERIOD"] = period;
+    startInfo.EnvironmentVariables["FOLDER"] = "../relative-strength/data";
+    var process = Process.Start(startInfo);
+    process?.WaitForExit();
+
+    if(process?.ExitCode == 0)
+    {
+        string output = process?.StandardOutput.ReadToEnd()?.Trim() ?? "";
+        using var reader = new StreamReader(output);
+        using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
+        return csv.GetRecords<TickerDataCSV>().ToList();
+    }
+
+    return [];
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -261,6 +303,79 @@ else if(Environment.GetEnvironmentVariable("MODE") == "percentile")
         }
         System.Console.WriteLine("Updating entities");
         _context.SaveChanges();
+    });
+}
+else if(Environment.GetEnvironmentVariable("MODE") == "daily")
+{
+    // Took 25 minutes to run
+    using var context = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var tickers = context.Tickers.ToList();
+
+    Parallel.ForEach(tickers, new ParallelOptions { MaxDegreeOfParallelism = 8 }, ticker =>
+    {
+        using var _context = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        _context.ChangeTracker.AutoDetectChangesEnabled = false;
+
+        var latestDate = _context.PriceData.Where(p => p.Ticker == ticker.Ticker)
+                                           .OrderByDescending(p => p.Datetime)
+                                           .AsNoTracking()
+                                           .FirstOrDefault()?.Datetime ?? DateTime.Today;
+        var diff = (int)(DateTime.Today - latestDate).TotalDays - 1; // Remove one day: If we run it in the morning there will be two days missing, today and yesterday, but we only need yesterday (we will get today's prices, tomorrow).
+        System.Console.WriteLine("Found latest date for {0} to be {1}. Difference is {2} days adjusted to '{3}'", ticker.Ticker,
+                                                                                                                  latestDate.ToString("yyyy-MM-dd"),
+                                                                                                                  diff,
+                                                                                                                  AdjustDaysDifference(diff));
+
+        System.Console.WriteLine("Fetching latest data for {0} from Yahoo", AdjustDaysDifference(diff));
+        var records = GetTickerData(ticker.Ticker, AdjustDaysDifference(diff));
+        System.Console.WriteLine("Fetched {0} records", records.Count);
+
+        if (records.Any(r => r.StockSplits > 0))
+        {
+            // TODO: Overwrite all history because there's been a stock split (i.e., change all existing records. Records from the provider are used up until latestDate)
+            System.Console.WriteLine("The stock had a split. Overwriting all existing data...");
+            records = GetTickerData(ticker.Ticker, "max");
+            System.Console.WriteLine("Got CSV data from Yahoo. Count {0}", records.Count);
+            var existingRecords = _context.PriceData.AsNoTracking().Where(p => p.Ticker == ticker.Ticker).ToList();
+            System.Console.WriteLine("Fetched all records from the database. Count {0}", existingRecords.Count);
+            foreach(var r in existingRecords)
+            {
+                var csvRecord = records.SingleOrDefault(rr => rr.DateTime == r.Datetime);
+                if(csvRecord == null)
+                    continue;
+
+                r.Open = csvRecord.Open;
+                r.Close = csvRecord.Close;
+                r.High = csvRecord.High;
+                r.Low = csvRecord.Low;
+                _context.Attach(r);
+                _context.Entry(r).Property(e => e.Open).IsModified = true;
+                _context.Entry(r).Property(e => e.Close).IsModified = true;
+                _context.Entry(r).Property(e => e.High).IsModified = true;
+                _context.Entry(r).Property(e => e.Low).IsModified = true;
+            }
+
+            System.Console.WriteLine("Saving changes...");
+            _context.SaveChanges();
+        }
+
+        var tickerRecords = records.Select(r => r.ToTickerData(ticker.Ticker));
+        var tickerRecordsToAdd = tickerRecords.Where(t => t.Datetime > latestDate && t.Datetime < DateTime.Today);
+        if(tickerRecordsToAdd.Any())
+        {
+            _context.AddRange(tickerRecordsToAdd);
+            _context.SaveChanges();
+
+            System.Console.WriteLine("Added {3} price data records for ticker {0} from {1} to {2}",
+                                                                                        ticker.Ticker,
+                                                                                        tickerRecordsToAdd.MinBy(d => d.Datetime)!.Datetime.ToString("MMM dd, yyyy"),
+                                                                                        tickerRecordsToAdd.MaxBy(d => d.Datetime)!.Datetime.ToString("MMM dd, yyyy"),
+                                                                                        tickerRecordsToAdd.Count());
+        }
+        else
+        {
+            System.Console.WriteLine("Nothing to update for ticker {0}", ticker.Ticker);
+        }
     });
 }
 else

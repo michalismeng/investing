@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using CsvHelper.Configuration.Attributes;
 using Skender.Stock.Indicators;
 
 namespace simulator.Model;
@@ -37,3 +38,29 @@ public class TickerData : IQuote
         return $"{Ticker}({Datetime.ToString("yyyy-MM-dd")}): Close at ${Close} with volume {Volume}";
     }
 }
+
+        class TickerDataCSV
+        {
+            public decimal Open { get; set; }
+            public decimal Close { get; set; }
+            public decimal Low { get; set; }
+            public decimal High { get; set; }
+            public decimal Volume { get; set; }
+            [Name("Date")]
+            public DateTime DateTime { get; set; }
+            public decimal Dividends { get; set; }
+            [Name("Stock Splits")]
+            public decimal StockSplits { get; set; }
+        
+            public TickerData ToTickerData(string ticker, TickerDataGranulariry granularity = TickerDataGranulariry.Daily) => new TickerData()
+            {
+                Ticker = ticker,
+                Close = Close,
+                Datetime = DateTime,
+                Granularity = granularity,
+                High = High,
+                Low = Low,
+                Open = Open,
+                Volume = Volume,
+            };
+        }
