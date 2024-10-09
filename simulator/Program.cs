@@ -7,48 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using Skender.Stock.Indicators;
 using simulator.Model;
 using simulator.Extensions;
-using System.Diagnostics;
-using CsvHelper;
-using System.Globalization;
-
-string AdjustDaysDifference(int days)
-{
-    if(days == 0) return "";
-    if(days == 1) return "1d";
-    if(days <= 3) return "5d";
-    if(days <= 30) return "1mo";
-    if(days <= 90) return "3mo";
-    return "max";
-}
-
-List<TickerDataCSV> GetTickerData(string ticker, string period)
-{
-    if(string.IsNullOrEmpty(period))
-        return new List<TickerDataCSV>();
-
-    var startInfo = new ProcessStartInfo
-    {
-        UseShellExecute = false,
-        FileName = "python3",
-        Arguments = "fetch_prices.py",
-        RedirectStandardOutput = true
-    };
-    startInfo.EnvironmentVariables["TICKER"] = ticker;
-    startInfo.EnvironmentVariables["PERIOD"] = period;
-    startInfo.EnvironmentVariables["FOLDER"] = "../relative-strength/data";
-    var process = Process.Start(startInfo);
-    process?.WaitForExit();
-
-    if(process?.ExitCode == 0)
-    {
-        string output = process?.StandardOutput.ReadToEnd()?.Trim() ?? "";
-        using var reader = new StreamReader(output);
-        using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
-        return csv.GetRecords<TickerDataCSV>().ToList();
-    }
-
-    return [];
-}
+using simulator.Utilities;
+using simulator.Pages;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -203,27 +163,9 @@ else if(Environment.GetEnvironmentVariable("MODE") == "strength")
         _context.ChangeTracker.AutoDetectChangesEnabled = false;
         var data = _context.PriceData.Where(d => d.Ticker == ticker).OrderBy(d => d.Datetime).ToArray();
         System.Console.WriteLine("Calculating strength of ticker {0}", ticker);
-        foreach(var i in Enumerable.Range(0, data.Length))
-        {
-            // Get strength of i-th last date
-            var dataFiltered = data.AsSpan(0, data.Length - i);
-
-            try
-            {
-                var strength = dataFiltered.GetStrength();
-
-                var latest = dataFiltered[^1];
-                latest.Strength = strength;
-                _context.Update(latest);
-            }
-            catch(Exception ex)
-            {
-                // This exception means there aren't enough past data from the i-th entry to calculate the strength (we need 4 quarters)
-                if (ex.Message.Contains("GetQuarterPerformance"))
-                    break;
-                throw;
-            }
-        }
+        Utilities.CalculateStrength(data);
+        foreach(var entity in data)
+            _context.MarkDirty(entity, e => e.Strength);
         _context.SaveChanges();
     });
 
@@ -244,29 +186,12 @@ else if(Environment.GetEnvironmentVariable("MODE") == "relative-strength")
         var data = _context.PriceData.Where(d => d.Ticker == ticker).OrderByDescending(d => d.Datetime).ToArray();
 
         System.Console.WriteLine("Calculating strength of ticker {0}", ticker);
-        // i: index in data, j: index in reference
-        // We've seen that datetime sometimes is not aligned, so we need to advance i/j until the dates are aligned
-        for(int i = 0, j = 0; i < Math.Min(data.Length, reference.Length) && j < Math.Min(data.Length, reference.Length); )
+        Utilities.CalculateRelativeStrength(data, reference);
+        foreach(var entity in data)
         {
-            if(data[i].Datetime > reference[j].Datetime)
-            {
-                i++;
-                continue;
-            }
-            else if(data[i].Datetime < reference[j].Datetime)
-            {
-                j++;
-                continue;
-            }
-            var relativeStrength = data[i].GetRelativeStrength(reference[j]);
-            data[i].RelativeStrength = relativeStrength;
-            data[i].ReferenceTicker = "SPY";
-            _context.Update(data[i]);
-            i++;
-            j++;
-            if(i > 10) break;
+            _context.MarkDirty(entity, e => e.RelativeStrength);
+            _context.MarkDirty(entity, e => e.RelativeStrength);
         }
-
         _context.SaveChanges();
     });
 }
@@ -293,25 +218,72 @@ else if(Environment.GetEnvironmentVariable("MODE") == "percentile")
         _context.ChangeTracker.AutoDetectChangesEnabled = false;
 
         System.Console.WriteLine("Calculating ticker percentiles for {0}", date.Date);
-        var data = _context.PriceData.AsNoTracking().Where(d => d.Datetime == date).ToList();
-        var percentiles = data.QCut(100).ToList();
-
-        foreach(var entity in percentiles)
-        {
-            _context.Attach(entity);
-            _context.Entry(entity).Property(e => e.Percentile).IsModified = true;
-        }
-        System.Console.WriteLine("Updating entities");
-        _context.SaveChanges();
+        context.CalculatePercentiles(date);
     });
 }
 else if(Environment.GetEnvironmentVariable("MODE") == "daily")
 {
-    // Took 25 minutes to run
-    using var context = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    var tickers = context.Tickers.ToList();
+    // TODO: Update tickers database
 
-    Parallel.ForEach(tickers, new ParallelOptions { MaxDegreeOfParallelism = 8 }, ticker =>
+    // Took <5 minutes to run
+    using var context = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+    var period = "1mo"; // Pin this, since in most cases it is enough.
+    var tickerDataNew = Utilities.GetTickerData(period, $"../relative-strength/data/{DateTime.Today:yyyy-MM-dd}.csv")
+                                 .GroupBy(t => t.Ticker)
+                                 .Select(g => (g.Key ?? "", g.ToList()))
+                                 .ToList();
+    var tickerDataNewDict = tickerDataNew.ToDictionary();
+
+    // Get data of stocks that had a split
+    var tickerSplits = tickerDataNew.Where(t => t.Item2.Any(s => s.StockSplits > 0)).Select(t => t.Item1).Distinct().ToList();
+    var tickerSplitData = new Dictionary<string, List<TickerDataCSV>>();
+    if(tickerSplits.Count > 0)
+    {
+        System.Console.WriteLine("The following stocks split");
+        foreach(var s in tickerSplits) System.Console.WriteLine("Stock split: {0}", s);
+        tickerSplitData = Utilities.GetTickerData("max", $"../relative-strength/data/{DateTime.Today:yyyy-MM-dd}-splits.csv", [..tickerSplits])
+                                   .GroupBy(t => t.Ticker)
+                                   .Select(g => (g.Key ?? "", g.ToList()))
+                                   .ToDictionary();
+    }
+
+    // Prepare reference ticker
+    var latestReferenceDate = context.PriceData.Where(p => p.Ticker == "SPY")
+                                       .OrderByDescending(p => p.Datetime)
+                                       .AsNoTracking()
+                                       .FirstOrDefault()?.Datetime ?? DateTime.Today;
+
+    var tickerRecordsToAdd = tickerDataNewDict["SPY"].Where(t => t.Datetime > latestReferenceDate && t.Datetime < DateTime.Today).Select(r => r.ToTickerData());
+    if (tickerRecordsToAdd.Any())
+    {
+        context.AddRange(tickerRecordsToAdd);
+        context.SaveChanges();
+
+        var minAddedDate = tickerRecordsToAdd.MinBy(d => d.Datetime)!.Datetime;
+        var maxAddedDate = tickerRecordsToAdd.MaxBy(d => d.Datetime)!.Datetime;
+
+        System.Console.WriteLine("Added {3} price data records for ticker {0} from {1} to {2}",
+                                                                                    "SPY",
+                                                                                    minAddedDate.ToString("MMM dd, yyyy"),
+                                                                                    maxAddedDate.ToString("MMM dd, yyyy"),
+                                                                                    tickerRecordsToAdd.Count());
+        System.Console.WriteLine("Calculating strength for ticker {0} between dates {1} and {2}",
+                                                                                    "SPY",
+                                                                                    minAddedDate.ToString("MMM dd, yyyy"),
+                                                                                    maxAddedDate.ToString("MMM dd, yyyy"));
+
+        context.CalculateStrength("SPY", minAddedDate, maxAddedDate);
+
+        System.Console.WriteLine("Calculating relative strength for ticker {0} between dates {1} and {2}",
+                                                                                    "SPY",
+                                                                                    minAddedDate.ToString("MMM dd, yyyy"),
+                                                                                    maxAddedDate.ToString("MMM dd, yyyy"));
+        context.CalculateRelativeStrength("SPY", "SPY", minAddedDate, maxAddedDate);
+    }
+
+    var tickers = context.Tickers.ToList();
+    _ = Parallel.ForEach(tickers, new ParallelOptions { MaxDegreeOfParallelism = 8 }, ticker =>
     {
         using var _context = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
         _context.ChangeTracker.AutoDetectChangesEnabled = false;
@@ -320,63 +292,89 @@ else if(Environment.GetEnvironmentVariable("MODE") == "daily")
                                            .OrderByDescending(p => p.Datetime)
                                            .AsNoTracking()
                                            .FirstOrDefault()?.Datetime ?? DateTime.Today;
-        var diff = (int)(DateTime.Today - latestDate).TotalDays - 1; // Remove one day: If we run it in the morning there will be two days missing, today and yesterday, but we only need yesterday (we will get today's prices, tomorrow).
-        System.Console.WriteLine("Found latest date for {0} to be {1}. Difference is {2} days adjusted to '{3}'", ticker.Ticker,
-                                                                                                                  latestDate.ToString("yyyy-MM-dd"),
-                                                                                                                  diff,
-                                                                                                                  AdjustDaysDifference(diff));
-
-        System.Console.WriteLine("Fetching latest data for {0} from Yahoo", AdjustDaysDifference(diff));
-        var records = GetTickerData(ticker.Ticker, AdjustDaysDifference(diff));
-        System.Console.WriteLine("Fetched {0} records", records.Count);
-
-        if (records.Any(r => r.StockSplits > 0))
+        if (tickerSplits.Contains(ticker.Ticker))
         {
-            // TODO: Overwrite all history because there's been a stock split (i.e., change all existing records. Records from the provider are used up until latestDate)
-            System.Console.WriteLine("The stock had a split. Overwriting all existing data...");
-            records = GetTickerData(ticker.Ticker, "max");
-            System.Console.WriteLine("Got CSV data from Yahoo. Count {0}", records.Count);
+            // Overwrite all history because there's been a stock split (i.e., change all existing records. Records from the provider are used up until latestDate)
+            System.Console.WriteLine("Stock {0} had a split. Overwriting all existing price data...", ticker.Ticker);
             var existingRecords = _context.PriceData.AsNoTracking().Where(p => p.Ticker == ticker.Ticker).ToList();
-            System.Console.WriteLine("Fetched all records from the database. Count {0}", existingRecords.Count);
             foreach(var r in existingRecords)
             {
-                var csvRecord = records.SingleOrDefault(rr => rr.DateTime == r.Datetime);
-                if(csvRecord == null)
+                var splitRecord = tickerSplitData[ticker.Ticker].SingleOrDefault(rr => rr.Datetime == r.Datetime);
+                if(splitRecord == null)
                     continue;
 
-                r.Open = csvRecord.Open;
-                r.Close = csvRecord.Close;
-                r.High = csvRecord.High;
-                r.Low = csvRecord.Low;
-                _context.Attach(r);
-                _context.Entry(r).Property(e => e.Open).IsModified = true;
-                _context.Entry(r).Property(e => e.Close).IsModified = true;
-                _context.Entry(r).Property(e => e.High).IsModified = true;
-                _context.Entry(r).Property(e => e.Low).IsModified = true;
+                r.Open = splitRecord.Open;
+                r.Close = splitRecord.Close;
+                r.High = splitRecord.High;
+                r.Low = splitRecord.Low;
+                _context.MarkDirty(r, e => e.Open, e => e.Close, e => e.High, e => e.Low);
             }
 
-            System.Console.WriteLine("Saving changes...");
             _context.SaveChanges();
         }
 
-        var tickerRecords = records.Select(r => r.ToTickerData(ticker.Ticker));
-        var tickerRecordsToAdd = tickerRecords.Where(t => t.Datetime > latestDate && t.Datetime < DateTime.Today);
-        if(tickerRecordsToAdd.Any())
+        var tickerRecordsToAdd = tickerDataNewDict.ContainsKey(ticker.Ticker) ? 
+                                 tickerDataNewDict[ticker.Ticker].Where(t => t.Datetime > latestDate && t.Datetime < DateTime.Today).Select(r => r.ToTickerData()) :
+                                 [];
+
+        if (tickerRecordsToAdd.Any())
         {
             _context.AddRange(tickerRecordsToAdd);
             _context.SaveChanges();
 
+            var minAddedDate = tickerRecordsToAdd.MinBy(d => d.Datetime)!.Datetime;
+            var maxAddedDate = tickerRecordsToAdd.MaxBy(d => d.Datetime)!.Datetime;
+
             System.Console.WriteLine("Added {3} price data records for ticker {0} from {1} to {2}",
                                                                                         ticker.Ticker,
-                                                                                        tickerRecordsToAdd.MinBy(d => d.Datetime)!.Datetime.ToString("MMM dd, yyyy"),
-                                                                                        tickerRecordsToAdd.MaxBy(d => d.Datetime)!.Datetime.ToString("MMM dd, yyyy"),
+                                                                                        minAddedDate.ToString("MMM dd, yyyy"),
+                                                                                        maxAddedDate.ToString("MMM dd, yyyy"),
                                                                                         tickerRecordsToAdd.Count());
+            System.Console.WriteLine("Calculating strength for ticker {0} between dates {1} and {2}",
+                                                                                        ticker.Ticker,
+                                                                                        minAddedDate.ToString("MMM dd, yyyy"),
+                                                                                        maxAddedDate.ToString("MMM dd, yyyy"));
+
+            _context.CalculateStrength(ticker.Ticker, minAddedDate, maxAddedDate);
+
+            System.Console.WriteLine("Calculating relative strength for ticker {0} between dates {1} and {2}",
+                                                                                        ticker.Ticker,
+                                                                                        minAddedDate.ToString("MMM dd, yyyy"),
+                                                                                        maxAddedDate.ToString("MMM dd, yyyy"));
+
+            _context.CalculateRelativeStrength(ticker.Ticker, "SPY", minAddedDate, maxAddedDate);
         }
         else
         {
             System.Console.WriteLine("Nothing to update for ticker {0}", ticker.Ticker);
         }
     });
+
+    // Calculate percentiles
+    // Assume latestReferenceDate is the last day of data for all tickers
+    var startDate = latestReferenceDate.AddDays(1);
+    var endDate = DateTime.Today.AddDays(-1);
+    var dates = Enumerable.Range(0, 1 + endDate.Subtract(startDate).Days)
+                          .Select(offset => startDate.AddDays(offset))
+                          .OrderDescending()
+                          .ToList();
+
+    if(dates.Count != 0)
+    {
+        System.Console.WriteLine("Calculating percentiles from {0} to {1}", dates.Min().ToString("yyyy-MM-dd"), dates.Max().ToString("yyyy-MM-dd"));
+        Parallel.ForEach(dates, new ParallelOptions { MaxDegreeOfParallelism = 8 }, date =>
+        {
+            using var _context = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            _context.ChangeTracker.AutoDetectChangesEnabled = false;
+
+            System.Console.WriteLine("Calculating ticker percentiles for {0}", date.Date);
+            _context.CalculatePercentiles(date);
+        });
+    }
+    else
+    {
+        System.Console.WriteLine("Nothing to do for percentiles calculation");
+    }
 }
 else
 {
