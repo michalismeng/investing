@@ -21,22 +21,6 @@ public class IndexModel : PageModel
 
     public void OnGet()
     {
-        Date = new DateTime(2015, 02, 02);
-        var startDate = Date.AddYears(-1).AddMonths(-1);
-        var tickers = _context.Tickers.ToList();
-        var prices = _context.PriceData.Where(p => p.Datetime <= Date && startDate <= p.Datetime)
-                                       .ToList()
-                                       .GroupBy(p => p.Ticker)
-                                       .ToDictionary(g => g.Key, g => g.Select(p => p));
-        foreach(var p in prices)
-        {
-            var sorted = p.Value.OrderBy(p => p.Datetime).ToList();
-            var dates = sorted.GetStage2ForLastDay();
-            if(dates.Contains(Date))
-                Tickers.Add(tickers.Single(t => t.Ticker == p.Key));
-        }
-        // Tickers.AddRange(tickers);
-        System.Console.WriteLine("Finished");
     }
 }
 
