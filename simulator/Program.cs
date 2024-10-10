@@ -228,7 +228,7 @@ else if(Environment.GetEnvironmentVariable("MODE") == "daily")
     // Took <5 minutes to run
     using var context = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-    var period = "1mo"; // Pin this, since in most cases it is enough.
+    var period = Environment.GetEnvironmentVariable("PERIOD") ?? "1mo";
     var tickerDataNew = Utilities.GetTickerData(period, $"../relative-strength/data/{DateTime.Today:yyyy-MM-dd}.csv")
                                  .GroupBy(t => t.Ticker)
                                  .Select(g => (g.Key ?? "", g.ToList()))
