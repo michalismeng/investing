@@ -53,7 +53,7 @@ def escape_ticker(ticker):
 
 def get_yf_data(ticker, period):
     escaped_ticker = escape_ticker(ticker)
-    df = yf.download(escaped_ticker, period=period, auto_adjust=True, interval="1d", actions=True, progress=False)
+    df = yf.download(escaped_ticker, period=period, auto_adjust=False, interval="1d", actions=True, progress=False)
     df["Ticker"] = ticker
     return df
 
