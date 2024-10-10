@@ -1,3 +1,4 @@
 *.csv
 simulator/bin
 simulator/obj
+*.sql
