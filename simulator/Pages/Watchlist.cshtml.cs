@@ -9,7 +9,7 @@ namespace simulator.Pages;
 public class WatchlistTickerInfoModel
 {
     public TickerInfo Ticker { get; set; }
-    public int Percentile { get; set; }
+    public TickerData PriceData { get; set; }
 }
 
 public class WatchlistModel : PageModel
@@ -28,21 +28,15 @@ public class WatchlistModel : PageModel
 
     public void OnGet(string? date = null)
     {
-        Date = date != null ? DateTime.Parse(date) : DateTime.Today;
-        var startDate = Date.AddYears(-1).AddMonths(-1);
-        var tickers = _context.Tickers.ToDictionary(g => g.Ticker);
-        var prices = _context.PriceData.Where(p => p.Datetime <= Date && startDate <= p.Datetime)
-                                       .GroupBy(p => p.Ticker)
-                                       .ToDictionary(g => g.Key, g => g.Select(p => p));
+        Date = date != null ? DateTime.Parse(date) : DateTime.Today.AddDays(-1);
+        var prices = _context.PriceData.Where(p => p.Datetime == Date && p.IsStage2 == true)
+                                       .ToDictionary(g => g.Ticker);
 
-        foreach(var p in prices)
+        Tickers = [.. prices.Select(st => new WatchlistTickerInfoModel()
         {
-            var sorted = p.Value.OrderBy(p => p.Datetime).ToList();
-            if(sorted.IsLastDayStage2())
-                Tickers.Add(new WatchlistTickerInfoModel() { Ticker = tickers[p.Key], Percentile = sorted.Last().Percentile.Value });
-        }
-
-        Tickers = [.. Tickers.OrderByDescending(t => t.Percentile)];
+            Ticker = _context.Tickers.FirstOrDefault(x => x.Ticker == st.Key),
+            PriceData = st.Value,
+        }).Where(x => x.Ticker != null && x.PriceData != null).OrderByDescending(x => x.PriceData.RelativeStrength)];
     }
 }
 

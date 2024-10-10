@@ -9,6 +9,7 @@ using simulator.Model;
 using simulator.Extensions;
 using simulator.Utilities;
 using simulator.Pages;
+using System.Collections.Concurrent;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -375,6 +376,34 @@ else if(Environment.GetEnvironmentVariable("MODE") == "daily")
     {
         System.Console.WriteLine("Nothing to do for percentiles calculation");
     }
+}
+else if(Environment.GetEnvironmentVariable("MODE") == "report-stage2")
+{
+    using var context = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var dateStr = Environment.GetEnvironmentVariable("DATE");
+    // Prepare the report either for the given date, or for yesterday's prices (which are the latest)
+    var date = dateStr != null ? DateTime.Parse(dateStr) : DateTime.Today.AddDays(-1);
+
+    System.Console.WriteLine("Generating stage 2 report for {0}...", date.ToString("yyyy-MM-dd"));
+    var startDate = date.AddYears(-1).AddMonths(-1);
+    System.Console.WriteLine("Fetching latest data from database...");
+    var prices = context.PriceData.Where(p => startDate <= p.Datetime && p.Datetime <= date)
+                                  .GroupBy(p => p.Ticker)
+                                  .ToDictionary(g => g.Key, g => g.Select(p => p));
+
+    System.Console.WriteLine("Calculating which companies are in stage 2...");
+    var cb = new ConcurrentBag<TickerData>();
+    _ = Parallel.ForEach(prices, new ParallelOptions { MaxDegreeOfParallelism = 8 }, price =>
+    {
+        var sorted = price.Value.OrderBy(p => p.Datetime).ToList();
+        var lastRecord = sorted.Last();
+        lastRecord.IsStage2 = sorted.IsLastDayStage2();
+        cb.Add(lastRecord);
+    });
+
+    System.Console.WriteLine("Found {0} companies in stage 2", cb.Where(r => r.IsStage2 == true).Count());
+    context.PriceData.UpdateRange(cb);
+    context.SaveChanges();
 }
 else
 {

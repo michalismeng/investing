@@ -25,6 +25,11 @@ public class TickerData : IQuote
     public decimal? RelativeStrength { get; set; }
     public string? ReferenceTicker { get; set; }
     public int? Percentile { get; set; }
+    /// <summary>
+    /// Whether the stock is in stage 2 for this day.
+    /// If null, then the calculation hasn't happened yet.
+    /// </summary>
+    public bool? IsStage2 { get; set; }
 
     [NotMapped]
     public DateTime Date => Datetime;

@@ -16,6 +16,8 @@
             <th scope="col">Name</th>
             <th scope="col">Sector</th>
             <th scope="col">Percentile</th>
+            <th scope="col">Relative Strength</th>
+            <th scope="col">Close</th>
             <th scope="col">Actions</th>
           </tr>
         </thead>
@@ -23,11 +25,14 @@
           @foreach(var tickerModel in Model.Tickers)
           {
             var ticker = tickerModel.Ticker;
+            var data = tickerModel.PriceData;
             <tr>
               <th scope="row">@ticker.Ticker</th>
               <td scope="row">@ticker.Name</td>
               <td scope="row">@ticker.Sector</td>
-              <td scope="row">@tickerModel.Percentile</td>
+              <td scope="row">@data.Percentile</td>
+              <td scope="row">@Math.Round(data.RelativeStrength!.Value, 2)</td>
+              <td scope="row">@Math.Round(data.Close, 2)</td>
               <td scope="row"><a class="btn btn-outline-primary" asp-page="Realtime" asp-route-ticker="@ticker.Ticker" asp-route-cutoff="@Model.Date.ToString("yyyy-MM-dd")">To chart</a></td>
             </tr>
           }
@@ -37,5 +42,5 @@
 </div>
 
 @section Scripts {
-    <partial name="_DataTableScript" model='(3, "desc")' />
+    <partial name="_DataTableScript" model='(4, "desc")' />
 }
