@@ -248,4 +248,37 @@ public static class StockPriceExtensions
                 return false;
         return true;
     }
+
+    public static decimal CalculateGreatestDropPercentage(this List<TickerData> stockPrices)
+    {
+        if (stockPrices == null || stockPrices.Count < 2)
+        {
+            throw new ArgumentException("There must be at least two prices to calculate a drop.");
+        }
+
+        var maxPrice = stockPrices[0]; // Initialize max price to the first price in the list
+        decimal greatestDropPercentage = 0m; // Initialize the greatest drop percentage
+
+        // Iterate through the list starting from the second price
+        for (int i = 1; i < stockPrices.Count; i++)
+        {
+            var currentPrice = stockPrices[i];
+
+            // Calculate the drop from the max price found so far
+            if (currentPrice.Low < maxPrice.High)
+            {
+                decimal dropPercentage = (maxPrice.High - currentPrice.Low) / maxPrice.High;
+
+                // Update the greatest drop percentage if the current drop is larger
+                if (dropPercentage > greatestDropPercentage)
+                    greatestDropPercentage = dropPercentage;
+            }
+
+            // Update the max price if the current price is higher than the previous max
+            if (currentPrice.High > maxPrice.High)
+                maxPrice = currentPrice;
+        }
+
+        return greatestDropPercentage;
+    }
 }
