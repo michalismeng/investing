@@ -10,11 +10,17 @@ using simulator.Extensions;
 using simulator.Utilities;
 using simulator.Pages;
 using System.Collections.Concurrent;
+using Parquet.Serialization;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(ApplicationDbContext.connectionString, ServerVersion.AutoDetect(ApplicationDbContext.connectionString), mySqlOptions => mySqlOptions.CommandTimeout(500))
+);
+
+builder.Services.AddDbContext<DorisDbContext>(options =>
+    options.UseMySql(DorisDbContext.connectionString, ServerVersion.AutoDetect(ApplicationDbContext.connectionString), mySqlOptions => mySqlOptions.CommandTimeout(500))
 );
 
 // Add services to the container.
@@ -404,6 +410,29 @@ else if(Environment.GetEnvironmentVariable("MODE") == "report-stage2")
     System.Console.WriteLine("Found {0} companies in stage 2", cb.Where(r => r.IsStage2 == true).Count());
     context.PriceData.UpdateRange(cb);
     context.SaveChanges();
+}
+else if(Environment.GetEnvironmentVariable("MODE") == "doris")
+{
+    // using var context = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    using var doris = app.Services.CreateScope().ServiceProvider.GetRequiredService<DorisDbContext>();
+    // context.ChangeTracker.AutoDetectChangesEnabled = false;
+    // doris.ChangeTracker.AutoDetectChangesEnabled = false;
+
+    // var tickers = doris.Tickers.OrderBy(t => t.Ticker).Take(10).ToList();
+    // foreach(var t in tickers) System.Console.WriteLine(t);
+
+    // var priceData = context.PriceData.OrderBy(x => x.Ticker).ThenBy(x => x.Datetime).AsNoTracking().ToList().Select(x => new { x.Ticker, x.Datetime, x.Open, x.Close, x.High, x.Low, x.Volume, x.Strength, x.RelativeStrength, x.ReferenceTicker, x.Percentile });
+    
+    // await ParquetSerializer.SerializeAsync(priceData, "./price-data-all.parquet", new ParquetSerializerOptions() { PropertyNameCaseInsensitive = false });
+
+
+    // System.Console.WriteLine("INSERT INTO Test (Ticker, Percentile) VALUES (\"hello\", 10);");
+    // doris.Database.ExecuteSql($"INSERT INTO Test (Ticker, Percentile) VALUES (\"hello\", 10);");
+    // minio key: piPouh18JhPIdvFNYTe1
+    // minio secret: r9Bmxp6x1zNdHezF9lL5nuhtdZ7ZIL8j7AC5QeU6
+
+    var data = doris.PriceData.Where(t => t.Datetime == new DateTime(2024, 10, 10)).Select(t => new { t.Ticker, t.Datetime, t.Close, t.RelativeStrength, t.Percentile }).ToList();
+    foreach(var d in data) System.Console.WriteLine($"{d.Ticker}({d.Datetime}): {d.Close} - {d.RelativeStrength} - {d.Percentile}");
 }
 else
 {

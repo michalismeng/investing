@@ -18,11 +18,13 @@ public class WatchlistModel : PageModel
 {
     private readonly ILogger<IndexModel> _logger;
     private readonly ApplicationDbContext _context;
+    private readonly DorisDbContext doris;
 
-    public WatchlistModel(ILogger<IndexModel> logger, ApplicationDbContext context)
+    public WatchlistModel(ILogger<IndexModel> logger, ApplicationDbContext context, DorisDbContext doris)
     {
         _logger = logger;
         _context = context;
+        this.doris = doris;
     }
 
     public List<WatchlistTickerInfoModel> Tickers { get; set; } = [];
@@ -38,11 +40,11 @@ public class WatchlistModel : PageModel
 
         var startDate = Date.AddYears(-5);
         System.Console.WriteLine("Getting price data for 5 years...");
-        var prices = _context.PriceData.Where(p => startDate <= p.Datetime && p.Datetime <= Date && stage2.Select(s => s.Ticker).Contains(p.Ticker))
-                                       .ToList();
+        var stage2Tickers = stage2.Select(s => s.Ticker).ToList();
+        var prices = doris.PriceData.Where(p => startDate <= p.Datetime && p.Datetime <= Date && stage2Tickers.Contains(p.Ticker))
+                                    .ToList();
 
         System.Console.WriteLine("Applying filters to historical data...");
-        var cart = prices.Where(p => p.Ticker == "CART");
         Tickers = [.. prices.GroupBy(g => g.Ticker).Select(g => new
         {
             Ticker = g.Key,

@@ -24,3 +24,23 @@ public class ApplicationDbContext : DbContext
         modelbuilder.Entity<TickerData>().HasIndex(x => x.Datetime);
     }
 }
+
+public class DorisDbContext : DbContext
+{
+    public DorisDbContext(DbContextOptions<DorisDbContext> options)
+            : base(options)
+        {
+        }
+
+    public static readonly string connectionString = "Server=127.0.0.1; User ID=root; Port=9030; Database=InvestingSimulator";
+    public DbSet<TickerInfo> Tickers { get; set; }
+    public DbSet<TickerData> PriceData { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelbuilder)
+    {
+        base.OnModelCreating(modelbuilder);
+        modelbuilder.Entity<TickerInfo>().HasNoKey();
+        modelbuilder.Entity<TickerData>().HasNoKey();
+
+    }
+}
