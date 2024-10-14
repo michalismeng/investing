@@ -21,7 +21,7 @@ public class TickerDataCSV
     {
         Ticker = Ticker ?? "",
         Close = Close,
-        Datetime = Datetime,
+        Date = Datetime,
         Granularity = granularity,
         High = High,
         Low = Low,

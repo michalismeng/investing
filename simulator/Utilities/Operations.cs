@@ -26,7 +26,7 @@ public static partial class Utilities
             {
                 var strength = dataFiltered.GetStrength();
                 var latest = dataFiltered[^1];
-                if(stopDate.HasValue && latest.Datetime >= stopDate)
+                if(stopDate.HasValue && latest.Date >= stopDate)
                     latest.Strength = strength;
             }
             catch(Exception ex)
@@ -50,13 +50,13 @@ public static partial class Utilities
     {
         // We need 1 year of data to calculate strength
         var minimumDataDate = startDate.AddYears(-1).AddMonths(-1);
-        var data = context.PriceData.Where(p => p.Ticker == ticker && minimumDataDate <= p.Datetime && p.Datetime <= endDate)
-                                    .OrderBy(p => p.Datetime)
+        var data = context.PriceData.Where(p => p.Ticker == ticker && minimumDataDate <= p.Date && p.Date <= endDate)
+                                    .OrderBy(p => p.Date)
                                     .ToArray();
 
         CalculateStrength(data, stopDate: startDate);
 
-        foreach(var entity in data.Where(d => d.Datetime >= startDate))
+        foreach(var entity in data.Where(d => d.Date >= startDate))
             context.MarkDirty(entity, e => e.Strength);
         context.SaveChanges();
     }
@@ -74,19 +74,19 @@ public static partial class Utilities
         // We've seen that datetime sometimes is not aligned, so we need to advance i/j until the dates are aligned
         for(int i = 0, j = 0; i < Math.Min(data.Length, reference.Length) && j < Math.Min(data.Length, reference.Length); )
         {
-            if(data[i].Datetime > reference[j].Datetime)
+            if(data[i].Date > reference[j].Date)
             {
                 i++;
                 continue;
             }
-            else if(data[i].Datetime < reference[j].Datetime)
+            else if(data[i].Date < reference[j].Date)
             {
                 j++;
                 continue;
             }
 
             // Both datetimes are equal here, thanks to the above if statements
-            if(stopDate.HasValue && data[i].Datetime >= stopDate)
+            if(stopDate.HasValue && data[i].Date >= stopDate)
             {
                 var relativeStrength = data[i].GetRelativeStrength(reference[j]);
                 data[i].RelativeStrength = relativeStrength;
@@ -101,22 +101,22 @@ public static partial class Utilities
     public static void CalculateRelativeStrength(this ApplicationDbContext context, string ticker, string referenceTicker, DateTime startDate, DateTime endDate)
     {
         var minimumDataDate = startDate.AddYears(-1).AddMonths(-1);
-        var data = context.PriceData.Where(p => p.Ticker == ticker && minimumDataDate <= p.Datetime && p.Datetime <= endDate)
-                                    .OrderByDescending(p => p.Datetime)
+        var data = context.PriceData.Where(p => p.Ticker == ticker && minimumDataDate <= p.Date && p.Date <= endDate)
+                                    .OrderByDescending(p => p.Date)
                                     .ToArray();
-        var reference = context.PriceData.Where(p => p.Ticker == referenceTicker && minimumDataDate <= p.Datetime && p.Datetime <= endDate)
-                                         .OrderByDescending(p => p.Datetime)
+        var reference = context.PriceData.Where(p => p.Ticker == referenceTicker && minimumDataDate <= p.Date && p.Date <= endDate)
+                                         .OrderByDescending(p => p.Date)
                                          .ToArray();
 
         CalculateRelativeStrength(data, reference, stopDate: startDate);
-        foreach(var entity in data.Where(d => d.Datetime >= startDate))
+        foreach(var entity in data.Where(d => d.Date >= startDate))
             context.MarkDirty(entity, e => e.RelativeStrength, e => e.ReferenceTicker);
         context.SaveChanges();
     }
 
     public static void CalculatePercentiles(this ApplicationDbContext context, DateTime date)
     {
-        var data = context.PriceData.Where(d => d.Datetime == date)
+        var data = context.PriceData.Where(d => d.Date == date)
                                     .AsNoTracking()
                                     .ToList();
 

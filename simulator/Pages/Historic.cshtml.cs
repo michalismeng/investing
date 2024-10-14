@@ -39,13 +39,13 @@ public class HistoricModel : PageModel
         if (dateStart != null)
         {
             var startDate = DateTime.Parse(dateStart);
-            Records = Records.Where(p => p.Datetime >= startDate).ToList();
+            Records = Records.Where(p => p.Date >= startDate).ToList();
         }
 
         if (dateEnd != null)
         {
             var endDate = DateTime.Parse(dateEnd);
-            Records = Records.Where(p => p.Datetime <= endDate).ToList();
+            Records = Records.Where(p => p.Date <= endDate).ToList();
         }
 
         MA_10 = Records.GetSma(50).Condense().ToList();

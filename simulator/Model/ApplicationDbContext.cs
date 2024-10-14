@@ -19,8 +19,8 @@ public class ApplicationDbContext : DbContext
 
         modelbuilder.Entity<TickerInfo>().HasKey(x => x.Ticker);
         // modelbuilder.Entity<TickerInfo>().HasMany(x => x.PriceData).WithOne(x => x.TickerInfo).HasForeignKey(x => x.Ticker);
-        modelbuilder.Entity<TickerData>().HasKey(x => new { x.Ticker, x.Datetime });
+        modelbuilder.Entity<TickerData>().HasKey(x => new { x.Ticker, x.Date });
         // modelbuilder.Entity<TickerData>().HasOne(x => x.ReferenceTickerInfo).WithMany().HasForeignKey(x => x.ReferenceTicker);
-        modelbuilder.Entity<TickerData>().HasIndex(x => x.Datetime);
+        modelbuilder.Entity<TickerData>().HasIndex(x => x.Date);
     }
 }

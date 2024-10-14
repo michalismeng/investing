@@ -136,14 +136,14 @@ else if(Environment.GetEnvironmentVariable("PRICE_DATA_FOLDER") != null)
             Low = decimal.Parse(candle["low"]!.ToString(), System.Globalization.NumberStyles.Float),
             High = decimal.Parse(candle["high"]!.ToString(), System.Globalization.NumberStyles.Float),
             Volume = decimal.Parse(candle["volume"]!.ToString(), System.Globalization.NumberStyles.Float),
-            Datetime = DateTimeOffset.FromUnixTimeSeconds(long.Parse(candle["datetime"]!.ToString())).UtcDateTime,
+            Date = DateTimeOffset.FromUnixTimeSeconds(long.Parse(candle["datetime"]!.ToString())).UtcDateTime,
         }).ToList();
         context.AddRange(priceData);
         context.SaveChanges();
 
         System.Console.WriteLine("Added price data for ticker {0} from {1} to {2}", ticker,
-                                                                                    priceData.MinBy(d => d.Datetime)!.Datetime.ToString("MMM dd, yyyy"),
-                                                                                    priceData.MaxBy(d => d.Datetime)!.Datetime.ToString("MMM dd, yyyy"));
+                                                                                    priceData.MinBy(d => d.Date)!.Date.ToString("MMM dd, yyyy"),
+                                                                                    priceData.MaxBy(d => d.Date)!.Date.ToString("MMM dd, yyyy"));
         priceData.Clear();
         obj.Clear();
 
@@ -162,7 +162,7 @@ else if(Environment.GetEnvironmentVariable("MODE") == "strength")
     {
         using var _context = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
         _context.ChangeTracker.AutoDetectChangesEnabled = false;
-        var data = _context.PriceData.Where(d => d.Ticker == ticker).OrderBy(d => d.Datetime).ToArray();
+        var data = _context.PriceData.Where(d => d.Ticker == ticker).OrderBy(d => d.Date).ToArray();
         System.Console.WriteLine("Calculating strength of ticker {0}", ticker);
         Utilities.CalculateStrength(data);
         foreach(var entity in data)
@@ -178,13 +178,13 @@ else if(Environment.GetEnvironmentVariable("MODE") == "relative-strength")
     // Took 25 minutes to run
     using var context = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
     var tickers = context.Tickers.Select(t => t.Ticker).ToList().Order();
-    var reference = context.PriceData.Where(d => d.Ticker == "SPY").ToList().OrderByDescending(d => d.Datetime).ToArray();
+    var reference = context.PriceData.Where(d => d.Ticker == "SPY").ToList().OrderByDescending(d => d.Date).ToArray();
 
     Parallel.ForEach(tickers, new ParallelOptions { MaxDegreeOfParallelism = 8 }, ticker =>
     {
         using var _context = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
         _context.ChangeTracker.AutoDetectChangesEnabled = false;
-        var data = _context.PriceData.Where(d => d.Ticker == ticker).OrderByDescending(d => d.Datetime).ToArray();
+        var data = _context.PriceData.Where(d => d.Ticker == ticker).OrderByDescending(d => d.Date).ToArray();
 
         System.Console.WriteLine("Calculating strength of ticker {0}", ticker);
         Utilities.CalculateRelativeStrength(data, reference);
@@ -205,8 +205,8 @@ else if(Environment.GetEnvironmentVariable("MODE") == "percentile")
     using var context = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
     System.Console.WriteLine("Getting min and max dates in database...");
-    var minDate = context.PriceData.Select(p => p.Datetime).Min();
-    var maxDate = context.PriceData.Select(p => p.Datetime).Max();
+    var minDate = context.PriceData.Select(p => p.Date).Min();
+    var maxDate = context.PriceData.Select(p => p.Date).Max();
 
     var dates = Enumerable.Range(0, 1 + maxDate.Subtract(minDate).Days)
                           .Select(offset => minDate.AddDays(offset))
@@ -251,9 +251,9 @@ else if(Environment.GetEnvironmentVariable("MODE") == "daily")
 
     // Prepare reference ticker
     var latestReferenceDate = context.PriceData.Where(p => p.Ticker == "SPY")
-                                       .OrderByDescending(p => p.Datetime)
+                                       .OrderByDescending(p => p.Date)
                                        .AsNoTracking()
-                                       .FirstOrDefault()?.Datetime ?? DateTime.Today;
+                                       .FirstOrDefault()?.Date ?? DateTime.Today;
 
     var tickerRecordsToAdd = tickerDataNewDict["SPY"].Where(t => t.Datetime > latestReferenceDate && t.Datetime < DateTime.Today).Select(r => r.ToTickerData());
     if (tickerRecordsToAdd.Any())
@@ -261,8 +261,8 @@ else if(Environment.GetEnvironmentVariable("MODE") == "daily")
         context.AddRange(tickerRecordsToAdd);
         context.SaveChanges();
 
-        var minAddedDate = tickerRecordsToAdd.MinBy(d => d.Datetime)!.Datetime;
-        var maxAddedDate = tickerRecordsToAdd.MaxBy(d => d.Datetime)!.Datetime;
+        var minAddedDate = tickerRecordsToAdd.MinBy(d => d.Date)!.Date;
+        var maxAddedDate = tickerRecordsToAdd.MaxBy(d => d.Date)!.Date;
 
         System.Console.WriteLine("Added {3} price data records for ticker {0} from {1} to {2}",
                                                                                     "SPY",
@@ -290,9 +290,9 @@ else if(Environment.GetEnvironmentVariable("MODE") == "daily")
         _context.ChangeTracker.AutoDetectChangesEnabled = false;
 
         var latestDate = _context.PriceData.Where(p => p.Ticker == ticker.Ticker)
-                                           .OrderByDescending(p => p.Datetime)
+                                           .OrderByDescending(p => p.Date)
                                            .AsNoTracking()
-                                           .FirstOrDefault()?.Datetime ?? DateTime.Today;
+                                           .FirstOrDefault()?.Date ?? DateTime.Today;
         if (tickerSplits.Contains(ticker.Ticker))
         {
             // Overwrite all history because there's been a stock split (i.e., change all existing records. Records from the provider are used up until latestDate)
@@ -300,7 +300,7 @@ else if(Environment.GetEnvironmentVariable("MODE") == "daily")
             var existingRecords = _context.PriceData.AsNoTracking().Where(p => p.Ticker == ticker.Ticker).ToList();
             foreach(var r in existingRecords)
             {
-                var splitRecord = tickerSplitData[ticker.Ticker].SingleOrDefault(rr => rr.Datetime == r.Datetime);
+                var splitRecord = tickerSplitData[ticker.Ticker].SingleOrDefault(rr => rr.Datetime == r.Date);
                 if(splitRecord == null)
                     continue;
 
@@ -323,8 +323,8 @@ else if(Environment.GetEnvironmentVariable("MODE") == "daily")
             _context.AddRange(tickerRecordsToAdd);
             _context.SaveChanges();
 
-            var minAddedDate = tickerRecordsToAdd.MinBy(d => d.Datetime)!.Datetime;
-            var maxAddedDate = tickerRecordsToAdd.MaxBy(d => d.Datetime)!.Datetime;
+            var minAddedDate = tickerRecordsToAdd.MinBy(d => d.Date)!.Date;
+            var maxAddedDate = tickerRecordsToAdd.MaxBy(d => d.Date)!.Date;
 
             System.Console.WriteLine("Added {3} price data records for ticker {0} from {1} to {2}",
                                                                                         ticker.Ticker,
@@ -387,7 +387,7 @@ else if(Environment.GetEnvironmentVariable("MODE") == "report-stage2")
     System.Console.WriteLine("Generating stage 2 report for {0}...", date.ToString("yyyy-MM-dd"));
     var startDate = date.AddYears(-1).AddMonths(-1);
     System.Console.WriteLine("Fetching latest data from database...");
-    var prices = context.PriceData.Where(p => startDate <= p.Datetime && p.Datetime <= date)
+    var prices = context.PriceData.Where(p => startDate <= p.Date && p.Date <= date)
                                   .GroupBy(p => p.Ticker)
                                   .ToDictionary(g => g.Key, g => g.Select(p => p));
 
@@ -395,7 +395,7 @@ else if(Environment.GetEnvironmentVariable("MODE") == "report-stage2")
     var cb = new ConcurrentBag<TickerData>();
     _ = Parallel.ForEach(prices, new ParallelOptions { MaxDegreeOfParallelism = 8 }, price =>
     {
-        var sorted = price.Value.OrderBy(p => p.Datetime).ToList();
+        var sorted = price.Value.OrderBy(p => p.Date).ToList();
         var lastRecord = sorted.Last();
         lastRecord.IsStage2 = sorted.IsLastDayStage2();
         cb.Add(lastRecord);

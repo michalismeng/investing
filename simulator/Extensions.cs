@@ -40,9 +40,9 @@ public static class StockPriceExtensions
             return null;
             throw new Exception("GetRelativeStrength: Strength cannot be null");
         }
-        if(ticker.Datetime != reference.Datetime)
+        if(ticker.Date != reference.Date)
             throw new Exception(string.Format("GetRelativeStrength: Ticker and reference must have the same date. The have {0} vs {1}",
-                                                ticker.Datetime.ToShortDateString(), reference.Datetime.ToShortDateString()));
+                                                ticker.Date.ToShortDateString(), reference.Date.ToShortDateString()));
 
         var rs = (1 + ticker.Strength) / (1 + reference.Strength) * 100;
         return Math.Round(rs.Value, 2);
@@ -117,7 +117,7 @@ public static class StockPriceExtensions
 
     public static List<TickerData> ToWeekly(this List<TickerData> dailyPrices) => 
         (from rec in dailyPrices
-         group rec by rec.Datetime.AddDays(-(int)rec.Datetime.DayOfWeek) into g
+         group rec by rec.Date.AddDays(-(int)rec.Date.DayOfWeek) into g
          select new TickerData {
           Ticker = g.First().Ticker,
           Close = g.Last().Close,
@@ -126,10 +126,10 @@ public static class StockPriceExtensions
           RelativeStrength = g.Last().RelativeStrength,
           Low = g.Select(x => x.Low).Min(),
           High = g.Select(x => x.High).Max(),
-          Open = g.MinBy(x => x.Datetime)!.Open,
+          Open = g.MinBy(x => x.Date)!.Open,
           Strength = g.Last().Strength,
           Volume = g.Sum(x => x.Volume),
-          Datetime = g.First().Datetime.AddDays(-(int)g.First().Datetime.DayOfWeek + 1), // Add one to get on Monday
+          Date = g.First().Date.AddDays(-(int)g.First().Date.DayOfWeek + 1), // Add one to get on Monday
           Granularity = TickerDataGranulariry.Weekly,
         }).ToList();
 
@@ -155,7 +155,7 @@ public static class StockPriceExtensions
             week_highs.Add(new TickerData
             {
                 Ticker = prices.First().Ticker,
-                Datetime = prices[i].Date,
+                Date = prices[i].Date,
                 Close = pricesInLast52Weeks.MaxBy(x => x.High)!.High
             });
         }
@@ -185,7 +185,7 @@ public static class StockPriceExtensions
             week_highs.Add(new TickerData
             {
                 Ticker = prices.First().Ticker,
-                Datetime = prices[i].Date,
+                Date = prices[i].Date,
                 Close = pricesInLast52Weeks.MinBy(x => x.Low)!.Low
             });
         }
