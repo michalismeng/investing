@@ -12,6 +12,7 @@ public class ApplicationDbContext : DbContext
     public static readonly string connectionString = "Server=localhost; User ID=root; Password=Mixalis97@@; Database=InvestingSimulator";
     public DbSet<TickerInfo> Tickers { get; set; }
     public DbSet<TickerData> PriceData { get; set; }
+    public DbSet<QuarterlyEarningsEntry> QuarterlyEarnings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelbuilder)
     {
@@ -22,5 +23,6 @@ public class ApplicationDbContext : DbContext
         modelbuilder.Entity<TickerData>().HasKey(x => new { x.Ticker, x.Date });
         // modelbuilder.Entity<TickerData>().HasOne(x => x.ReferenceTickerInfo).WithMany().HasForeignKey(x => x.ReferenceTicker);
         modelbuilder.Entity<TickerData>().HasIndex(x => x.Date);
+        modelbuilder.Entity<QuarterlyEarningsEntry>().HasKey(x => new { x.Ticker, x.FiscalDateEnding });
     }
 }
