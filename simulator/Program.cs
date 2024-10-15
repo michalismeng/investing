@@ -437,6 +437,31 @@ else if(Environment.GetEnvironmentVariable("MODE") == "earnings")
         catch(Refit.ApiException e) { System.Console.WriteLine("Exception occured while getting earnings for {0}, {1}", t.Ticker, e.Message); }
     }
 }
+else if(Environment.GetEnvironmentVariable("MODE") == "annual-earnings")
+{
+    using var context = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    using var scope = app.Services.CreateScope();
+    var alphaVantage = scope.ServiceProvider.GetRequiredService<AlphaVantageClient>();
+    var tickers = context.Tickers.Select(t => new { t.Ticker }).ToList().OrderBy(t => t.Ticker);
+    foreach(var t in tickers)
+    {
+        System.Console.WriteLine("Getting annual earnings for {0}", t.Ticker);
+        try
+        {
+            var earnings = await alphaVantage.GetEarnings(new AlphaVantage.Fundamentals.EarningsRequest { Symbol = t.Ticker });
+            var entries = earnings.AnnualEarnings.Select(x => new AnnualEarningsEntry()
+            {
+                Ticker = t.Ticker,
+                FiscalDateEnding = new DateTime(x.FiscalDateEnding, new TimeOnly()),
+                ReportedEPS = x.ReportedEPS,
+            });
+            System.Console.WriteLine("Writing to database...");
+            context.AnnualEarnings.AddRange(entries);
+            context.SaveChanges();
+        }
+        catch(Refit.ApiException e) { System.Console.WriteLine("Exception occured while getting earnings for {0}, {1}", t.Ticker, e.Message); }
+    }
+}
 else
 {
     app.UseHttpsRedirection();
