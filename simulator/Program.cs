@@ -10,6 +10,7 @@ using simulator.Extensions;
 using simulator.Utilities;
 using simulator.Pages;
 using System.Collections.Concurrent;
+using AlphaVantage;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +20,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Add services to the container.
 builder.Services.AddRazorPages();
+
+var alphaVantageKey = builder.Configuration["AlphaVantage:APIKey"];
+builder.Services.AddAlphaVantageClient("AlphaVantage");
 
 var app = builder.Build();
 
@@ -404,6 +408,34 @@ else if(Environment.GetEnvironmentVariable("MODE") == "report-stage2")
     System.Console.WriteLine("Found {0} companies in stage 2", cb.Where(r => r.IsStage2 == true).Count());
     context.PriceData.UpdateRange(cb);
     context.SaveChanges();
+}
+else if(Environment.GetEnvironmentVariable("MODE") == "earnings")
+{
+    // Started 18:20
+    using var context = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    using var scope = app.Services.CreateScope();
+    var alphaVantage = scope.ServiceProvider.GetRequiredService<AlphaVantageClient>();
+    var tickers = context.Tickers.Select(t => new { t.Ticker }).ToList().OrderBy(t => t.Ticker);
+    foreach(var t in tickers)
+    {
+        System.Console.WriteLine("Getting earnings for {0}", t.Ticker);
+        try
+        {
+            var earnings = await alphaVantage.GetEarnings(new AlphaVantage.Fundamentals.EarningsRequest { Symbol = t.Ticker });
+            var entries = earnings.QuarterlyEarnings.Select(x => new QuarterlyEarningsEntry()
+            {
+                Ticker = t.Ticker,
+                FiscalDateEnding = new DateTime(x.FiscalDateEnding, new TimeOnly()),
+                ReportedDate = new DateTime(x.ReportedDate, new TimeOnly()), 
+                ReportedEPS = x.ReportedEPS,
+                Surpirse = x.Surprise,
+            });
+            System.Console.WriteLine("Writing to database...");
+            context.QuarterlyEarnings.AddRange(entries);
+            context.SaveChanges();
+        }
+        catch(Refit.ApiException e) { System.Console.WriteLine("Exception occured while getting earnings for {0}, {1}", t.Ticker, e.Message); }
+    }
 }
 else
 {

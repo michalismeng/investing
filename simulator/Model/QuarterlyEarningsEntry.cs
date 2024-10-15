@@ -14,5 +14,10 @@ public class QuarterlyEarningsEntry
     public decimal? EstimatedEPS  => ReportedEPS - Surpirse;
     [NotMapped]
     public decimal? SurprisePercentage  => Surpirse / EstimatedEPS;
+
+    public override string ToString()
+    {
+        return $"{Ticker}({FiscalDateEnding:yyyy-MM-dd}): ${ReportedEPS}";
+    }
 }
 
