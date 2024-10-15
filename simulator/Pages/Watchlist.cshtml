@@ -1,10 +1,11 @@
 @page
+@using simulator.Extensions
 @model WatchlistModel
 @{
     ViewData["Title"] = $"Watchlist for {Model.Date:yyyy-MM-dd}";
 }
 
-<div class="container">
+<div class="container-fluid px-4 py-2">
     <h1 class="text-center">@ViewData["Title"]</h1>
 
     <div class="my-2">
@@ -18,6 +19,7 @@
             <th scope="col">Percentile</th>
             <th scope="col">Relative Strength</th>
             <th scope="col">Close</th>
+            <th scope="col">Earnings</th>
             <th scope="col">Actions</th>
           </tr>
         </thead>
@@ -33,6 +35,18 @@
               <td scope="row">@data.Percentile</td>
               <td scope="row">@Math.Round(data.RelativeStrength!.Value, 2)</td>
               <td scope="row">@Math.Round(data.Close, 2)</td>
+              <td scope="row">
+                <div class="d-flex flex-column p-2">
+                  @foreach(var e in tickerModel.Earnings.Take(4))
+                  {
+                    <div class="d-flex flex-row justify-content-between text-center">
+                      <div>@e.entry.FiscalDateEnding.ToString("yyyy-MM-dd"):</div>
+                      <div>$@e.entry.ReportedEPS.Round()</div>
+                      <div>@(e.change > 0 ? e.change.Round().ToString() + "%" : $"({-e.change.Round()}%)")</div>
+                    </div>  
+                  }
+                </div>
+              </td>
               <td scope="row"><a class="btn btn-outline-primary" asp-page="Realtime" asp-route-ticker="@ticker.Ticker" asp-route-cutoff="@Model.Date.ToString("yyyy-MM-dd")">To chart</a></td>
             </tr>
           }

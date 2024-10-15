@@ -12,6 +12,7 @@ public class WatchlistTickerInfoModel
 {
     public TickerInfo Ticker { get; set; }
     public TickerData PriceData { get; set; }
+    public List<(QuarterlyEarningsEntry entry, decimal? change)> Earnings { get; set; }
 }
 
 public class WatchlistModel : PageModel
@@ -40,9 +41,13 @@ public class WatchlistModel : PageModel
         System.Console.WriteLine("Getting price data for 5 years...");
         var prices = _context.PriceData.Where(p => startDate <= p.Date && p.Date <= Date && stage2.Select(s => s.Ticker).Contains(p.Ticker))
                                        .ToList();
-
+        
+        System.Console.WriteLine("Getting quarterly earnings data for the last 4 + 4 quarters...");
+        startDate = Date.AddYears(-4);
+        var earnings = _context.QuarterlyEarnings.Where(p => startDate <= p.FiscalDateEnding && p.FiscalDateEnding <= Date && stage2.Select(s => s.Ticker).Contains(p.Ticker))
+                                                 .ToList();
+        
         System.Console.WriteLine("Applying filters to historical data...");
-        var cart = prices.Where(p => p.Ticker == "CART");
         Tickers = [.. prices.GroupBy(g => g.Ticker).Select(g => new
         {
             Ticker = g.Key,
@@ -50,6 +55,7 @@ public class WatchlistModel : PageModel
             VolumeSMA50 = (decimal)g.Select(x => new TickerData() { Date = x.Date, Ticker = x.Ticker, Close = x.Volume }).OrderBy(x => x.Date).GetSma(50).Last().Sma!,
             MaxDrop = g.OrderBy(x => x.Date).ToList().CalculateGreatestDropPercentage(),
             PriceData = g.Last(),
+            Earnings = earnings.Where(e => e.Ticker == g.Key).OrderByDescending(e => e.FiscalDateEnding).Take(8).ToList().GetYearOverYearChange(),
         }).Where(p => p.SMA40 >= 5M &&                 // Ensure the stock is not 'penny'.
                       p.VolumeSMA50 >= 200000M &&      // Ensure there is enough volume.
                       p.MaxDrop <= 0.5M)
@@ -57,6 +63,7 @@ public class WatchlistModel : PageModel
           {
             Ticker = _context.Tickers.FirstOrDefault(x => x.Ticker == st.Ticker)!,
             PriceData = st.PriceData,
+            Earnings = st.Earnings,
           }).Where(x => x.Ticker != null && x.PriceData != null).OrderByDescending(x => x.PriceData.RelativeStrength)];
         System.Console.WriteLine("Finished");
     }

@@ -281,4 +281,29 @@ public static class StockPriceExtensions
 
         return greatestDropPercentage;
     }
+
+    public static decimal Round(this decimal d) => Math.Round(d, 2);
+    public static decimal? Round(this decimal? d) => d != null ? Math.Round(d.Value, 2) : null;
+
+    /// <summary>
+    /// Get year over year change in the given earnings entries. Assume the entries as sorted in descending datetime order!
+    /// </summary>
+    /// <param name="entries"></param>
+    /// <returns></returns>
+    public static List<(QuarterlyEarningsEntry entry, decimal? change)> GetYearOverYearChange(this List<QuarterlyEarningsEntry> entries)
+    {
+        var result = new List<(QuarterlyEarningsEntry entry, decimal? change)>();
+        for(int i = 0; i < entries.Count - 4; i++)
+        {
+            if(entries[i + 4] == null || entries[i + 4].ReportedEPS == 0)
+                result.Add((entries[i], -1));
+            else
+            {
+                decimal? change = (entries[i].ReportedEPS - entries[i + 4].ReportedEPS) / Math.Abs(entries[i + 4].ReportedEPS!.Value) * 100;
+                result.Add((entries[i], change));
+            }
+        }
+
+        return result;
+    }
 }
