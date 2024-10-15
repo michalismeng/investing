@@ -13,6 +13,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<TickerInfo> Tickers { get; set; }
     public DbSet<TickerData> PriceData { get; set; }
     public DbSet<QuarterlyEarningsEntry> QuarterlyEarnings { get; set; }
+    public DbSet<AnnualEarningsEntry> AnnualEarnings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelbuilder)
     {
@@ -24,5 +25,6 @@ public class ApplicationDbContext : DbContext
         // modelbuilder.Entity<TickerData>().HasOne(x => x.ReferenceTickerInfo).WithMany().HasForeignKey(x => x.ReferenceTicker);
         modelbuilder.Entity<TickerData>().HasIndex(x => x.Date);
         modelbuilder.Entity<QuarterlyEarningsEntry>().HasKey(x => new { x.Ticker, x.FiscalDateEnding });
+        modelbuilder.Entity<AnnualEarningsEntry>().HasKey(x => new { x.Ticker, x.FiscalDateEnding });
     }
 }
