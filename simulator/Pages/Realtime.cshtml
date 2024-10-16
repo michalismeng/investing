@@ -103,19 +103,15 @@
 </div>
 
 
+@section PerScripts
+{
+    <script src="~/js/tradingViewCharts.js" asp-append-version="true"></script>
+}
+
 @section Scripts
 {
     <script>
-        let round = (x) => Math.round(x * 100) / 100
-
-        function parseStopLoss(stopLoss, price, dailyHigh = 0) {
-            if (stopLoss.toString().endsWith("%")) {
-                return round((1 + parseFloat(stopLoss.substring(0, stopLoss.indexOf("%"))) / 100) * price);
-            } else {
-                return round(parseFloat(stopLoss))
-            }
-        }
-
+        @* Initialize Alpine store *@
         document.addEventListener('alpine:init', () => {
             Alpine.store('infoPanel', {
                 date: moment(),
@@ -128,8 +124,8 @@
                     this.price = price
                 },
             })
-            let date = moment(stockPrices.data().at(-1).time)
-            let price = stockPrices.data().at(-1).close
+            let date = moment(slast(stockPrices).time)
+            let price = slast(stockPrices).close
             Alpine.store("infoPanel").update(date, price)
 
             Alpine.store('entryPoints', {
@@ -176,35 +172,16 @@
         @* Variables *@
         let currentDate = moment("@Model.CutoffDate.ToString("yyyy-MM-dd")");
 
-        let scaleToChartInt = function(s) {
-            if(s == "linear") return 0;
-            if(s == "logarithmic") return 1;
-            if(s == "percentage") return 2
-            return 0;
-        }
+        @* Initialize charts *@
+        const [chart, chartSPY, stockPrices, spyPrices] = setUpCharts('chart', 'chart-spy', "@Model.TickerInfo", "@Model.TickerInfoSPY")
 
-        @* Logic *@
-        const chartSPY = window.LightweightCharts.createChart(document.getElementById("chart-spy"), {
-            autoSize: true,
-            rightPriceScale: { mode: scaleToChartInt("logarithmic"), entireTextOnly: true, visible: true, minimumWidth: 80 },
-            leftPriceScale: { visible: true, minimumWidth: 80 },
-            timeScale: { visible: false }
-        });
-        const spyPrices = chartSPY.addCandlestickSeries();
+        @* Initialize data *@
         spyPrices.setData([
             @foreach(var record in Model.SPY)
             {
                 @: { open: @record.Open, high: @record.High, low: @record.Low, close: @record.Close, time: "@record.Date.ToString("yyyy-MM-dd")" },
             }
         ]);
-
-        const chart = window.LightweightCharts.createChart(document.getElementById("chart"), {
-            autoSize: true,
-            rightPriceScale: { mode: scaleToChartInt("logarithmic"), entireTextOnly: true, visible: true, minimumWidth: 80 },
-            leftPriceScale: { visible: true, minimumWidth: 80 },
-        });
-
-        const stockPrices = chart.addBarSeries();
         stockPrices.setData([
         @foreach(var record in Model.Records)
         {
@@ -212,121 +189,15 @@
         }
         ]);
 
-        stockPrices.priceScale().applyOptions({
-            scaleMargins: {
-                top: 0.1, // highest point of the series will be 10% away from the top
-                bottom: 0.35, // lowest point will be 40% away from the bottom
-            },
-        });
 
-        function getCrosshairDataPoint(series, param) {
-            if (!param.time) {
-                return null;
-            }
-            const dataPoint = param.seriesData.get(series);
-            return dataPoint || null;
-        }
+        indicatorData = {}
 
-        function syncCrosshair(chart, series, dataPoint) {
-            if (dataPoint) {
-                chart.setCrosshairPosition(dataPoint.value, dataPoint.time, series);
-                return;
-            }
-            chart.clearCrosshairPosition();
-        }
-
-        chart.subscribeCrosshairMove(param => {
-            const dataPoint = getCrosshairDataPoint(stockPrices, param);
-            syncCrosshair(chartSPY, spyPrices, dataPoint);
-        });
-
-        function createLegend(chartId, text) {
-            const container = document.getElementById(chartId);
-
-            legendHtml = `
-                <div class="card p-2" style="position: absolute; left: 90px; top: 26px; z-index: 1000000; font-size: 18px; font-family: sans-serif; line-height: 18px; font-weight: 300;">
-                    <strong>${text}</strong>
-                </div>
-            `;
-
-            container.insertAdjacentHTML('beforeend', legendHtml);
-        }
-
-        function createTimeScaleMarkers(chartId) {
-            const container = document.getElementById(chartId);
-
-            legendHtml = `
-                <div id="time-scale-markers" style="position: absolute; left: 80px; bottom: 30px; width: calc(100% - 80px); height: 600px;"></div>
-            `;
-
-            container.insertAdjacentHTML('afterbegin', legendHtml);
-        }
-
-        createTimeScaleMarkers("chart")
-
-        function drawMarkers() {
-            const markers = [
-                { time: '2014-07-14', label: 'E' },
-                { time: '2014-10-13', label: 'E' },
-            ];
-
-            const container = document.getElementById('time-scale-markers');
-            container.innerHTML = ''; // Clear previous markers
-
-            markers.forEach(marker => {
-                const coordinate = chart.timeScale().timeToCoordinate(marker.time);
-                if (coordinate) {
-                    html = `
-                        <div class='earnings-box' style="position: absolute; left: ${coordinate - 15}px; bottom: 0; z-index: 10">${marker.label}</div>
-                    `
-
-                    if(coordinate + 90 >= container.getBoundingClientRect().left && coordinate + 95 + 90 <= container.getBoundingClientRect().right) {
-                        container.insertAdjacentHTML('beforeend', html)
-                    }
-                }
-            });
-        }
-
-        drawMarkers();
-
-        createLegend('chart', "@Model.TickerInfo")
-        createLegend('chart-spy', "@Model.TickerInfoSPY")
-
-        chart.timeScale().subscribeVisibleLogicalRangeChange(timeRange => {
-            chartSPY.timeScale().setVisibleLogicalRange(timeRange);
-            drawMarkers();
-        });
-
-        chartSPY.subscribeCrosshairMove(param => {
-            const dataPoint = getCrosshairDataPoint(spyPrices, param);
-            syncCrosshair(chart, stockPrices, dataPoint);
-        });
-
-        chartSPY.timeScale().subscribeVisibleLogicalRangeChange(timeRange => {
-            chart.timeScale().setVisibleLogicalRange(timeRange);
-        });
-
-        const volumeSeries = chart.addHistogramSeries({
-            priceFormat: {
-                type: 'volume',
-            },
-            priceScaleId: 'left', // set as an overlay by setting a blank priceScaleId
-        });
-        volumeSeries.priceScale().applyOptions({
-            // set the positioning of the volume series
-            scaleMargins: {
-                top: 0.7, // highest point of the series will be 70% away from the top
-                bottom: 0,
-            },
-        });
-        volumeSeries.setData([
+        indicatorData.volume = [
         @foreach(var record in Model.Records)
         {
             @: { value: @record.Volume, time: "@record.Date.ToString("yyyy-MM-dd")" },
         }
-        ]);
-
-        indicatorData = {}
+        ];
 
         indicatorData.volume50Day = [
         @foreach(var record in Model.Volume_MA_50_day)
@@ -389,20 +260,12 @@
         toggleStage2()
 
 
-        indicators = {
-            volume50Day: chart.addLineSeries({ color: "purple", lineWidth: 2, priceScaleId: 'left', visible: true }),
-            stock20Day:  chart.addLineSeries({ color: "gold", lineWidth: 3, visible: false }),
-            stock10Week: chart.addLineSeries({ color: "blue", lineWidth: 2, visible: false }),
-            stock30Week: chart.addLineSeries({ color: "green", lineWidth: 2, visible: false }),
-            stock40Week: chart.addLineSeries({ color: "red", lineWidth: 2, visible: false }),
-            stock52High: chart.addLineSeries({ color: "lightgreen", lineWidth: 3, visible: false }),
-            stock52Low:  chart.addLineSeries({ color: "#FFCCCB", lineWidth: 3, visible: false }),
-            stockStrength: chart.addLineSeries({ color: "#FFCCCB", lineWidth: 3, priceScaleId: '', visible: false }),
-        }
+        indicators = setUpIndicators(chart)
 
         for(const indicator in indicators) {
             indicators[indicator].setData(indicatorData[indicator])
         }
+
 
         function advanceData(retries=4) {
             if (retries == 0) return;
@@ -431,7 +294,15 @@
                     time: moment(price.date).format("YYYY-MM-DD"),
                 })
 
-                volumeSeries.update({
+                spyPrices.update({
+                    open: spy.open,
+                    high: spy.high,
+                    low: spy.low,
+                    close: spy.close,
+                    time: moment(spy.date).format("YYYY-MM-DD"),
+                })
+
+                indicators.volume.update({
                     value: price.volume,
                     time: moment(price.date).format("YYYY-MM-DD"),
                 })
@@ -478,14 +349,6 @@
                     })
                 }
 
-                spyPrices.update({
-                    open: spy.open,
-                    high: spy.high,
-                    low: spy.low,
-                    close: spy.close,
-                    time: moment(spy.date).format("YYYY-MM-DD"),
-                })
-
                 if(isStage2) {
                     let date = moment(price.date)
                     let object = { ...markers.at(-1), time: { year: date.year(), month: date.month() + 1, day: date.date() } }
@@ -493,10 +356,10 @@
                     stockPrices.setMarkers(markers)
                 }
 
-                let latestDate = moment(stockPrices.data().at(-1).time)
-                let latestPrice = stockPrices.data().at(-1).close
+                let latestDate = moment(slast(stockPrices).time)
+                let latestPrice = slast(stockPrices).close
                 Alpine.store("infoPanel").update(latestDate, latestPrice)
-                Alpine.store("entryPoints").update(currentDate, stockPrices.data().at(-1).close, stockPrices.data().at(-1).low, stockPrices.data().at(-1).high, stockPrices.data().at(-1).open)
+                Alpine.store("entryPoints").update(currentDate, slast(stockPrices).close, slast(stockPrices).low, slast(stockPrices).high, slast(stockPrices).open)
             })
         }
 
@@ -525,29 +388,6 @@
                 }
             })
         }
-
-        function scrollToTime(time, timeScale){
-            const currentPosition = timeScale.scrollPosition();
-            const currentVisibleLogicalRange = timeScale.getVisibleLogicalRange();
-
-            const coordinate = timeScale.timeToCoordinate(time);
-            const logicalIndex = timeScale.coordinateToLogical(coordinate);
-
-            const targetPosition = currentPosition - currentVisibleLogicalRange.to + logicalIndex;
-            timeScale.scrollToPosition(targetPosition, false);
-        }
-
-
-        @* function myClickHandler(param) {
-            if (!param.point) {
-                return;
-            }
-
-            const data = param.seriesData.get(stockPrices);
-            const price = data.value !== undefined ? data.value : data.close;
-        }
-
-        chart.subscribeClick(myClickHandler); *@
 
         function buyLatestDay() {
             let latestDate = Alpine.store("infoPanel").date

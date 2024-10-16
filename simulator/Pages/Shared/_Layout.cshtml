@@ -48,6 +48,7 @@
     <script src="https://cdn.datatables.net/plug-ins/2.1.7/sorting/datetime-moment.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 
+    @await RenderSectionAsync("PerScripts", required: false)
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
