@@ -8,7 +8,11 @@ html {
   }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+.btn:focus,
+.btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus,
+.form-check-input:focus {
   box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
@@ -24,4 +28,22 @@ body {
 
 .clickable:hover {
   cursor: pointer;
+}
+
+.earnings-box {
+  width: 25px; /* Set the width of the box */
+  height: 25px; /* Set the height to make it square */
+  display: flex; /* Use flexbox to center content */
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
+  border: 3px solid green; /* Add a black border */
+  font-size: 16px; /* Size of the letter */
+  font-weight: bold; /* Make the letter bold */
+  background-color: white;
+  color: green;
+}
+
+.earnings-box:hover {
+  cursor: pointer;
+  background-color: #e4f0e4;
 }

@@ -252,11 +252,49 @@
             container.insertAdjacentHTML('beforeend', legendHtml);
         }
 
+        function createTimeScaleMarkers(chartId) {
+            const container = document.getElementById(chartId);
+
+            legendHtml = `
+                <div id="time-scale-markers" style="position: absolute; left: 80px; bottom: 30px; width: calc(100% - 80px); height: 600px;"></div>
+            `;
+
+            container.insertAdjacentHTML('afterbegin', legendHtml);
+        }
+
+        createTimeScaleMarkers("chart")
+
+        function drawMarkers() {
+            const markers = [
+                { time: '2014-07-14', label: 'E' },
+                { time: '2014-10-13', label: 'E' },
+            ];
+
+            const container = document.getElementById('time-scale-markers');
+            container.innerHTML = ''; // Clear previous markers
+
+            markers.forEach(marker => {
+                const coordinate = chart.timeScale().timeToCoordinate(marker.time);
+                if (coordinate) {
+                    html = `
+                        <div class='earnings-box' style="position: absolute; left: ${coordinate - 15}px; bottom: 0; z-index: 10">${marker.label}</div>
+                    `
+
+                    if(coordinate + 90 >= container.getBoundingClientRect().left && coordinate + 95 + 90 <= container.getBoundingClientRect().right) {
+                        container.insertAdjacentHTML('beforeend', html)
+                    }
+                }
+            });
+        }
+
+        drawMarkers();
+
         createLegend('chart', "@Model.TickerInfo")
         createLegend('chart-spy', "@Model.TickerInfoSPY")
 
         chart.timeScale().subscribeVisibleLogicalRangeChange(timeRange => {
             chartSPY.timeScale().setVisibleLogicalRange(timeRange);
+            drawMarkers();
         });
 
         chartSPY.subscribeCrosshairMove(param => {
