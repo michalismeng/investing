@@ -20,6 +20,7 @@
             <th scope="col">Relative Strength</th>
             <th scope="col">Close</th>
             <th scope="col">Earnings</th>
+            <th scope="col">Annual</th>
             <th scope="col">Actions</th>
           </tr>
         </thead>
@@ -37,13 +38,29 @@
               <td scope="row">@Math.Round(data.Close, 2)</td>
               <td scope="row">
                 <div class="d-flex flex-column p-2">
-                  @foreach(var e in tickerModel.Earnings.Take(4))
+                  @foreach(var e in tickerModel.Earnings)
                   {
                     <div class="d-flex flex-row justify-content-between text-center">
                       <div>@e.entry.FiscalDateEnding.ToString("yyyy-MM-dd"):</div>
                       <div>$@e.entry.ReportedEPS.Round()</div>
-                      <div>@(e.change > 0 ? e.change.Round().ToString() + "%" : $"({-e.change.Round()}%)")</div>
-                    </div>  
+                      <div>@(e.change > 0 ? e.change.Value.ToString("P2") : $"({(-e.change.Value).ToString("P2")})")</div>
+                    </div>
+                  }
+                </div>
+              </td>
+              <td scope="row">
+                <div class="d-flex flex-column p-2">
+                  @foreach(var e in tickerModel.AnnualEarnings)
+                  {
+                    <div class="d-flex flex-row justify-content-between text-center">
+                      <div>@e.entry.FiscalDateEnding.ToString("yyyy-MM-dd"):</div>
+                      <div>$@e.entry.ReportedEPS.Round()</div>
+                      @if(e.change.HasValue) {
+                        <div>@(e.change > 0 ? e.change.Value.ToString("P2") : $"({(-e.change.Value).ToString("P2")})")</div>
+                      } else {
+                        <div style="width: 3rem"></div>
+                      }
+                    </div>
                   }
                 </div>
               </td>

@@ -290,19 +290,62 @@ public static class StockPriceExtensions
     /// </summary>
     /// <param name="entries"></param>
     /// <returns></returns>
-    public static List<(QuarterlyEarningsEntry entry, decimal? change)> GetYearOverYearChange(this List<QuarterlyEarningsEntry> entries)
+    public static List<(QuarterlyEarningsEntry entry, decimal? change)> GetYearOverYearChange(this List<QuarterlyEarningsEntry> entries, bool smooth = true)
     {
         var result = new List<(QuarterlyEarningsEntry entry, decimal? change)>();
-        for(int i = 0; i < entries.Count - 4; i++)
+        if(entries.Count < 5)
+            result = entries.Select(e => (entry: e, change: (decimal?)null)).ToList();
+        else
         {
-            if(entries[i + 4] == null || entries[i + 4].ReportedEPS == 0)
-                result.Add((entries[i], -1));
-            else
+            for(int i = 0; i < entries.Count - 4; i++)
             {
-                decimal? change = (entries[i].ReportedEPS - entries[i + 4].ReportedEPS) / Math.Abs(entries[i + 4].ReportedEPS!.Value) * 100;
-                result.Add((entries[i], change));
+                if(entries[i + 4] == null || entries[i + 4].ReportedEPS == 0)
+                    result.Add((entries[i], -1));
+                else
+                {
+                    decimal? change = (entries[i].ReportedEPS - entries[i + 4].ReportedEPS) / Math.Abs(entries[i + 4].ReportedEPS!.Value);
+                    result.Add((entries[i], change));
+                }
             }
         }
+
+        // Smooth is only applied to percentage change
+        if (smooth && result.Count > 1)
+            result = [..result.Zip(result.Skip(1)).Select(x => (x.First.entry, change: (x.First.change + x.Second.change) / 2))];
+
+        return result;
+    }
+
+    /// <summary>
+    /// Get year over year change in the given annual earnings entries. Assume the entries as sorted in descending datetime order!
+    /// </summary>
+    /// <param name="entries"></param>
+    /// <returns></returns>
+    public static List<(AnnualEarningsEntry entry, decimal? change)> GetYearOverYearChange(this List<AnnualEarningsEntry> entries, bool smooth = true)
+    {
+        var result = new List<(AnnualEarningsEntry entry, decimal? change)>();
+        if(entries.Count < 2)
+            result = entries.Select(e => (entry: e, change: (decimal?)null)).ToList();
+        else
+        {
+            for(int i = 0; i < entries.Count - 1; i++)
+            {
+                if(entries[i + 1] == null || entries[i + 1].ReportedEPS == 0)
+                    result.Add((entries[i], -1));
+                else
+                {
+                    decimal? change = (entries[i].ReportedEPS - entries[i + 1].ReportedEPS) / Math.Abs(entries[i + 1].ReportedEPS!.Value);
+                    result.Add((entries[i], change));
+                }
+            }
+        }
+
+        if(entries.Count > 0)
+            result = [.. result, (entries.Last(), null)];
+
+        // Smooth is only applied to percentage change
+        if (smooth && result.Count > 1)
+            result = [..result.Zip(result.Skip(1)).Select(x => (x.First.entry, change: (x.First.change + x.Second.change) / 2))];
 
         return result;
     }
