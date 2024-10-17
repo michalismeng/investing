@@ -1,3 +1,5 @@
+const TIME_SCALE_MARKERS_ELEMENT_ID = "time-scale-markers"
+
 
 let scaleToChartInt = function(s) {
     if(s == "linear") return 0;
@@ -74,36 +76,11 @@ function createTimeScaleMarkers(chartId) {
     const container = document.getElementById(chartId);
 
     html = `
-        <div id="time-scale-markers" style="position: absolute; left: 80px; bottom: 30px; width: calc(100% - 80px); height: 600px;"></div>
+        <div id='${TIME_SCALE_MARKERS_ELEMENT_ID}' style="position: absolute; left: 80px; bottom: 30px; width: calc(100% - 80px); height: 600px;"></div>
     `;
 
     container.insertAdjacentHTML('afterbegin', html);
 }
-
-
-function drawTimeScaleMarkers(containerId, chart) {
-    const markers = [
-        { time: '2014-07-14', label: 'E' },
-        { time: '2014-10-13', label: 'E' },
-    ];
-
-    const container = document.getElementById(containerId);
-    container.innerHTML = ''; // Clear previous markers
-
-    markers.forEach(marker => {
-        const coordinate = chart.timeScale().timeToCoordinate(marker.time);
-        if (coordinate) {
-            html = `
-                <div class='earnings-box' style="position: absolute; left: ${coordinate - 15}px; bottom: 0; z-index: 10">${marker.label}</div>
-            `
-
-            if(coordinate + 90 >= container.getBoundingClientRect().left && coordinate + 95 + 90 <= container.getBoundingClientRect().right) {
-                container.insertAdjacentHTML('beforeend', html)
-            }
-        }
-    });
-}
-
 
 function scrollToTime(time, timeScale){
     const currentPosition = timeScale.scrollPosition();
@@ -116,15 +93,7 @@ function scrollToTime(time, timeScale){
     timeScale.scrollToPosition(targetPosition, false);
 }
 
-function createCharts(tickerChart, referenceChart) {
-    const chart = createTickerChart(tickerChart)
-    const chartSPY = createReferenceChart(referenceChart)
-
-    return [chart, chartSPY]
-}
-
-
-function setUpCharts(tickerChart, referenceChart, tickerLegend, referenceLegend) {
+function setUpCharts(tickerChart, referenceChart, tickerLegend, referenceLegend, drawTimeScaleMarkerFunc) {
     const chart = createTickerChart(tickerChart)
     const chartSPY = createReferenceChart(referenceChart)
 
@@ -145,7 +114,7 @@ function setUpCharts(tickerChart, referenceChart, tickerLegend, referenceLegend)
 
     // Set up functionality for time scale markers (not provided by default from the library) 
     createTimeScaleMarkers(tickerChart)
-    drawTimeScaleMarkers('time-scale-markers', chart)
+    drawTimeScaleMarkerFunc(chart)
 
     // Set up time syncing between the two charts 
     chart.subscribeCrosshairMove(param => {
@@ -165,7 +134,7 @@ function setUpCharts(tickerChart, referenceChart, tickerLegend, referenceLegend)
     chart.timeScale().subscribeVisibleLogicalRangeChange(timeRange => {
         chartSPY.timeScale().setVisibleLogicalRange(timeRange);
         // When the time scale of the ticker chart changes, make sure to redraw the time scale markers
-        drawTimeScaleMarkers('time-scale-markers', chart);
+        drawTimeScaleMarkerFunc(chart)
     });
 
     return [chart, chartSPY, tickerPrices, spyPrices];

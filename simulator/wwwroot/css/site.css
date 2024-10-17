@@ -36,14 +36,45 @@ body {
   display: flex; /* Use flexbox to center content */
   justify-content: center; /* Center horizontally */
   align-items: center; /* Center vertically */
-  border: 3px solid green; /* Add a black border */
+  border-width: 3px;
+  border-style: solid;
   font-size: 16px; /* Size of the letter */
   font-weight: bold; /* Make the letter bold */
   background-color: white;
-  color: green;
+  position: absolute;
+  bottom: 0;
 }
 
 .earnings-box:hover {
   cursor: pointer;
   background-color: #e4f0e4;
+}
+
+.earnings-dropdown {
+  border: 0;
+  border-left-width: 3px;
+  border-left-style: solid;
+  box-shadow: 2px 2px 2px lightgray;
+  cursor: default;
+}
+
+.earnings-up {
+  color: var(--bs-success);
+  border-color: var(--bs-success);
+}
+
+.earnings-down {
+  color: var(--bs-danger);
+  border-color: var(--bs-danger);
+}
+
+.earnings-estimate {
+
+}
+
+.noselect {
+  -webkit-user-select: none; /* Safari */        
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+/Edge */
+  user-select: none; /* Standard */
 }

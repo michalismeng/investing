@@ -1,4 +1,5 @@
 ﻿@page
+@using System.Text.Json
 @model RealtimeModel
 @{
     ViewData["Title"] = "Home page";
@@ -102,6 +103,45 @@
     </div>
 </div>
 
+<div x-data='{label: "", fiscalDate: "0001-01-01", time: "0001-01-01", eps: 0, estimate: 0, surprise: 0}' class="d-none dropdown earnings-box" id="time-marker-template">
+    <span href="#" role="button" class='nostyle earnings-box' :class="{ 'earnings-up': surprise >= 0, 'earnings-down': surprise < 0 }"
+                data-bs-offset="-100,20" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" id="+template+" style="position: absolute; left: +template+; bottom: 0; z-index: 10">
+      <span x-text="label"></span>
+    </span>
+    <div style="width: 250px" class="dropdown-menu earnings-dropdown noselect rounded" :class="{ 'border-success': surprise >= 0, 'border-danger': surprise < 0 }" aria-labelledby="+template+">
+        <div class='p-2' style='height: 300px'>
+            <div class="h5 fw-bold">Earnings & Revenue</div>
+            <table class="w-100 table table-sm table-borderless fw-normal small lh-1">
+                <tbody>
+                    <tr>
+                        <td>Date</td>
+                        <td><span x-text="moment(time).format('ddd D MMM \'YY')"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Period Ending</td>
+                        <td><span x-text="moment(fiscalDate).format('ddd D MMM \'YY')"></span></td>
+                    </tr>
+                    <tr><td></td></tr>
+                    <tr><td></td></tr>
+                    <tr><td class="text-muted small">EARNINGS</td></tr>
+                    <tr>
+                        <td>Reported</td>
+                        <td><span x-text="eps"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Estimate</td>
+                        <td><span x-text="estimate"></span></td>
+                    </tr>
+                    <tr class="fw-bold" :class="{ 'text-success': surprise >= 0, 'text-danger': surprise < 0 }" >
+                        <td>Surprise</td>
+                        <td><span x-text="round(surprise * 100) + '%'"></span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 
 @section PerScripts
 {
@@ -169,11 +209,42 @@
             })
         })
 
+        const earnings = [
+        @foreach(var e in Model.Earnings)
+        {
+            @: { time: '@e.ReportedDate.ToString("yyyy-MM-dd")', label: 'E', fiscalDate: '@e.FiscalDateEnding.ToString("yyyy-MM-dd")', eps: @e.ReportedEPS, estimate: @e.EstimatedEPS, surprise: @e.SurprisePercentage },
+        }
+        ];
+
         @* Variables *@
         let currentDate = moment("@Model.CutoffDate.ToString("yyyy-MM-dd")");
 
+        function drawTimeScaleMarkers(chart) {
+            const container = document.getElementById(TIME_SCALE_MARKERS_ELEMENT_ID);
+            container.innerHTML = ''; // Clear previous markers
+
+            i = 0;
+            earnings.forEach(marker => {
+                const coordinate = chart.timeScale().timeToCoordinate(marker.time);
+                if (coordinate) {
+                    if(coordinate + 90 >= container.getBoundingClientRect().left && coordinate + 95 + 90 <= container.getBoundingClientRect().right) {
+                        let element = $("#time-marker-template").clone().removeAttr('id').removeClass("d-none").attr('x-data', JSON.stringify(marker))
+                        element.find("span").attr('id', `dropdownMenuButton-${i}`).css('left', `${coordinate - 15}px`)
+                        element.find("div").attr('aria-labelledby', `dropdownMenuButton-${i}`)
+                        container.appendChild(element.get(0))
+                    }
+                }
+                i++;
+            });
+        }
+
         @* Initialize charts *@
-        const [chart, chartSPY, stockPrices, spyPrices] = setUpCharts('chart', 'chart-spy', "@Model.TickerInfo", "@Model.TickerInfoSPY")
+        const [chart, chartSPY, stockPrices, spyPrices] = setUpCharts('chart', 'chart-spy', "@Model.TickerInfo", "@Model.TickerInfoSPY", drawTimeScaleMarkers)
+
+        @* setTimeout(() => { earnings.push(
+            { time: '@Model.Earnings.Last().ReportedDate.ToString("yyyy-MM-dd")', label: 'E' },
+        ); drawTimeScaleMarkers(chart) }, 5000) *@
+
 
         @* Initialize data *@
         spyPrices.setData([

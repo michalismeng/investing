@@ -28,6 +28,7 @@ public class RealtimeModel : PageModel
     public List<SmaResult> Volume_MA_50_day { get; set; } = [];
     public List<TickerData> Week_High_52 { get; set; } = [];
     public List<TickerData> Week_Low_52 { get; set; } = [];
+    public List<QuarterlyEarningsEntry> Earnings { get; set; } = [];
     public List<DateTime> Stage2_Marks { get; set; } = [];
     public DateTime CutoffDate { get; set; } = DateTime.Now;
     public DateTime StartDate { get; set; } = DateTime.Now;
@@ -39,7 +40,7 @@ public class RealtimeModel : PageModel
 
         TickerInfo = _context.Tickers.Single(d => d.Ticker == ticker);
         TickerInfoSPY = _context.Tickers.Single(d => d.Ticker == "SPY");
-        Records = _context.PriceData.Where(p => p.Ticker == TickerInfo.Ticker && StartDate <= p.Date && p.Date <= CutoffDate).ToList();
+        Records = _context.PriceData.Where(p => p.Ticker == TickerInfo.Ticker && StartDate <= p.Date && p.Date <= CutoffDate).ToList().OrderBy(p => p.Date).ToList();
         var minimumRecordsDate = Records.Select(p => p.Date).Min();
         SPY = _context.PriceData.Where(p => p.Ticker == "SPY" && minimumRecordsDate <= p.Date && p.Date <= CutoffDate).ToList();
 
@@ -55,6 +56,8 @@ public class RealtimeModel : PageModel
                                   .GetSma(50)
                                   .Condense()
                                   .ToList();
+
+        Earnings = _context.QuarterlyEarnings.Where(p => p.Ticker == ticker && StartDate <= p.ReportedDate && p.ReportedDate <= CutoffDate).ToList();
     }
 
     public IActionResult OnGetPrice(string ticker, DateTime date)
@@ -75,6 +78,7 @@ public class RealtimeModel : PageModel
             Ma40 = price.Count >= 200 ? price.GetSma(200).Condense().ToList().Last() : new SmaResult(price.Last().Date),
             Week52High = price.Count >= 252 ? price.Calculate52WeekHigh().Last() : new TickerData() { Date = price.Last().Date, Ticker = price.Last().Ticker },
             Week52Low = price.Count >= 252 ? price.Calculate52WeekLow().Last() : new TickerData() { Date = price.Last().Date, Ticker = price.Last().Ticker },
+            // TODO: Run stage2 calculation everywhere
             IsStage2 = price.IsLastDayStage2(),
             Spy = spy,
         });
