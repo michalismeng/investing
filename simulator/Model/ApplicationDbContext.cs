@@ -14,7 +14,13 @@ public class ApplicationDbContext : DbContext
     public DbSet<TickerData> PriceData { get; set; }
     public DbSet<QuarterlyEarningsEntry> QuarterlyEarnings { get; set; }
     public DbSet<AnnualEarningsEntry> AnnualEarnings { get; set; }
+    public DbSet<QuarterlyIncomeStatement> QuarterlyIncomeStatements { get; set; }
+    public DbSet<AnnualIncomeStatement> AnnualIncomeStatements { get; set; }
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.EnableSensitiveDataLogging();
+    }
     protected override void OnModelCreating(ModelBuilder modelbuilder)
     {
         base.OnModelCreating(modelbuilder);
@@ -26,5 +32,8 @@ public class ApplicationDbContext : DbContext
         modelbuilder.Entity<TickerData>().HasIndex(x => x.Date);
         modelbuilder.Entity<QuarterlyEarningsEntry>().HasKey(x => new { x.Ticker, x.FiscalDateEnding });
         modelbuilder.Entity<AnnualEarningsEntry>().HasKey(x => new { x.Ticker, x.FiscalDateEnding });
+
+        modelbuilder.Entity<QuarterlyIncomeStatement>().HasKey(x => new { x.Ticker, x.FiscalDateEnding });
+        modelbuilder.Entity<AnnualIncomeStatement>().HasKey(x => new { x.Ticker, x.FiscalDateEnding });
     }
 }
