@@ -65,6 +65,7 @@ public class RealtimeModel : PageModel
         var startDate = date.AddYears(-1).AddMonths(-1);
         var price = _context.PriceData.Where(p => startDate <= p.Date && p.Date <= date && p.Ticker == ticker).OrderBy(p => p.Date).ToList();
         var spy = _context.PriceData.SingleOrDefault(p => p.Date == date && p.Ticker == "SPY");
+        var earnings = _context.QuarterlyEarnings.SingleOrDefault(p => p.Ticker == ticker && p.ReportedDate == date);
 
         if (price.Any(p => p.Date == date) == false)
             return new OkObjectResult(null);
@@ -81,6 +82,7 @@ public class RealtimeModel : PageModel
             // TODO: Run stage2 calculation everywhere
             IsStage2 = price.IsLastDayStage2(),
             Spy = spy,
+            Earnings = earnings,
         });
     }
 }

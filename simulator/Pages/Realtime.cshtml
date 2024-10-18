@@ -209,7 +209,7 @@
             })
         })
 
-        const earnings = [
+        const earningsData = [
         @foreach(var e in Model.Earnings)
         {
             @: { time: '@e.ReportedDate.ToString("yyyy-MM-dd")', label: 'E', fiscalDate: '@e.FiscalDateEnding.ToString("yyyy-MM-dd")', eps: @e.ReportedEPS, estimate: @e.EstimatedEPS, surprise: @e.SurprisePercentage },
@@ -224,7 +224,7 @@
             container.innerHTML = ''; // Clear previous markers
 
             i = 0;
-            earnings.forEach(marker => {
+            earningsData.forEach(marker => {
                 const coordinate = chart.timeScale().timeToCoordinate(marker.time);
                 if (coordinate) {
                     if(coordinate + 90 >= container.getBoundingClientRect().left && coordinate + 95 + 90 <= container.getBoundingClientRect().right) {
@@ -240,11 +240,6 @@
 
         @* Initialize charts *@
         const [chart, chartSPY, stockPrices, spyPrices] = setUpCharts('chart', 'chart-spy', "@Model.TickerInfo", "@Model.TickerInfoSPY", drawTimeScaleMarkers)
-
-        @* setTimeout(() => { earnings.push(
-            { time: '@Model.Earnings.Last().ReportedDate.ToString("yyyy-MM-dd")', label: 'E' },
-        ); drawTimeScaleMarkers(chart) }, 5000) *@
-
 
         @* Initialize data *@
         spyPrices.setData([
@@ -355,7 +350,7 @@
                     return;
                 }
 
-                let { price, ma20day, volumeMA50day, ma10, ma30, ma40, week52High, week52Low, isStage2, spy } = data
+                let { price, ma20day, volumeMA50day, ma10, ma30, ma40, week52High, week52Low, isStage2, spy, earnings } = data
 
                 stockPrices.update({
                     open: price.open,
@@ -425,6 +420,18 @@
                     let object = { ...markers.at(-1), time: { year: date.year(), month: date.month() + 1, day: date.date() } }
                     markers.push(object)
                     stockPrices.setMarkers(markers)
+                }
+
+                if(earnings != null) {
+                    earningsData.push({
+                        time: moment(earnings.reportedDate).format("YYYY-MM-DD"),
+                        fiscalDate: moment(earnings.fiscalDateEnding).format("YYYY-MM-DD"),
+                        label: 'E',
+                        eps: earnings.reportedEPS,
+                        estimate: earnings.estimatedEPS,
+                        surprise: earnings.surprisePercentage
+                    });
+                    drawTimeScaleMarkers(chart)
                 }
 
                 let latestDate = moment(slast(stockPrices).time)
