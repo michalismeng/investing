@@ -62,7 +62,7 @@ public class WatchlistModel : PageModel
             MaxDrop = g.OrderBy(x => x.Date).ToList().CalculateGreatestDropPercentage(),
             PriceData = g.Last(),
             Earnings = earnings.Where(e => e.Ticker == g.Key).OrderByDescending(e => e.FiscalDateEnding).Take(9).ToList().GetYearOverYearChange(),
-            AnnualEarnings = annualEarnings.Where(e => e.Ticker == g.Key).OrderByDescending(e => e.FiscalDateEnding).Take(5).ToList().GetYearOverYearChange(smooth: false),
+            AnnualEarnings = annualEarnings.Where(e => e.Ticker == g.Key).OrderByDescending(e => e.FiscalDateEnding).Take(5).ToList().GetYearOverYearChange(),
         }).Where(p => p.SMA40 >= 5M &&                 // Ensure the stock is not 'penny'.
                       p.VolumeSMA50 >= 200000M &&      // Ensure there is enough volume.
                       p.Earnings.Count > 0 && p.Earnings.All(e => e.change >= 0.2M) &&

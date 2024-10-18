@@ -286,67 +286,47 @@ public static class StockPriceExtensions
     public static decimal? Round(this decimal? d) => d != null ? Math.Round(d.Value, 2) : null;
 
     /// <summary>
+    /// Get year over year change in the given entries. Assume the entries as sorted in descending datetime order!
+    /// </summary>
+    public static List<(T entry, decimal? change)> GetYearOverYearChange<T>(List<T> entries, Func<T, decimal?> valueFunc, int period)
+    {
+        var result = new List<(T entry, decimal? change)>();
+        if(entries.Count <= period)
+            result = entries.Select(e => (entry: e, change: (decimal?)null)).ToList();
+        else
+        {
+            for(int i = 0; i < entries.Count - period; i++)
+            {
+                if(entries[i + period] == null || valueFunc(entries[i + period]) == 0)
+                    result.Add((entries[i], -1));
+                else
+                {
+                    decimal? change = (valueFunc(entries[i]) - valueFunc(entries[i + period])) / Math.Abs(valueFunc(entries[i + period])!.Value);
+                    result.Add((entries[i], change));
+                }
+            }
+
+            if(entries.Count < 2 * period)
+            {
+                for(int i = entries.Count - period + 1; i <= period; i++)
+                    result.Add((entries[i], null));
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Get year over year change in the given earnings entries. Assume the entries as sorted in descending datetime order!
     /// </summary>
     /// <param name="entries"></param>
     /// <returns></returns>
-    public static List<(QuarterlyEarningsEntry entry, decimal? change)> GetYearOverYearChange(this List<QuarterlyEarningsEntry> entries, bool smooth = true)
-    {
-        var result = new List<(QuarterlyEarningsEntry entry, decimal? change)>();
-        if(entries.Count < 5)
-            result = entries.Select(e => (entry: e, change: (decimal?)null)).ToList();
-        else
-        {
-            for(int i = 0; i < entries.Count - 4; i++)
-            {
-                if(entries[i + 4] == null || entries[i + 4].ReportedEPS == 0)
-                    result.Add((entries[i], -1));
-                else
-                {
-                    decimal? change = (entries[i].ReportedEPS - entries[i + 4].ReportedEPS) / Math.Abs(entries[i + 4].ReportedEPS!.Value);
-                    result.Add((entries[i], change));
-                }
-            }
-        }
-
-        // Smooth is only applied to percentage change
-        if (smooth && result.Count > 1)
-            result = [..result.Zip(result.Skip(1)).Select(x => (x.First.entry, change: (x.First.change + x.Second.change) / 2))];
-
-        return result;
-    }
+    public static List<(QuarterlyEarningsEntry entry, decimal? change)> GetYearOverYearChange(this List<QuarterlyEarningsEntry> entries) => GetYearOverYearChange(entries, e => e.ReportedEPS, 4);
 
     /// <summary>
     /// Get year over year change in the given annual earnings entries. Assume the entries as sorted in descending datetime order!
     /// </summary>
     /// <param name="entries"></param>
     /// <returns></returns>
-    public static List<(AnnualEarningsEntry entry, decimal? change)> GetYearOverYearChange(this List<AnnualEarningsEntry> entries, bool smooth = true)
-    {
-        var result = new List<(AnnualEarningsEntry entry, decimal? change)>();
-        if(entries.Count < 2)
-            result = entries.Select(e => (entry: e, change: (decimal?)null)).ToList();
-        else
-        {
-            for(int i = 0; i < entries.Count - 1; i++)
-            {
-                if(entries[i + 1] == null || entries[i + 1].ReportedEPS == 0)
-                    result.Add((entries[i], -1));
-                else
-                {
-                    decimal? change = (entries[i].ReportedEPS - entries[i + 1].ReportedEPS) / Math.Abs(entries[i + 1].ReportedEPS!.Value);
-                    result.Add((entries[i], change));
-                }
-            }
-        }
-
-        if(entries.Count > 0)
-            result = [.. result, (entries.Last(), null)];
-
-        // Smooth is only applied to percentage change
-        if (smooth && result.Count > 1)
-            result = [..result.Zip(result.Skip(1)).Select(x => (x.First.entry, change: (x.First.change + x.Second.change) / 2))];
-
-        return result;
-    }
+    public static List<(AnnualEarningsEntry entry, decimal? change)> GetYearOverYearChange(this List<AnnualEarningsEntry> entries) => GetYearOverYearChange(entries, e => e.ReportedEPS, 1);
 }
