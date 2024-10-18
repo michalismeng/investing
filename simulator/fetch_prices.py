@@ -83,6 +83,7 @@ def main():
         pool.join()
 
         df = pd.concat(list(filter(lambda x: len(x) > 0, results)))
+        pd.options.display.float_format = '{:.0f}'.format
         df.to_csv(file) if file else df.to_csv(sys.stdout)
 
 
