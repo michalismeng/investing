@@ -465,7 +465,7 @@ else if(Environment.GetEnvironmentVariable("MODE") == "annual-earnings")
 }
 else if(Environment.GetEnvironmentVariable("MODE") == "income-statement")
 {
-    // Started 17.47
+    // Started 17.47 ended 19.20
     using var context = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
     using var scope = app.Services.CreateScope();
     var alphaVantage = scope.ServiceProvider.GetRequiredService<AlphaVantageClient>();

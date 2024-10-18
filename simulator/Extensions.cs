@@ -285,6 +285,20 @@ public static class StockPriceExtensions
     public static decimal Round(this decimal d) => Math.Round(d, 2);
     public static decimal? Round(this decimal? d) => d != null ? Math.Round(d.Value, 2) : null;
 
+    public static List<(T entry, decimal? smooth)> Smooth<T>(List<T> entries, Func<T, decimal?> valueFunc)
+    {
+        if(entries.Count > 1)
+            return [..entries.Zip(entries.Skip(1)).Select(x => (x.First, smooth: (valueFunc(x.First) + valueFunc(x.Second)) / 2))];
+        else
+            return [];
+    }
+
+    public static List<(QuarterlyEarningsEntry entry, decimal? change, decimal? smooth)> Smooth(this List<(QuarterlyEarningsEntry entry, decimal? change)> entries) =>
+        [.. Smooth(entries, e => e.change).Select(x => (x.entry.entry, x.entry.change, x.smooth))];
+
+    public static List<(AnnualEarningsEntry entry, decimal? change, decimal? smooth)> Smooth(this List<(AnnualEarningsEntry entry, decimal? change)> entries) =>
+        [.. Smooth(entries, e => e.change).Select(x => (x.entry.entry, x.entry.change, x.smooth))];
+
     /// <summary>
     /// Get year over year change in the given entries. Assume the entries as sorted in descending datetime order!
     /// </summary>

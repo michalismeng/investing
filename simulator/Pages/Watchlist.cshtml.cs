@@ -12,8 +12,8 @@ public class WatchlistTickerInfoModel
 {
     public TickerInfo Ticker { get; set; }
     public TickerData PriceData { get; set; }
-    public List<(QuarterlyEarningsEntry entry, decimal? change)> Earnings { get; set; }
-    public List<(AnnualEarningsEntry entry, decimal? change)> AnnualEarnings { get; set; }
+    public List<(QuarterlyEarningsEntry entry, decimal? change, decimal? smooth)> Earnings { get; set; }
+    public List<(AnnualEarningsEntry entry, decimal? change, decimal? smooth)> AnnualEarnings { get; set; }
 }
 
 public class WatchlistModel : PageModel
@@ -48,7 +48,7 @@ public class WatchlistModel : PageModel
         var earnings = _context.QuarterlyEarnings.Where(p => startDate <= p.FiscalDateEnding && p.FiscalDateEnding <= Date && stage2.Select(s => s.Ticker).Contains(p.Ticker))
                                                  .ToList();
         
-        System.Console.WriteLine("Getting annual earnings data for the last 4 + 4 quarters...");
+        System.Console.WriteLine("Getting annual earnings data for the last 5 years...");
         startDate = Date.AddYears(-6);
         var annualEarnings = _context.AnnualEarnings.Where(p => startDate <= p.FiscalDateEnding && p.FiscalDateEnding <= Date && stage2.Select(s => s.Ticker).Contains(p.Ticker))
                                                     .ToList();
@@ -61,11 +61,11 @@ public class WatchlistModel : PageModel
             VolumeSMA50 = (decimal)g.Select(x => new TickerData() { Date = x.Date, Ticker = x.Ticker, Close = x.Volume }).OrderBy(x => x.Date).GetSma(50).Last().Sma!,
             MaxDrop = g.OrderBy(x => x.Date).ToList().CalculateGreatestDropPercentage(),
             PriceData = g.Last(),
-            Earnings = earnings.Where(e => e.Ticker == g.Key).OrderByDescending(e => e.FiscalDateEnding).Take(9).ToList().GetYearOverYearChange(),
-            AnnualEarnings = annualEarnings.Where(e => e.Ticker == g.Key).OrderByDescending(e => e.FiscalDateEnding).Take(5).ToList().GetYearOverYearChange(),
+            Earnings = earnings.Where(e => e.Ticker == g.Key).OrderByDescending(e => e.FiscalDateEnding).Take(9).ToList().GetYearOverYearChange().Smooth(),
+            AnnualEarnings = annualEarnings.Where(e => e.Ticker == g.Key).OrderByDescending(e => e.FiscalDateEnding).Take(6).ToList().GetYearOverYearChange().Smooth(),
         }).Where(p => p.SMA40 >= 5M &&                 // Ensure the stock is not 'penny'.
                       p.VolumeSMA50 >= 200000M &&      // Ensure there is enough volume.
-                      p.Earnings.Count > 0 && p.Earnings.All(e => e.change >= 0.2M) &&
+                      p.Earnings.Count > 0 && p.Earnings.All(e => e.smooth >= 0.2M) &&
                       p.MaxDrop <= 0.5M)               // This is wrong, as it could be caused by overall market fall.
           .Select(st => new WatchlistTickerInfoModel()
           {
