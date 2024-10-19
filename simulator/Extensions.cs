@@ -1,3 +1,4 @@
+using System.Globalization;
 using NoAlloq;
 using simulator.Model;
 using Skender.Stock.Indicators;
@@ -304,18 +305,21 @@ public static class StockPriceExtensions
     public static List<(AnnualEarningsEntry entry, decimal? change, decimal? smooth)> Smooth(this List<(AnnualEarningsEntry entry, decimal? change)> entries) =>
         [.. Smooth(entries, e => e.change).Select(x => (x.entry.entry, x.entry.change, x.smooth))];
 
+    public static List<(QuarterlyIncomeStatement entry, decimal? change, decimal? smooth)> Smooth(this List<(QuarterlyIncomeStatement entry, decimal? change)> entries) =>
+        [.. Smooth(entries, e => e.change).Select(x => (x.entry.entry, x.entry.change, x.smooth))];
+
     /// <summary>
     /// Get year over year change in the given entries. Assume the entries as sorted in descending datetime order!
     /// The resulting array has the same elements as the given one. The (last) entries for which the change cannot be calculated
     /// are null.
     /// </summary>
-    public static List<(T entry, decimal? change)> GetYearOverYearChange<T>(List<T> entries, Func<T, decimal?> valueFunc, int period)
+    public static List<(T entry, decimal? change)> GetYearOverYearChange<T>(this List<T> entries, Func<T, decimal?> valueFunc, int period)
     {
         if(entries.Count <= period)
             return entries.Select(e => (entry: e, change: (decimal?)null)).ToList();
 
         var result = entries.Zip(entries.Skip(period))
-                            .Select(x => (x.First, (valueFunc(x.First) - valueFunc(x.Second)) / valueFunc(x.Second).Abs()))
+                            .Select(x => (x.First, (valueFunc(x.First) - valueFunc(x.Second)) / (valueFunc(x.Second) != 0 ? valueFunc(x.Second).Abs() : null)))
                             .ToList();
         result.AddRange(entries.Skip(result.Count).Select(x => (x, (decimal?)null)));
 
@@ -337,4 +341,25 @@ public static class StockPriceExtensions
     /// <param name="entries"></param>
     /// <returns></returns>
     public static List<(AnnualEarningsEntry entry, decimal? change)> GetYearOverYearChange(this List<AnnualEarningsEntry> entries) => GetYearOverYearChange(entries, e => e.ReportedEPS, 1);
+
+    /// <summary>
+    /// Get year over year change in the given quarterly sales entries. Assume the entries as sorted in descending datetime order!
+    /// </summary>
+    /// <param name="entries"></param>
+    /// <returns></returns>
+    public static List<(QuarterlyIncomeStatement entry, decimal? change)> GetYearOverYearChange(this List<QuarterlyIncomeStatement> entries) => GetYearOverYearChange(entries, e => e.TotalRevenue, 4);
+
+    public static string ToKMB(this decimal? num)
+    {
+        if(num == null) return "";
+
+        if (num > 999999999 || num < -999999999 )
+            return num.Value.ToString("0,,,.###B", CultureInfo.InvariantCulture);
+        else if (num > 999999 || num < -999999 )
+            return num.Value.ToString("0,,.##M", CultureInfo.InvariantCulture);
+        else if (num > 999 || num < -999)
+            return num.Value.ToString("0,.#K", CultureInfo.InvariantCulture);
+        else
+            return num.Value.ToString(CultureInfo.InvariantCulture);
+    }
 }

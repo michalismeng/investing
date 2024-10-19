@@ -502,6 +502,45 @@ else if(Environment.GetEnvironmentVariable("MODE") == "income-statement")
         catch(Refit.ApiException e) { System.Console.WriteLine("Exception occured while getting income statement for {0}, {1}", t.Ticker, e.Message); }
     }
 }
+else if(Environment.GetEnvironmentVariable("MODE") == "company-overview")
+{
+    // Started 17.47 ended 19.20
+    using var context = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    using var scope = app.Services.CreateScope();
+    var alphaVantage = scope.ServiceProvider.GetRequiredService<AlphaVantageClient>();
+    var tickers = context.Tickers.Select(t => new { t.Ticker }).ToList().OrderBy(t => t.Ticker);
+    foreach(var t in tickers)
+    {
+        System.Console.WriteLine("Getting income statement for {0}", t.Ticker);
+        try
+        {
+            var income = await alphaVantage.GetIncomeStatement(new AlphaVantage.Fundamentals.IncomeStatementRequest { Symbol = t.Ticker });
+            var entriesQuarterly = income.QuarterlyReports.Select(x => new QuarterlyIncomeStatement()
+            {
+                Ticker = t.Ticker,
+                FiscalDateEnding = new DateTime(x.FiscalDateEnding, new TimeOnly()),
+                TotalRevenue = x.TotalRevenue,
+                ReportedCurrency = x.ReportedCurrency,
+            }).DistinctBy(x => new { x.Ticker, x.FiscalDateEnding });
+            var entriesAnnually = income.AnnualReports.Select(x => new AnnualIncomeStatement()
+            {
+                Ticker = t.Ticker,
+                FiscalDateEnding = new DateTime(x.FiscalDateEnding, new TimeOnly()),
+                TotalRevenue = x.TotalRevenue,
+                ReportedCurrency = x.ReportedCurrency,
+            }).DistinctBy(x => new { x.Ticker, x.FiscalDateEnding });
+
+            if(entriesQuarterly.Count() != income.QuarterlyReports.Count || entriesAnnually.Count() != income.AnnualReports.Count)
+                System.Console.WriteLine("Deduplicated duplicate entries for ticker {0}", t.Ticker);
+
+            System.Console.WriteLine("Writing to database...");
+            context.QuarterlyIncomeStatements.AddRange(entriesQuarterly);
+            context.AnnualIncomeStatements.AddRange(entriesAnnually);
+            context.SaveChanges();
+        }
+        catch(Refit.ApiException e) { System.Console.WriteLine("Exception occured while getting income statement for {0}, {1}", t.Ticker, e.Message); }
+    }
+}
 else
 {
     app.UseHttpsRedirection();

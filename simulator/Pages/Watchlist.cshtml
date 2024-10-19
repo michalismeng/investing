@@ -20,6 +20,7 @@
             <th scope="col">Relative Strength</th>
             <th scope="col">Close</th>
             <th scope="col" class="text-center">Quarterly Earnings</th>
+            <th scope="col" class="text-center">Quarterly Sales</th>
             <th scope="col" class="text-center">Annual Earnings</th>
             <th scope="col">Actions</th>
           </tr>
@@ -37,7 +38,7 @@
               <td scope="row">@Math.Round(data.RelativeStrength!.Value, 2)</td>
               <td scope="row">@Math.Round(data.Close, 2)</td>
               <td scope="row">
-                <table class="table table-sm small text-center">
+                <table class="mytable-hover table table-sm small text-center">
                   <thead>
                     <tr>
                       <th class="border-0 text-center">Date</th>
@@ -47,7 +48,7 @@
                     </tr>
                   </thead>
                   <tbody class="lh-1">
-                    @foreach(var e in tickerModel.Earnings)
+                    @foreach(var e in tickerModel.Earnings.Take(6))
                     {
                       <tr>
                         <td class="text-center"><div>@e.entry.FiscalDateEnding.ToString("yyyy-MM-dd")</div></td>
@@ -68,7 +69,38 @@
                 </table>
               </td>
               <td scope="row">
-                <table class="table table-sm small text-center">
+                <table class="mytable-hover table table-sm small text-center">
+                  <thead>
+                    <tr>
+                      <th class="border-0 text-center">Date</th>
+                      <th class="border-0 text-center">Sales</th>
+                      <th class="border-0 text-center">YoY</th>
+                      <th class="border-0 text-center">Smooth</th>
+                    </tr>
+                  </thead>
+                  <tbody class="lh-1">
+                    @foreach(var e in tickerModel.Income.Take(6))
+                    {
+                      <tr>
+                        <td class="text-center"><div>@e.entry.FiscalDateEnding.ToString("yyyy-MM-dd")</div></td>
+                        <td class="text-center"><div>$@e.entry.TotalRevenue.Round().ToKMB()</div></td>
+                        <td>
+                          @if(e.change != null) {
+                            <div>@(e.change > 0 ? e.change.Value.ToString("P2") : $"({(-e.change.Value).ToString("P2")})")</div>
+                          }
+                        </td>
+                        <td>
+                          @if(e.smooth != null) {
+                            <div>@(e.smooth > 0 ? e.smooth.Value.ToString("P2") : $"({(-e.smooth.Value).ToString("P2")})")</div>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </td>
+              <td scope="row">
+                <table class="mytable-hover table table-sm small text-center">
                   <thead>
                     <tr>
                       <th class="border-0 text-center">Date</th>
