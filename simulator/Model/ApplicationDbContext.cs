@@ -16,6 +16,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<AnnualEarningsEntry> AnnualEarnings { get; set; }
     public DbSet<QuarterlyIncomeStatement> QuarterlyIncomeStatements { get; set; }
     public DbSet<AnnualIncomeStatement> AnnualIncomeStatements { get; set; }
+    public DbSet<QuarterlyBalanceSheet> QuarterlyBalanceSheets { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -35,5 +36,7 @@ public class ApplicationDbContext : DbContext
 
         modelbuilder.Entity<QuarterlyIncomeStatement>().HasKey(x => new { x.Ticker, x.FiscalDateEnding });
         modelbuilder.Entity<AnnualIncomeStatement>().HasKey(x => new { x.Ticker, x.FiscalDateEnding });
+
+        modelbuilder.Entity<QuarterlyBalanceSheet>().HasKey(x => new { x.Ticker, x.FiscalDateEnding });
     }
 }
