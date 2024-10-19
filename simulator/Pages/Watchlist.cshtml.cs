@@ -15,6 +15,8 @@ public class WatchlistTickerInfoModel
     public List<(QuarterlyEarningsEntry entry, decimal? change, decimal? smooth)> Earnings { get; set; } = [];
     public List<(AnnualEarningsEntry entry, decimal? change, decimal? smooth)> AnnualEarnings { get; set; } = [];
     public List<(QuarterlyIncomeStatement entry, decimal? change, decimal? smooth)> Income { get; set; } = [];
+    public decimal? MarketCap { get; set; }
+    public decimal? SharesOutstanding { get; set; }
 }
 
 public class WatchlistModel : PageModel
@@ -58,6 +60,12 @@ public class WatchlistModel : PageModel
         var annualEarnings = _context.AnnualEarnings.Where(p => startDate <= p.FiscalDateEnding && p.FiscalDateEnding <= Date && stage2.Select(s => s.Ticker).Contains(p.Ticker))
                                                     .ToList();
 
+        System.Console.WriteLine("Getting latest balance sheet...");
+        startDate = Date.AddMonths(-4); // Should be 3 months, but do 4 to be sure
+        var balance = _context.QuarterlyBalanceSheets.Where(p => startDate <= p.FiscalDateEnding && p.FiscalDateEnding <= Date && stage2.Select(s => s.Ticker).Contains(p.Ticker))
+                                                     .ToList();
+
+
         System.Console.WriteLine("Getting max drop of SPY in the last 5 years...");
         var maxDropSPY = prices.Where(t => t.Ticker == "SPY").OrderBy(p => p.Date).ToList().CalculateGreatestDropPercentage();
         System.Console.WriteLine("Max drop of SPY is {0}", maxDropSPY.Round());
@@ -74,6 +82,8 @@ public class WatchlistModel : PageModel
             Earnings = earnings.Where(e => e.Ticker == g.Key).OrderByDescending(e => e.FiscalDateEnding).Take(9).ToList().GetYearOverYearChange().Smooth(),
             AnnualEarnings = annualEarnings.Where(e => e.Ticker == g.Key).OrderByDescending(e => e.FiscalDateEnding).Take(6).ToList().GetYearOverYearChange().Smooth(),
             Sales = sales.Where(e => e.Ticker == g.Key).OrderByDescending(e => e.FiscalDateEnding).Take(9).ToList().GetYearOverYearChange().Smooth(),
+            MarketCap = balance.Where(e => e.Ticker == g.Key).OrderByDescending(e => e.FiscalDateEnding).FirstOrDefault()?.MarketCap(g.Last().Close),
+            SharesOutstanding = balance.Where(e => e.Ticker == g.Key).OrderByDescending(e => e.FiscalDateEnding).FirstOrDefault()?.SharesOutstanding,
         }).Where(p => p.SMA40 >= 5M &&                 // Ensure the stock is not 'penny'.
                       p.VolumeSMA50 >= 200000M &&      // Ensure there is enough volume.
                       p.Earnings.Count > 0 && p.Earnings.Take(4).All(e => e.smooth >= 0.2M) &&      // latest 4 quarters should have 20% yoy increase
@@ -85,6 +95,8 @@ public class WatchlistModel : PageModel
             Earnings = st.Earnings,
             AnnualEarnings = st.AnnualEarnings,
             Income = st.Sales,
+            MarketCap = st.MarketCap,
+            SharesOutstanding = st.SharesOutstanding,
           }).Where(x => x.Ticker != null && x.PriceData != null).OrderByDescending(x => x.PriceData.RelativeStrength)];
         System.Console.WriteLine("Finished");
     }

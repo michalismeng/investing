@@ -349,9 +349,9 @@ public static class StockPriceExtensions
     /// <returns></returns>
     public static List<(QuarterlyIncomeStatement entry, decimal? change)> GetYearOverYearChange(this List<QuarterlyIncomeStatement> entries) => GetYearOverYearChange(entries, e => e.TotalRevenue, 4);
 
-    public static string ToKMB(this decimal? num)
+    public static string? ToKMB(this decimal? num)
     {
-        if(num == null) return "";
+        if(num == null) return null;
 
         if (num > 999999999 || num < -999999999 )
             return num.Value.ToString("0,,,.###B", CultureInfo.InvariantCulture);

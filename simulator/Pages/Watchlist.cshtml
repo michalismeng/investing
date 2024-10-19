@@ -10,19 +10,15 @@
 
     <div class="my-2">
 
-    <table id="datatable" class="display table table-sm table-hover table-bordered border border-2">
+    <table id="datatable" class="display table table-sm table-bordered border border-2">
         <thead>
           <tr>
-            <th scope="col">Ticker</th>
-            <th scope="col">Name</th>
-            <th scope="col">Sector</th>
-            <th scope="col">Percentile</th>
-            <th scope="col">Relative Strength</th>
-            <th scope="col">Close</th>
-            <th scope="col" class="text-center">Quarterly Earnings</th>
-            <th scope="col" class="text-center">Quarterly Sales</th>
-            <th scope="col" class="text-center">Annual Earnings</th>
-            <th scope="col">Actions</th>
+            <th class="text-center" scope="col">Ticker</th>
+            <th class="text-center" scope="col">General Information</th>
+            <th class="text-center" scope="col">Quarterly Earnings</th>
+            <th class="text-center" scope="col">Quarterly Sales</th>
+            <th class="text-center" scope="col">Annual Earnings</th>
+            <th class="text-center" scope="col">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -31,14 +27,49 @@
             var ticker = tickerModel.Ticker;
             var data = tickerModel.PriceData;
             <tr>
-              <th scope="row">@ticker.Ticker</th>
-              <td scope="row">@ticker.Name</td>
-              <td scope="row">@ticker.Sector</td>
-              <td scope="row">@data.Percentile</td>
-              <td scope="row">@Math.Round(data.RelativeStrength!.Value, 2)</td>
-              <td scope="row">@Math.Round(data.Close, 2)</td>
+              <th scope="row" style="vertical-align: middle;" class="text-center">@ticker.Ticker</th>
               <td scope="row">
-                <table class="mytable-hover table table-sm small text-center">
+                <div class="d-flex p-3 justify-content-center align-items-center">
+                <table class="table-hover table table-sm small">
+                  <tbody class="lh-1">
+                    <tr>
+                      <th style="width: 9rem;">Company:</th>
+                      <td>@ticker.Name</td>
+                    </tr>
+                    <tr>
+                      <th style="vertical-align: middle">Sector:</th>
+                      <td>@ticker.Sector</td>
+                    </tr>
+                    <tr>
+                      <th style="vertical-align: middle">Industry:</th>
+                      <td>@ticker.Industry</td>
+                    </tr>
+                    <tr>
+                      <th>Market Cap:</th>
+                      <td>@(tickerModel.MarketCap.Round().ToKMB() ?? "-")</td>
+                    </tr>
+                    <tr>
+                      <th>Shares:</th>
+                      <td>@(tickerModel.SharesOutstanding.Round().ToKMB() ?? "-")</td>
+                    </tr>
+                    <tr>
+                      <th>Latest Close:</th>
+                      <td>$@Math.Round(data.Close, 2)</td>
+                    </tr>
+                    <tr>
+                      <th>Percentile:</th>
+                      <td>@data.Percentile</td>
+                    </tr>
+                    <tr>
+                      <th>Relative Strength:</th>
+                      <td>@(data.RelativeStrength?.Round().ToString() ?? "-")</td>
+                    </tr>
+                  </tbody>
+                </table>
+                </div>
+              </td>
+              <td scope="row">
+                <table class="table-hover table table-sm small text-center">
                   <thead>
                     <tr>
                       <th class="border-0 text-center">Date</th>
@@ -69,7 +100,7 @@
                 </table>
               </td>
               <td scope="row">
-                <table class="mytable-hover table table-sm small text-center">
+                <table class="table-hover table table-sm small text-center">
                   <thead>
                     <tr>
                       <th class="border-0 text-center">Date</th>
@@ -100,7 +131,7 @@
                 </table>
               </td>
               <td scope="row">
-                <table class="mytable-hover table table-sm small text-center">
+                <table class="table-hover table table-sm small text-center">
                   <thead>
                     <tr>
                       <th class="border-0 text-center">Date</th>
@@ -130,7 +161,11 @@
                   </tbody>
                 </table>
               </td>
-              <td scope="row"><a class="btn btn-outline-primary" asp-page="Realtime" asp-route-ticker="@ticker.Ticker" asp-route-cutoff="@Model.Date.ToString("yyyy-MM-dd")">To chart</a></td>
+              <td scope="row">
+                <div class="d-flex w-100 h-100">
+                  <a class="btn btn-outline-primary m-auto" asp-page="Realtime" asp-route-ticker="@ticker.Ticker" asp-route-cutoff="@Model.Date.ToString("yyyy-MM-dd")">To chart</a>
+                </div>
+              </td>
             </tr>
           }
         </tbody>
@@ -139,5 +174,5 @@
 </div>
 
 @section Scripts {
-    <partial name="_DataTableScript" model='(4, "desc")' />
+    <partial name="_DataTableScript" />
 }
