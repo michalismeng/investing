@@ -285,10 +285,15 @@ public static class StockPriceExtensions
     public static decimal Round(this decimal d) => Math.Round(d, 2);
     public static decimal? Round(this decimal? d) => d != null ? Math.Round(d.Value, 2) : null;
 
+    /// <summary>
+    /// Smooth out the given entries by taking the average for each one with its next. This means we assume entries are given in descending datetime order!
+    /// The resulting array has the same elements as the given one. The (last) entries for which the change cannot be calculated
+    /// are null.
+    /// </summary>
     public static List<(T entry, decimal? smooth)> Smooth<T>(List<T> entries, Func<T, decimal?> valueFunc)
     {
         if(entries.Count > 1)
-            return [..entries.Zip(entries.Skip(1)).Select(x => (x.First, smooth: (valueFunc(x.First) + valueFunc(x.Second)) / 2))];
+            return [..entries.Zip(entries.Skip(1)).Select(x => (x.First, smooth: (valueFunc(x.First) + valueFunc(x.Second)) / 2)), (entries.Last(), null)];
         else
             return entries.Select(x => (x, (decimal?)null)).ToList();
     }
@@ -301,34 +306,23 @@ public static class StockPriceExtensions
 
     /// <summary>
     /// Get year over year change in the given entries. Assume the entries as sorted in descending datetime order!
+    /// The resulting array has the same elements as the given one. The (last) entries for which the change cannot be calculated
+    /// are null.
     /// </summary>
     public static List<(T entry, decimal? change)> GetYearOverYearChange<T>(List<T> entries, Func<T, decimal?> valueFunc, int period)
     {
-        var result = new List<(T entry, decimal? change)>();
         if(entries.Count <= period)
-            result = entries.Select(e => (entry: e, change: (decimal?)null)).ToList();
-        else
-        {
-            for(int i = 0; i < entries.Count - period; i++)
-            {
-                if(entries[i + period] == null || valueFunc(entries[i + period]) == 0)
-                    result.Add((entries[i], -1));
-                else
-                {
-                    decimal? change = (valueFunc(entries[i]) - valueFunc(entries[i + period])) / Math.Abs(valueFunc(entries[i + period])!.Value);
-                    result.Add((entries[i], change));
-                }
-            }
+            return entries.Select(e => (entry: e, change: (decimal?)null)).ToList();
 
-            if(entries.Count < 2 * period)
-            {
-                for(int i = entries.Count - period + 1; i <= period; i++)
-                    result.Add((entries[i], null));
-            }
-        }
+        var result = entries.Zip(entries.Skip(period))
+                            .Select(x => (x.First, (valueFunc(x.First) - valueFunc(x.Second)) / valueFunc(x.Second).Abs()))
+                            .ToList();
+        result.AddRange(entries.Skip(result.Count).Select(x => (x, (decimal?)null)));
 
         return result;
     }
+
+    public static decimal? Abs(this decimal? number) => number.HasValue ? Math.Abs(number.Value) : null; 
 
     /// <summary>
     /// Get year over year change in the given earnings entries. Assume the entries as sorted in descending datetime order!
