@@ -290,7 +290,7 @@ public static class StockPriceExtensions
         if(entries.Count > 1)
             return [..entries.Zip(entries.Skip(1)).Select(x => (x.First, smooth: (valueFunc(x.First) + valueFunc(x.Second)) / 2))];
         else
-            return [];
+            return entries.Select(x => (x, (decimal?)null)).ToList();
     }
 
     public static List<(QuarterlyEarningsEntry entry, decimal? change, decimal? smooth)> Smooth(this List<(QuarterlyEarningsEntry entry, decimal? change)> entries) =>

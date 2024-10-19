@@ -52,9 +52,13 @@
                       <tr>
                         <td class="text-center"><div>@e.entry.FiscalDateEnding.ToString("yyyy-MM-dd")</div></td>
                         <td class="text-center"><div>$@e.entry.ReportedEPS.Round()</div></td>
-                        <td><div>@(e.change > 0 ? e.change.Value.ToString("P2") : $"({(-e.change.Value).ToString("P2")})")</div></td>
                         <td>
-                          @if(e.smooth != null) {
+                          @if(e.change != null && e != tickerModel.Earnings.Last()) {
+                            <div>@(e.change > 0 ? e.change.Value.ToString("P2") : $"({(-e.change.Value).ToString("P2")})")</div>
+                          }
+                        </td>
+                        <td>
+                          @if(e.smooth != null && e != tickerModel.Earnings.Last()) {
                             <div>@(e.smooth > 0 ? e.smooth.Value.ToString("P2") : $"({(-e.smooth.Value).ToString("P2")})")</div>
                           }
                         </td>
@@ -79,9 +83,13 @@
                       <tr>
                         <td class="text-center"><div>@e.entry.FiscalDateEnding.ToString("yyyy-MM-dd")</div></td>
                         <td class="text-center"><div>$@e.entry.ReportedEPS.Round()</div></td>
-                        <td><div>@(e.change > 0 ? e.change.Value.ToString("P2") : $"({(-e.change.Value).ToString("P2")})")</div></td>
                         <td>
-                          @if(e.smooth != null) {
+                          @if(e.change != null && e != tickerModel.AnnualEarnings.Last()) {
+                            <div>@(e.change > 0 ? e.change.Value.ToString("P2") : $"({(-e.change.Value).ToString("P2")})")</div>
+                          }
+                        </td>
+                        <td>
+                          @if(e.smooth != null && e != tickerModel.AnnualEarnings.Last()) {
                             <div>@(e.smooth > 0 ? e.smooth.Value.ToString("P2") : $"({(-e.smooth.Value).ToString("P2")})")</div>
                           }
                         </td>
