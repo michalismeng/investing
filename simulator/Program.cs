@@ -11,6 +11,8 @@ using simulator.Utilities;
 using simulator.Pages;
 using System.Collections.Concurrent;
 using AlphaVantage;
+using CsvHelper;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -502,43 +504,42 @@ else if(Environment.GetEnvironmentVariable("MODE") == "income-statement")
         catch(Refit.ApiException e) { System.Console.WriteLine("Exception occured while getting income statement for {0}, {1}", t.Ticker, e.Message); }
     }
 }
-else if(Environment.GetEnvironmentVariable("MODE") == "company-overview")
+else if(Environment.GetEnvironmentVariable("MODE") == "balance-sheet")
 {
-    // Started 17.47 ended 19.20
+    // Start at 18.40
     using var context = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
     using var scope = app.Services.CreateScope();
     var alphaVantage = scope.ServiceProvider.GetRequiredService<AlphaVantageClient>();
     var tickers = context.Tickers.Select(t => new { t.Ticker }).ToList().OrderBy(t => t.Ticker);
     foreach(var t in tickers)
     {
-        System.Console.WriteLine("Getting income statement for {0}", t.Ticker);
+        System.Console.WriteLine("Getting balance statement for {0}", t.Ticker);
         try
         {
-            var income = await alphaVantage.GetIncomeStatement(new AlphaVantage.Fundamentals.IncomeStatementRequest { Symbol = t.Ticker });
-            var entriesQuarterly = income.QuarterlyReports.Select(x => new QuarterlyIncomeStatement()
+            // var balance = await alphaVantage.GetBalanceSheet(new AlphaVantage.Fundamentals.BalanceSheetRequest { Symbol = t.Ticker });
+            // string json = JsonSerializer.Serialize(balance);
+            // File.WriteAllText($"../relative-strength/data/balance-sheet/{DateTime.Today:yyyy-MM-dd}-{t.Ticker}-2.json", json);
+            if(Path.Exists($"../relative-strength/data/balance-sheet/{DateTime.Today:yyyy-MM-dd}-{t.Ticker}.json") == false)
+                continue;
+            string json = File.ReadAllText($"../relative-strength/data/balance-sheet/{DateTime.Today:yyyy-MM-dd}-{t.Ticker}.json");
+            var balance = JsonSerializer.Deserialize<AlphaVantage.Fundamentals.BalanceSheetResponse>(json);
+
+            var entries = balance.QuarterlyReports.Select(x => new QuarterlyBalanceSheet()
             {
                 Ticker = t.Ticker,
                 FiscalDateEnding = new DateTime(x.FiscalDateEnding, new TimeOnly()),
-                TotalRevenue = x.TotalRevenue,
-                ReportedCurrency = x.ReportedCurrency,
-            }).DistinctBy(x => new { x.Ticker, x.FiscalDateEnding });
-            var entriesAnnually = income.AnnualReports.Select(x => new AnnualIncomeStatement()
-            {
-                Ticker = t.Ticker,
-                FiscalDateEnding = new DateTime(x.FiscalDateEnding, new TimeOnly()),
-                TotalRevenue = x.TotalRevenue,
+                SharesOutstanding = x.CommonStockSharesOutstanding,
                 ReportedCurrency = x.ReportedCurrency,
             }).DistinctBy(x => new { x.Ticker, x.FiscalDateEnding });
 
-            if(entriesQuarterly.Count() != income.QuarterlyReports.Count || entriesAnnually.Count() != income.AnnualReports.Count)
+            if(entries.Count() != balance.QuarterlyReports.Count)
                 System.Console.WriteLine("Deduplicated duplicate entries for ticker {0}", t.Ticker);
-
+            
             System.Console.WriteLine("Writing to database...");
-            context.QuarterlyIncomeStatements.AddRange(entriesQuarterly);
-            context.AnnualIncomeStatements.AddRange(entriesAnnually);
+            context.QuarterlyBalanceSheets.AddRange(entries);
             context.SaveChanges();
         }
-        catch(Refit.ApiException e) { System.Console.WriteLine("Exception occured while getting income statement for {0}, {1}", t.Ticker, e.Message); }
+        catch(Refit.ApiException e) { System.Console.WriteLine("Exception occured while getting balance statement for {0}, {1}", t.Ticker, e.Message); }
     }
 }
 else
