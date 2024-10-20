@@ -33,7 +33,7 @@
                 <table class="table-hover table table-sm small">
                   <tbody class="lh-1">
                     <tr>
-                      <th style="width: 9rem;">Company:</th>
+                      <th style="width: 10rem;">Company:</th>
                       <td>@ticker.Name</td>
                     </tr>
                     <tr>
@@ -63,6 +63,10 @@
                     <tr>
                       <th>Relative Strength:</th>
                       <td>@(data.RelativeStrength?.Round().ToString() ?? "-")</td>
+                    </tr>
+                    <tr>
+                      <th>50-Day Volume Avg.:</th>
+                      <td>@tickerModel.VolumeSMA50.Round().ToKMB()</td>
                     </tr>
                   </tbody>
                 </table>

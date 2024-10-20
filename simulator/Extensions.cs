@@ -349,6 +349,7 @@ public static class StockPriceExtensions
     /// <returns></returns>
     public static List<(QuarterlyIncomeStatement entry, decimal? change)> GetYearOverYearChange(this List<QuarterlyIncomeStatement> entries) => GetYearOverYearChange(entries, e => e.TotalRevenue, 4);
 
+    public static string? ToKMB(this decimal num) => ToKMB((decimal?)num);
     public static string? ToKMB(this decimal? num)
     {
         if(num == null) return null;

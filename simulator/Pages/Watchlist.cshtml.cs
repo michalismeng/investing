@@ -17,6 +17,7 @@ public class WatchlistTickerInfoModel
     public List<(QuarterlyIncomeStatement entry, decimal? change, decimal? smooth)> Income { get; set; } = [];
     public decimal? MarketCap { get; set; }
     public decimal? SharesOutstanding { get; set; }
+    public decimal VolumeSMA50 { get; set; }
 }
 
 public class WatchlistModel : PageModel
@@ -97,6 +98,7 @@ public class WatchlistModel : PageModel
             Income = st.Sales,
             MarketCap = st.MarketCap,
             SharesOutstanding = st.SharesOutstanding,
+            VolumeSMA50 = st.VolumeSMA50,
           }).Where(x => x.Ticker != null && x.PriceData != null).OrderByDescending(x => x.PriceData.RelativeStrength)];
         System.Console.WriteLine("Finished");
     }
