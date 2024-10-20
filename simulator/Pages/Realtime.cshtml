@@ -212,7 +212,7 @@
         const earningsData = [
         @foreach(var e in Model.Earnings)
         {
-            @: { time: '@e.ReportedDate.ToString("yyyy-MM-dd")', label: 'E', fiscalDate: '@e.FiscalDateEnding.ToString("yyyy-MM-dd")', eps: @e.ReportedEPS, estimate: @(e.EstimatedEPS?.ToString() ?? "undefined"), surprise: @(e.SurprisePercentage?.ToString() ?? "undefined") },
+            @: { time: '@e.ReportedDate.ToString("yyyy-MM-dd")', label: 'E', fiscalDate: '@e.FiscalDateEnding.ToString("yyyy-MM-dd")', eps: @e.ReportedEPS, estimate: @(e.EstimatedEPS?.ToString() ?? "null"), surprise: @(e.SurprisePercentage?.ToString() ?? "null") },
         }
         ];
 
