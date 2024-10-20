@@ -223,9 +223,25 @@
             const container = document.getElementById(TIME_SCALE_MARKERS_ELEMENT_ID);
             container.innerHTML = ''; // Clear previous markers
 
+            function getCoordinate(chart, time) {
+                const coordinate = chart.timeScale().timeToCoordinate(time);
+                t = 1
+                while(coordinate == null && t < 10) {
+                    const next = moment(time).clone().add(t, 'days')
+                    const nextDate = chart.timeScale().timeToCoordinate(next.format("YYYY-MM-DD"))
+                    if(nextDate != null) return nextDate
+                    const prev = moment(time).clone().add(-t, 'days')
+                    const prevDate = chart.timeScale().timeToCoordinate(prev.format("YYYY-MM-DD"))
+                    if(prevDate != null) return prevDate
+                    t++;
+                }
+
+                return coordinate;
+            }
+
             i = 0;
             earningsData.forEach(marker => {
-                const coordinate = chart.timeScale().timeToCoordinate(marker.time);
+                const coordinate = getCoordinate(chart, marker.time)
                 if (coordinate) {
                     if(coordinate + 90 >= container.getBoundingClientRect().left && coordinate + 95 + 90 <= container.getBoundingClientRect().right) {
                         let element = $("#time-marker-template").clone().removeAttr('id').removeClass("d-none").attr('x-data', JSON.stringify(marker))
