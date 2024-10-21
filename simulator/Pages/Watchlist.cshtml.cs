@@ -124,8 +124,7 @@ public class WatchlistModel : PageModel
             Sales = sales.Where(e => e.Ticker == g.Key).OrderByDescending(e => e.FiscalDateEnding).Take(9).ToList().GetYearOverYearChange().Smooth(),
             MarketCap = balance.Where(e => e.Ticker == g.Key).OrderByDescending(e => e.FiscalDateEnding).FirstOrDefault()?.MarketCap(g.Last().Close),
             SharesOutstanding = balance.Where(e => e.Ticker == g.Key).OrderByDescending(e => e.FiscalDateEnding).FirstOrDefault()?.SharesOutstanding,
-        }).Where(p => p.SMA40 >= 5M &&                 // Ensure the stock is not 'penny'. If we are in the past, the company might have split many times and appear as a penny stock
-                      p.VolumeSMA50 >= filters.Volume &&      // Ensure there is enough volume.
+        }).Where(p => p.VolumeSMA50 >= filters.Volume &&      // Ensure there is enough volume.
                       p.Earnings.Count >= 0 && p.Earnings.Take(filters.EarningsGrowthQuarters).All(e => e.smooth >= filters.EarningsGrowth) &&      // latest 4 quarters should have 20% yoy increase
                       p.SharesOutstanding <= filters.SharesOutstanding &&
                       p.MaxDrop <= maxDropSPY + Filters.MaxDropOverSPY)
