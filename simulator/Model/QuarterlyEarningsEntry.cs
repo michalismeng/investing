@@ -13,7 +13,7 @@ public class QuarterlyEarningsEntry
     [NotMapped]
     public decimal? EstimatedEPS  => ReportedEPS - Surpirse;
     [NotMapped]
-    public decimal? SurprisePercentage  => EstimatedEPS.HasValue ? Surpirse / Math.Abs(EstimatedEPS.Value) : null;
+    public decimal? SurprisePercentage  => EstimatedEPS.HasValue && EstimatedEPS.Value != 0 ? Surpirse / Math.Abs(EstimatedEPS.Value) : null;
 
     public override string ToString()
     {

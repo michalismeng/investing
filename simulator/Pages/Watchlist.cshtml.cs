@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using simulator.Extensions;
 using simulator.Model;
@@ -20,6 +21,16 @@ public class WatchlistTickerInfoModel
     public decimal VolumeSMA50 { get; set; }
 }
 
+public class WatchlistFiltersModel
+{
+    public DateTime Date { get; set; }
+    public decimal Volume { get; set; }
+    public decimal EarningsGrowth { get; set; }
+    public int EarningsGrowthQuarters { get; set; }
+    public decimal MaxDropOverSPY { get; set; }
+    public int SharesOutstanding { get; set; }
+}
+
 public class WatchlistModel : PageModel
 {
     private readonly ILogger<IndexModel> _logger;
@@ -32,38 +43,66 @@ public class WatchlistModel : PageModel
     }
 
     public List<WatchlistTickerInfoModel> Tickers { get; set; } = [];
+    [FromQuery]
+    public WatchlistFiltersModel Filters { get; set; } = new WatchlistFiltersModel();
     public DateTime Date { get; set; }
 
-    public void OnGet(string? date = null)
+    public IActionResult OnGet()
     {
-        Date = date != null ? DateTime.Parse(date) : DateTime.Today.AddDays(-1);
+        // Htmx request
+        if(HttpContext.Request.Headers.ContainsKey("Hx-Request"))
+        {
+            DoWork(Filters);
+            return Partial("_WatchlistTable", (Tickers, Filters.Date));
+        }
+        else
+        {
+            if(Filters.Date == default)
+            {
+                Filters.Date = new DateTime(2015, 02, 02);
+                Filters.Volume = 200000;
+                Filters.EarningsGrowth = 0.2M;
+                Filters.EarningsGrowthQuarters = 4;
+                Filters.MaxDropOverSPY = 0.2M;
+                Filters.SharesOutstanding = 50000000;
+                Date = Filters.Date;
+            }
+            return Page();
+        }
+    }
+
+    private void DoWork(WatchlistFiltersModel filters)
+    {
+        var isStage2CalculationMissing = _context.PriceData.Any(p => p.Date == filters.Date && p.IsStage2 == null);
+        if(isStage2CalculationMissing)
+            throw new Exception(string.Format("Watchlist: Stage 2 calculation hasn't happened for {0}. Consider running the CLI task.", filters.Date));
 
         System.Console.WriteLine("Getting stage 2 companies...");
-        var stage2 = _context.PriceData.Where(p => p.Date == Date && p.IsStage2 == true)
+        var stage2 = _context.PriceData.Where(p => p.Date == filters.Date && p.IsStage2 == true)
                                        .ToList();
 
-        var startDate = Date.AddYears(-5);
+        var startDate = filters.Date.AddYears(-5);
         System.Console.WriteLine("Getting price data for 5 years...");
-        var prices = _context.PriceData.Where(p => startDate <= p.Date && p.Date <= Date && (stage2.Select(s => s.Ticker).Contains(p.Ticker) || p.Ticker == "SPY"))
+        var prices = _context.PriceData.Where(p => startDate <= p.Date && p.Date <= filters.Date && (stage2.Select(s => s.Ticker).Contains(p.Ticker) || p.Ticker == "SPY"))
                                        .ToList();
 
         System.Console.WriteLine("Getting quarterly earnings data for the last 4 + 4 quarters...");
-        startDate = Date.AddYears(-4);
-        var earnings = _context.QuarterlyEarnings.Where(p => startDate <= p.FiscalDateEnding && p.FiscalDateEnding <= Date && stage2.Select(s => s.Ticker).Contains(p.Ticker))
+        startDate = filters.Date.AddYears(-4);
+        var earnings = _context.QuarterlyEarnings.Where(p => startDate <= p.FiscalDateEnding && p.FiscalDateEnding <= filters.Date && stage2.Select(s => s.Ticker).Contains(p.Ticker))
                                                  .ToList();
 
         System.Console.WriteLine("Getting sales data for the last 4 + 4 quarters...");
-        var sales = _context.QuarterlyIncomeStatements.Where(p => startDate <= p.FiscalDateEnding && p.FiscalDateEnding <= Date && stage2.Select(s => s.Ticker).Contains(p.Ticker))
+        var sales = _context.QuarterlyIncomeStatements.Where(p => startDate <= p.FiscalDateEnding && p.FiscalDateEnding <= filters.Date && stage2.Select(s => s.Ticker).Contains(p.Ticker))
                                                       .ToList();
 
         System.Console.WriteLine("Getting annual earnings data for the last 5 years...");
-        startDate = Date.AddYears(-6);
-        var annualEarnings = _context.AnnualEarnings.Where(p => startDate <= p.FiscalDateEnding && p.FiscalDateEnding <= Date && stage2.Select(s => s.Ticker).Contains(p.Ticker))
+        startDate = filters.Date.AddYears(-6);
+        var annualEarnings = _context.AnnualEarnings.Where(p => startDate <= p.FiscalDateEnding && p.FiscalDateEnding <= filters.Date && stage2.Select(s => s.Ticker).Contains(p.Ticker))
                                                     .ToList();
 
         System.Console.WriteLine("Getting latest balance sheet...");
-        startDate = Date.AddMonths(-4); // Should be 3 months, but do 4 to be sure
-        var balance = _context.QuarterlyBalanceSheets.Where(p => startDate <= p.FiscalDateEnding && p.FiscalDateEnding <= Date && stage2.Select(s => s.Ticker).Contains(p.Ticker))
+        startDate = filters.Date.AddMonths(-4); // Should be 3 months, but do 4 to be sure
+        var balance = _context.QuarterlyBalanceSheets.Where(p => startDate <= p.FiscalDateEnding && p.FiscalDateEnding <= filters.Date && stage2.Select(s => s.Ticker).Contains(p.Ticker))
                                                      .ToList();
 
 
@@ -72,7 +111,7 @@ public class WatchlistModel : PageModel
         System.Console.WriteLine("Max drop of SPY is {0}", maxDropSPY.Round());
 
         System.Console.WriteLine("Applying filters to historical data...");
-        Tickers = [.. prices.GroupBy(g => g.Ticker).Select(g => new
+        Tickers = [.. prices.GroupBy(g => g.Ticker).Where(g => g.Key != "SPY").Select(g => new
         {
             Ticker = g.Key,
             SMA40 = (decimal)g.OrderBy(x => x.Date).GetSma(200).Last().Sma!,
@@ -85,10 +124,11 @@ public class WatchlistModel : PageModel
             Sales = sales.Where(e => e.Ticker == g.Key).OrderByDescending(e => e.FiscalDateEnding).Take(9).ToList().GetYearOverYearChange().Smooth(),
             MarketCap = balance.Where(e => e.Ticker == g.Key).OrderByDescending(e => e.FiscalDateEnding).FirstOrDefault()?.MarketCap(g.Last().Close),
             SharesOutstanding = balance.Where(e => e.Ticker == g.Key).OrderByDescending(e => e.FiscalDateEnding).FirstOrDefault()?.SharesOutstanding,
-        }).Where(p => p.SMA40 >= 5M &&                 // Ensure the stock is not 'penny'.
-                      p.VolumeSMA50 >= 200000M &&      // Ensure there is enough volume.
-                      p.Earnings.Count > 0 && p.Earnings.Take(4).All(e => e.smooth >= 0.2M) &&      // latest 4 quarters should have 20% yoy increase
-                      p.MaxDrop <= maxDropSPY + 0.2M)
+        }).Where(p => p.SMA40 >= 5M &&                 // Ensure the stock is not 'penny'. If we are in the past, the company might have split many times and appear as a penny stock
+                      p.VolumeSMA50 >= filters.Volume &&      // Ensure there is enough volume.
+                      p.Earnings.Count >= 0 && p.Earnings.Take(filters.EarningsGrowthQuarters).All(e => e.smooth >= filters.EarningsGrowth) &&      // latest 4 quarters should have 20% yoy increase
+                      p.SharesOutstanding <= filters.SharesOutstanding &&
+                      p.MaxDrop <= maxDropSPY + Filters.MaxDropOverSPY)
           .Select(st => new WatchlistTickerInfoModel()
           {
             Ticker = _context.Tickers.FirstOrDefault(x => x.Ticker == st.Ticker)!,
@@ -101,6 +141,7 @@ public class WatchlistModel : PageModel
             VolumeSMA50 = st.VolumeSMA50,
           }).Where(x => x.Ticker != null && x.PriceData != null).OrderByDescending(x => x.PriceData.RelativeStrength)];
         System.Console.WriteLine("Finished");
+
     }
 }
 

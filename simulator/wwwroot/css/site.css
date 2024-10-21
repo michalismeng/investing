@@ -82,3 +82,10 @@ body {
 .mytable-hover tbody tr:hover td {
     background: darkgray;
 }
+
+.my-indicator{
+  display: none;
+}
+.htmx-request.my-indicator{
+  display: flex;
+}

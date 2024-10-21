@@ -1,0 +1,168 @@
+@using simulator.Extensions
+@model (List<WatchlistTickerInfoModel> Tickers, DateTime Date)
+
+<div class="text-center h4">Report for @Model.Date.ToString("dddd, dd MMMM yyyy")</div>
+<table id="datatable" class="display table table-sm table-bordered border border-2">
+    <thead>
+      <tr>
+        <th class="text-center" scope="col">Ticker</th>
+        <th class="text-center" scope="col">General Information</th>
+        <th class="text-center" scope="col">Quarterly Earnings</th>
+        <th class="text-center" scope="col">Quarterly Sales</th>
+        <th class="text-center" scope="col">Annual Earnings</th>
+        <th class="text-center" scope="col">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @foreach(var tickerModel in Model.Tickers)
+      {
+        var ticker = tickerModel.Ticker;
+        var data = tickerModel.PriceData;
+        <tr>
+          <th scope="row" style="vertical-align: middle;" class="text-center">@ticker.Ticker</th>
+          <td scope="row">
+            <div class="d-flex p-3 justify-content-center align-items-center">
+            <table class="table-hover table table-sm small">
+              <tbody class="lh-1">
+                <tr>
+                  <th style="width: 10rem;">Company:</th>
+                  <td>@ticker.Name</td>
+                </tr>
+                <tr>
+                  <th style="vertical-align: middle">Sector:</th>
+                  <td>@ticker.Sector</td>
+                </tr>
+                <tr>
+                  <th style="vertical-align: middle">Industry:</th>
+                  <td>@ticker.Industry</td>
+                </tr>
+                <tr>
+                  <th>Market Cap:</th>
+                  <td>@(tickerModel.MarketCap.Round().ToKMB() ?? "-")</td>
+                </tr>
+                <tr>
+                  <th>Shares:</th>
+                  <td>@(tickerModel.SharesOutstanding.Round().ToKMB() ?? "-")</td>
+                </tr>
+                <tr>
+                  <th>Latest Close:</th>
+                  <td>$@Math.Round(data.Close, 2)</td>
+                </tr>
+                <tr>
+                  <th>Percentile:</th>
+                  <td>@data.Percentile</td>
+                </tr>
+                <tr>
+                  <th>Relative Strength:</th>
+                  <td>@(data.RelativeStrength?.Round().ToString() ?? "-")</td>
+                </tr>
+                <tr>
+                  <th>50-Day Volume Avg.:</th>
+                  <td>@tickerModel.VolumeSMA50.Round().ToKMB()</td>
+                </tr>
+              </tbody>
+            </table>
+            </div>
+          </td>
+          <td scope="row">
+            <table class="table-hover table table-sm small text-center">
+              <thead>
+                <tr>
+                  <th class="border-0 text-center">Date</th>
+                  <th class="border-0 text-center">EPS</th>
+                  <th class="border-0 text-center">YoY</th>
+                  <th class="border-0 text-center">YoY Smooth</th>
+                </tr>
+              </thead>
+              <tbody class="lh-1">
+                @foreach(var e in tickerModel.Earnings.Take(6))
+                {
+                  <tr>
+                    <td class="text-center"><div>@e.entry.FiscalDateEnding.ToString("yyyy-MM-dd")</div></td>
+                    <td class="text-center"><div>$@e.entry.ReportedEPS.Round()</div></td>
+                    <td>
+                      @if(e.change != null && e != tickerModel.Earnings.Last()) {
+                        <div>@(e.change > 0 ? e.change.Value.ToString("P2") : $"({(-e.change.Value).ToString("P2")})")</div>
+                      }
+                    </td>
+                    <td>
+                      @if(e.smooth != null && e != tickerModel.Earnings.Last()) {
+                        <div>@(e.smooth > 0 ? e.smooth.Value.ToString("P2") : $"({(-e.smooth.Value).ToString("P2")})")</div>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </td>
+          <td scope="row">
+            <table class="table-hover table table-sm small text-center">
+              <thead>
+                <tr>
+                  <th class="border-0 text-center">Date</th>
+                  <th class="border-0 text-center">Sales</th>
+                  <th class="border-0 text-center">YoY</th>
+                  <th class="border-0 text-center">Smooth</th>
+                </tr>
+              </thead>
+              <tbody class="lh-1">
+                @foreach(var e in tickerModel.Income.Take(6))
+                {
+                  <tr>
+                    <td class="text-center"><div>@e.entry.FiscalDateEnding.ToString("yyyy-MM-dd")</div></td>
+                    <td class="text-center"><div>$@e.entry.TotalRevenue.Round().ToKMB()</div></td>
+                    <td>
+                      @if(e.change != null) {
+                        <div>@(e.change > 0 ? e.change.Value.ToString("P2") : $"({(-e.change.Value).ToString("P2")})")</div>
+                      }
+                    </td>
+                    <td>
+                      @if(e.smooth != null) {
+                        <div>@(e.smooth > 0 ? e.smooth.Value.ToString("P2") : $"({(-e.smooth.Value).ToString("P2")})")</div>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </td>
+          <td scope="row">
+            <table class="table-hover table table-sm small text-center">
+              <thead>
+                <tr>
+                  <th class="border-0 text-center">Date</th>
+                  <th class="border-0 text-center">EPS</th>
+                  <th class="border-0 text-center">YoY</th>
+                  <th class="border-0 text-center">YoY Smooth</th>
+                </tr>
+              </thead>
+              <tbody class="lh-1">
+                @foreach(var e in tickerModel.AnnualEarnings)
+                {
+                  <tr>
+                    <td class="text-center"><div>@e.entry.FiscalDateEnding.ToString("yyyy-MM-dd")</div></td>
+                    <td class="text-center"><div>$@e.entry.ReportedEPS.Round()</div></td>
+                    <td>
+                      @if(e.change != null && e != tickerModel.AnnualEarnings.Last()) {
+                        <div>@(e.change > 0 ? e.change.Value.ToString("P2") : $"({(-e.change.Value).ToString("P2")})")</div>
+                      }
+                    </td>
+                    <td>
+                      @if(e.smooth != null && e != tickerModel.AnnualEarnings.Last()) {
+                        <div>@(e.smooth > 0 ? e.smooth.Value.ToString("P2") : $"({(-e.smooth.Value).ToString("P2")})")</div>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </td>
+          <td scope="row">
+            <div class="d-flex w-100 h-100">
+              <a class="btn btn-outline-dark m-auto" asp-page="Realtime" asp-route-ticker="@ticker.Ticker" asp-route-cutoff="@Model.Date.ToString("yyyy-MM-dd")">To chart</a>
+            </div>
+          </td>
+        </tr>
+      }
+    </tbody>
+</table>

@@ -1,7 +1,6 @@
 <script>
-    $(document).ready(function () {
-        $.fn.dataTable.moment('DD-MM-YYYY');
-        $('#datatable').DataTable({
+    function createDataTable(id) {
+        return $('#' + id).DataTable({
             "responsive": true,
             deferRender: true,
             dom: '<"d-flex flex-row my-2"<"d-none d-md-block me-auto"f>i>rt<"d-flex flex-column gap-4""<"ms-auto d-none d-md-block"p>>',
@@ -28,5 +27,6 @@
                 }
             }
         });
-    });
+
+    }
 </script>
