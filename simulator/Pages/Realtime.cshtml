@@ -35,29 +35,32 @@
                 </div>
             </div>
             <div x-data>
-                <p class="text-center">Your entry points</p>
+                <p class="text-center">Your positions</p>
                 <table class="table table-sm">
                     <thead>
                         <tr>
-                            <th style="width: 9rem">Date</th>
+                            <th style="width: 8.5rem">Date</th>
                             <th class="text-center">Price</th>
-                            <th class="text-center">% Chg.</th>
+                            <th class="text-center">P/L (%)</th>
                             <th class="text-center" style="width: 8rem">Stop-loss</th>
                             <th style="width: 2rem"></th>
                         </tr>
                     </thead>
                     <tbody> 
                         <template x-for="entry in $store.entryPoints.entries">
-                            <tr :class="{ 'text-muted': entry.stopLossTriggered }">
+                            <tr :class="{ 'text-muted': entry.stopLossTriggered || entry.isSold }">
                                 <td><span x-text="entry.date.format('YYYY-MM-DD')"></span> (<span x-text="entry.holdingDays"></span>d)</td>
                                 <td class="text-center" x-text="Math.round(entry.price * 100) / 100"></td>
                                 <td class="text-center"><span x-text="Math.round(entry.pctChange * 100) / 100"></span>%</td>
                                 <td class="text-center" style="width: 8rem" x-data="{ stopLoss: entry.stopLoss }">
-                                    <span class="clickable" x-show="! entry.stopLossEditing" x-on:click="entry.stopLossEditing = true" x-text="Math.round(entry.stopLoss * 100) / 100 + ' (' + Math.round((entry.stopLoss / entry.price - 1) * 100) + '%)'" data-bs-toggle="tooltip" :title="'Stop loss set @@ ' + stopLoss"></span>
-                                    <i x-show="entry.stopLossTriggered" data-bs-toggle="tooltip" data-bs-placement="top" :title="'Stop loss triggered @@ ' + Math.round(entry.triggerPrice * 100) / 100" class="fa-solid fa-bolt"></i>
-                                    <input x-show="entry.stopLossEditing" x-model="stopLoss" @@keyup.enter="entry.stopLoss = parseStopLoss(stopLoss, entry.price) ; entry.stopLossEditing = false" x-on:blur="entry.stopLoss = parseStopLoss(stopLoss, entry.price) ; entry.stopLossEditing = false" class="form-control form-control-sm w-75 text-center mx-auto">
+                                    <span :class="{ 'clickable': ! entry.isSold && !entry.stopLossTriggered }" x-show="! entry.stopLossEditing" x-on:click="!entry.isSold && !entry.stopLossTriggered && (entry.stopLossEditing = true)" x-text="Math.round(entry.stopLoss * 100) / 100 + ' (' + Math.round((entry.stopLoss / entry.price - 1) * 100) + '%)'" data-bs-toggle="tooltip" :title="'Stop loss set @@ ' + stopLoss"></span>
+                                    <input x-show="entry.stopLossEditing && ! entry.isSold" x-model="stopLoss" @@keyup.enter="entry.stopLoss = parseStopLoss(stopLoss, entry.price) ; entry.stopLossEditing = false" x-on:blur="entry.stopLoss = parseStopLoss(stopLoss, entry.price) ; entry.stopLossEditing = false" class="form-control form-control-sm w-75 text-center mx-auto">
                                 </td>
-                                <td><a x-show="! entry.stopLossTriggered" style="color: black" href="javascript:void(0);" x-on:click="$store.entryPoints.remove(entry.date)"><i class="fa-solid fa-xmark"></i></button></td>
+                                <td>
+                                    <a x-show="! entry.stopLossTriggered && ! entry.isSold" style="color: black" href="javascript:void(0);" x-on:click="entry.isSold = true"><i class="fa-solid fa-dollar-sign"></i></a>
+                                    <i x-show="entry.stopLossTriggered" data-bs-toggle="tooltip" data-bs-placement="top" :title="'Stop loss triggered @@ ' + Math.round(entry.triggerPrice * 100) / 100" class="fa-solid fa-bolt"></i>
+                                    <i x-show="entry.isSold" data-bs-toggle="tooltip" data-bs-placement="top" title="Sold" class="fa-solid fa-hand-holding-dollar"></i>
+                                </td>
                             </tr>
                         </template>
                     </tbody>
@@ -174,13 +177,14 @@
                 addIfNew(date, price) {
                     if(this.entries.find(e => e.date.format("YYYY-MM-DD") == date.format("YYYY-MM-DD")))
                         return;
-                    this.entries.push({ date: date, price: price, holdingDays: 0, pctChange: 0, stopLoss: round(0.95 * price), stopLossEditing: false, stopLossTriggered: false, triggerPrice: null })
+                    this.entries.push({ date: date, price: price, holdingDays: 0, pctChange: 0, isSold: false, stopLoss: round(0.95 * price), stopLossEditing: false, stopLossTriggered: false, triggerPrice: null })
                 },
 
                 update(latestDate, latestPrice, latestLow, latestHigh, latestOpen) {
                     // Update stop-loss - check whether it triggers
                     for(let e of this.entries) {
-                        if(e.stopLossTriggered == false && e.stopLoss >= latestLow) {
+                        if(e.stopLossTriggered == true || e.isSold) continue;
+                        if(e.stopLoss >= latestLow) {
                             // The stop-loss triggers, hence the position is closed by selling at the stop-loss
                             e.stopLossTriggered = true
                             let sellPrice;
@@ -193,7 +197,7 @@
                         }
                     }
                     for(let e of this.entries) {
-                        if(e.stopLossTriggered == false) {
+                        if(e.stopLossTriggered == false && e.isSold == false) {
                             e.pctChange = (latestPrice / e.price - 1) * 100
                             e.holdingDays = latestDate.diff(e.date, 'days')
                         }
