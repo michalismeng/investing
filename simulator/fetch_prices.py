@@ -84,7 +84,7 @@ def main():
 
         df = pd.concat(list(filter(lambda x: len(x) > 0, results)))
         pd.options.display.float_format = '{:.0f}'.format
-        df.to_csv(file) if file else df.to_csv(sys.stdout)
+        df.to_csv(file, float_format="%.16f") if file else df.to_csv(sys.stdout, float_format="%.16f")
 
 
 if __name__ == "__main__":
