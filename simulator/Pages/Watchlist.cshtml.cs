@@ -28,7 +28,7 @@ public class WatchlistFiltersModel
     public decimal EarningsGrowth { get; set; }
     public int EarningsGrowthQuarters { get; set; }
     public decimal MaxDropOverSPY { get; set; }
-    public int SharesOutstanding { get; set; }
+    public decimal SharesOutstanding { get; set; }
 }
 
 public class WatchlistModel : PageModel
@@ -125,9 +125,9 @@ public class WatchlistModel : PageModel
             MarketCap = balance.Where(e => e.Ticker == g.Key).OrderByDescending(e => e.FiscalDateEnding).FirstOrDefault()?.MarketCap(g.Last().Close),
             SharesOutstanding = balance.Where(e => e.Ticker == g.Key).OrderByDescending(e => e.FiscalDateEnding).FirstOrDefault()?.SharesOutstanding,
         }).Where(p => p.VolumeSMA50 >= filters.Volume &&      // Ensure there is enough volume.
-                      p.Earnings.Count >= 0 && p.Earnings.Take(filters.EarningsGrowthQuarters).All(e => e.smooth >= filters.EarningsGrowth) &&      // latest 4 quarters should have 20% yoy increase
-                      p.SharesOutstanding <= filters.SharesOutstanding &&
-                      p.MaxDrop <= maxDropSPY + Filters.MaxDropOverSPY)
+                      p.Earnings.Count >= 0 && p.Earnings.Take(filters.EarningsGrowthQuarters).All(e => e.smooth.HasValue == false || e.smooth >= filters.EarningsGrowth) &&      // latest 4 quarters should have 20% yoy increase
+                      p.SharesOutstanding.HasValue == false || p.SharesOutstanding <= filters.SharesOutstanding &&
+                      p.MaxDrop <= maxDropSPY + filters.MaxDropOverSPY)
           .Select(st => new WatchlistTickerInfoModel()
           {
             Ticker = _context.Tickers.FirstOrDefault(x => x.Ticker == st.Ticker)!,
