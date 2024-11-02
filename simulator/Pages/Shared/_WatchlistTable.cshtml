@@ -48,6 +48,20 @@
                   <th>Latest Close:</th>
                   <td>$@Math.Round(data.Close, 2)</td>
                 </tr>
+                @if(tickerModel.PriceDataFuture.All(x => x != null)) {
+                <tr>
+                  <th>Close 4 Weeks:</th>
+                  <td>@tickerModel.PriceDataFuture[0].Date.ToString("yyyy-MM-dd") @@ $@Math.Round(tickerModel.PriceDataFuture[0].Close, 2), @((100 * (tickerModel.PriceDataFuture[0].Close / data.Close - 1)).Round())% </td>
+                </tr>
+                <tr>
+                  <th>Close 8 Weeks:</th>
+                  <td>@tickerModel.PriceDataFuture[1].Date.ToString("yyyy-MM-dd") @@ $@Math.Round(tickerModel.PriceDataFuture[1].Close, 2), @(100 * ((tickerModel.PriceDataFuture[1].Close / data.Close - 1)).Round())% </td>
+                </tr>
+                <tr>
+                  <th>Close 13 Weeks:</th>
+                  <td>@tickerModel.PriceDataFuture[2].Date.ToString("yyyy-MM-dd") @@ $@Math.Round(tickerModel.PriceDataFuture[2].Close, 2), @(100 * ((tickerModel.PriceDataFuture[2].Close / data.Close - 1)).Round())% </td>
+                </tr>
+                }
                 <tr>
                   <th>Percentile:</th>
                   <td>@data.Percentile</td>
@@ -59,6 +73,10 @@
                 <tr>
                   <th>50-Day Volume Avg.:</th>
                   <td>@tickerModel.VolumeSMA50.Round().ToKMB()</td>
+                </tr>
+                <tr>
+                  <th>10-Day Volatility:</th>
+                  <td>@(Math.Round(tickerModel.Volatility.Item2.Value * 100, 2)) % - @tickerModel.Volatility.Item1.ToString("yyyy-MM-dd")</td>
                 </tr>
               </tbody>
             </table>
