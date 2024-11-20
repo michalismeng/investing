@@ -26,6 +26,7 @@ public class RealtimeModel : PageModel
     public List<SmaResult> MA_30 { get; set; } = [];
     public List<SmaResult> MA_40 { get; set; } = [];
     public List<SmaResult> Volume_MA_50_day { get; set; } = [];
+    public List<SmaResult> RelativeStrength_MA_30 { get; set; } = [];
     public List<TickerData> Week_High_52 { get; set; } = [];
     public List<TickerData> Week_Low_52 { get; set; } = [];
     public List<QuarterlyEarningsEntry> Earnings { get; set; } = [];
@@ -47,6 +48,7 @@ public class RealtimeModel : PageModel
         MA_20_day = Records.GetSma(20).Condense().ToList();
         MA_10 = Records.GetSma(50).Condense().ToList();
         MA_30 = Records.GetSma(150).Condense().ToList();
+        RelativeStrength_MA_30 = Records.Select(r => new TickerData() { Date = r.Date, Ticker = r.Ticker, Close = r.RelativeStrength ?? 0}).GetSma(150).Condense().ToList();
         MA_40 = Records.GetSma(200).Condense().ToList();
         Week_High_52 = Records.Calculate52WeekHigh();
         Week_Low_52 = Records.Calculate52WeekLow();

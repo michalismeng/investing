@@ -216,7 +216,7 @@
         const earningsData = [
         @foreach(var e in Model.Earnings)
         {
-            @: { time: '@e.ReportedDate.ToString("yyyy-MM-dd")', label: 'E', fiscalDate: '@e.FiscalDateEnding.ToString("yyyy-MM-dd")', eps: @e.ReportedEPS, estimate: @(e.EstimatedEPS?.ToString() ?? "null"), surprise: @(e.SurprisePercentage?.ToString() ?? "null") },
+            @: { time: '@e.ReportedDate.ToString("yyyy-MM-dd")', label: 'E', fiscalDate: '@e.FiscalDateEnding.ToString("yyyy-MM-dd")', eps: @(e.ReportedEPS?.ToString() ?? "null"), estimate: @(e.EstimatedEPS?.ToString() ?? "null"), surprise: @(e.SurprisePercentage?.ToString() ?? "null") },
         }
         ];
 
@@ -329,11 +329,9 @@
         ];
 
         indicatorData.stockStrength = [
-        @foreach(var record in Model.Records)
+        @foreach(var record in Model.RelativeStrength_MA_30)
         {
-            @if(record.RelativeStrength != null) {
-                @: { value: @record.RelativeStrength, time: "@record.Date.ToString("yyyy-MM-dd")" },
-            }
+            @: { value: @record.Sma, time: "@record.Date.ToString("yyyy-MM-dd")" },
         }
         ];
 
@@ -343,7 +341,7 @@
             @: { time: { year: @record.Year, month: @record.Month, day: @record.Day }, position: 'aboveBar', color: '#e91e63', shape: 'circle', text: 'S2' },
         }
         ];
-        toggleStage2()
+        @* toggleStage2() *@
 
 
         indicators = setUpIndicators(chart)

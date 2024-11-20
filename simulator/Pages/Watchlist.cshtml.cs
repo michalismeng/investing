@@ -83,6 +83,7 @@ public class WatchlistModel : PageModel
         System.Console.WriteLine("Getting stage 2 companies...");
         var stage2 = _context.PriceData.Where(p => p.Date == filters.Date && p.IsStage2 == true)
                                        .ToList();
+        System.Console.WriteLine("Found {0} companies in total", stage2.Count);
 
         var startDate = filters.Date.AddYears(-5);
         System.Console.WriteLine("Getting price data for 5 years...");
@@ -131,7 +132,7 @@ public class WatchlistModel : PageModel
         }).Where(p => p.VolumeSMA50 >= filters.Volume &&      // Ensure there is enough volume.
                       p.Earnings.Count >= 0 && p.Earnings.Where(e => e.change.HasValue).Count() >= filters.EarningsGrowthQuarters &&
                       p.Earnings.Take(filters.EarningsGrowthQuarters).All(e => e.change.HasValue == false || e.change >= filters.EarningsGrowth) &&      // latest 4 quarters should have 20% yoy increase
-                      ( p.SharesOutstanding <= filters.SharesOutstanding) &&
+                      ( p.SharesOutstanding.HasValue == false || p.SharesOutstanding <= filters.SharesOutstanding) &&
                       p.MaxDrop2Y <= maxDropSPY + filters.MaxDropOverSPY)
           .Select(st => new WatchlistTickerInfoModel()
           {
